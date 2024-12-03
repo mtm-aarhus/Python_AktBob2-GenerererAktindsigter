@@ -9,11 +9,5 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     """Do the primary process of the robot."""
 
 
-
-
-
-
-
-
     orchestrator_connection.log_trace("Running process.")
 
