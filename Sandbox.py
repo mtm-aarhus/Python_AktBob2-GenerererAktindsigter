@@ -7,6 +7,8 @@ import requests
 from requests_ntlm import HttpNtlmAuth
 import GenerateCaseFolder
 import PrepareEachDocumentToUpload
+import GenerateAndUploadAktlistePDF
+import GenerererSagsoversigt
 from email.message import EmailMessage
 from getpass import getpass
 import smtplib
@@ -78,11 +80,13 @@ Arguments = {
     "KMDNovaURL": KMDNovaURL
 }
 
+
+# ---- Run "GetDocumentList" ----
 GetDocumentList_Output_arguments = GetDocumentList.invoke(Arguments, go_session)
 Sagstitel = GetDocumentList_Output_arguments.get("sagstitel")
 print("Sagstitel:", Sagstitel)
 dt_DocumentList = GetDocumentList_Output_arguments.get("dt_DocumentList")
-
+DokumentlisteDatoString = GetDocumentList_Output_arguments.get("out_DokumentlisteDatoString")
 
 
 # ---- Run "GenerateCaseFolder" ----
@@ -107,33 +111,33 @@ FilarkivCaseID = GenerateCaseFolder_Output_arguments.get("out_FilarkivCaseID")
 print(f"FilarkivCaseID: {FilarkivCaseID}")
 
 # ---- Send mail til sagsansvarlig ----
-if __name__ == "__main__":
-    # Define email details
-    sender = "Aktbob<rpamtm001@aarhus.dk>" # Replace with actual sender
-    subject = f"Robotten er gået i gang med aktindsigt for {Sagsnummer}"
-    body = """Robotten er nu gået i gang med din aktindsigt, og du vil modtage en mail, når den er færdig.<br><br>
-    Processen tager typisk et par minutter, men den kan nogle gange være undervejs i flere timer alt efter antallet af dokumenter, 
-    der gives aktindsigt til i dokumentlisten og hastigheden på GetOrganized's API.<br><br>
-    Det anbefales at følge <a href="https://aarhuskommune.sharepoint.com/:w:/t/tea-teamsite10506/EVjuZhmtsHRGi6H7-COs26AB6afOXvReKSnWJ1XK1mKxZw?e=n03h0t/">vejledningen</a>, 
-    hvor du også finder svar på de fleste spørgsmål og fejltyper.<br><br>
-    Med venlig hilsen<br><br>
-    Teknik & Miljø<br><br>
-    Digitalisering<br><br>
-    Aarhus Kommune
-    """
-    smtp_server = "smtp.adm.aarhuskommune.dk"   # Replace with your SMTP server
-    smtp_port = 25                    # Replace with your SMTP port
+# if __name__ == "__main__":
+#     # Define email details
+#     sender = "Aktbob<rpamtm001@aarhus.dk>" # Replace with actual sender
+#     subject = f"Robotten er gået i gang med aktindsigt for {Sagsnummer}"
+#     body = """Robotten er nu gået i gang med din aktindsigt, og du vil modtage en mail, når den er færdig.<br><br>
+#     Processen tager typisk et par minutter, men den kan nogle gange være undervejs i flere timer alt efter antallet af dokumenter, 
+#     der gives aktindsigt til i dokumentlisten og hastigheden på GetOrganized's API.<br><br>
+#     Det anbefales at følge <a href="https://aarhuskommune.sharepoint.com/:w:/t/tea-teamsite10506/EVjuZhmtsHRGi6H7-COs26AB6afOXvReKSnWJ1XK1mKxZw?e=n03h0t/">vejledningen</a>, 
+#     hvor du også finder svar på de fleste spørgsmål og fejltyper.<br><br>
+#     Med venlig hilsen<br><br>
+#     Teknik & Miljø<br><br>
+#     Digitalisering<br><br>
+#     Aarhus Kommune
+#     """
+#     smtp_server = "smtp.adm.aarhuskommune.dk"   # Replace with your SMTP server
+#     smtp_port = 25                    # Replace with your SMTP port
 
-    # Call the send_email function
-    send_email(
-        receiver=UdviklerMailAktbob,
-        sender=sender,
-        subject=subject,
-        body=body,
-        smtp_server=smtp_server,
-        smtp_port=smtp_port,
-        html_body=True
-    )
+#     # Call the send_email function
+#     send_email(
+#         receiver=UdviklerMailAktbob,
+#         sender=sender,
+#         subject=subject,
+#         body=body,
+#         smtp_server=smtp_server,
+#         smtp_port=smtp_port,
+#         html_body=True
+#     )
 
 
 # ---- Run "PrepareEachDocumentToUpload" ----
@@ -162,13 +166,56 @@ Arguments_PrepareEachDocumentToUpload = {
 }
 
 PrepareEachDocumentToUpload_Output_arguments = PrepareEachDocumentToUpload.invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload)
-FilarkivCaseID = PrepareEachDocumentToUpload_Output_arguments.get("out_AktIndexDT")
-print(f"FilarkivCaseID: {FilarkivCaseID}")
+dt_AktIndex = PrepareEachDocumentToUpload_Output_arguments.get("out_dt_AktIndex")
 
 
+
+# ---- Run "Generate&UploadAktlistPDF" ----
+
+Arguments_GenerateAndUploadAktlistePDF = {
+"in_dt_AktIndex": dt_AktIndex,
+"in_Sagsnummer": Sagsnummer,
+"in_DokumentlisteDatoString":DokumentlisteDatoString, 
+"in_RobotUserName": RobotUserName,
+"in_RobotPassword": RobotPassword,
+"in_SagsTitel": Sagstitel,
+"in_SharePointAppID": SharePointAppID,
+"in_SharePointTenant": SharePointTenant,
+"in_Overmappe": Overmappe,
+"in_Undermappe": Undermappe,
+"in_SharePointURL": SharePointURL,
+"in_GoUsername":GoUsername,
+"in_GoPassword": GoPassword
+}
+
+GenerateAndUploadAktlistePDF_Output_arguments = GenerateAndUploadAktlistePDF.invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF)
+Test = GenerateAndUploadAktlistePDF_Output_arguments.get("out_Text")
+print(Test)
 
 
 # ---- Run "GenererSagsoversigt" ----
+Arguments_GenererSagsoversigt = {
+"in_RobotUserName": RobotUserName,
+"in_RobotPassword": RobotPassword,
+"in_MailModtager": MailModtager,
+"in_SharePointAppID": SharePointAppID,
+"in_SharePointTenant": SharePointTenant,
+"in_SharePointURL": SharePointURL,
+"in_Sagsnummer": Sagsnummer,
+"in_SagsTitel": Sagstitel,
+"in_Overmappe": Overmappe,
+"in_Undermappe": Undermappe,
+"in_GoUsername":GoUsername,
+"in_GoPassword": GoPassword
+}
+
+
+GenererSagsoversigt_Output_arguments = GenerererSagsoversigt.invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt)
+Test = GenererSagsoversigt_Output_arguments.get("out_Text")
+print(Test)
+
+
+
 
 
 # ---- Run "SendFilarkivCaseId&PodioIDToPodio"

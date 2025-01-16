@@ -41,7 +41,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
     try:
         # Send GET request
         response = requests.get(url, headers=headers)
-        print("FilArkiv respons:", response.status_code, response.text)
+        print("FilArkiv respons:", response.status_code)
 
         Respons = response.json()  # Parse the response as JSON
         
@@ -54,7 +54,6 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
                 title = current_item.get("title", "")
                 
                 if "UDDATERET/SLETTET" in title:
-                    print(f"Sagen er omdømt i forvejen")
                     continue  # Skip this item and move to the next
                     
 
@@ -62,7 +61,6 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
                     #Sagen er oprettet i forvejen - omdøber
                     Old_FilarkivCaseID = current_item.get("id","")
                     old_Title = (f"{title} - UDDATERET/SLETTET")
-                    print(f"Sagen skal ømdøbes, anvender det gamle caseID: {Old_FilarkivCaseID}")
 
                 # Define the variables
                 NewJson = {
@@ -94,7 +92,6 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
                 except Exception as e:
                     print("Kunne ikke omdøbe sagen:", str(e))
 
-            print(f"Opretter sagen på ny")
              
             # Prepare the payload for creating a new case
             payload = {
@@ -124,15 +121,12 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
                 response = requests.post(url, headers=headers, data=json_payload)
                 response_json = response.json()
                 Out_FilarkivCaseID = response_json["id"]
-                print(f"Anvender følgende FilarkivCaseID: {Out_FilarkivCaseID}")
 
             except Exception as e:
                 print("Kunne ikke oprette sagen på ny:", str(e))
 
 
         else:
-            print("Sagen findes ikke i Filarkiv - Opretter ny sag")
-            
             
             # Prepare the payload for creating a new case
             payload = {
@@ -163,7 +157,6 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
 
                 response_json = response.json()
                 Out_FilarkivCaseID = response_json["id"]
-                print(f"Anvender følgende FilarkivCaseID: {Out_FilarkivCaseID}")
 
             except Exception as e:
                 print("Kunne ikke oprette sagen på ny:", str(e))
@@ -177,13 +170,11 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
             SharePointUrl = SharePointUrl[8:]
 
         SharePointUrl = SharePointUrl.replace(".sharepoint.com", ".sharepoint.com:")
-        print(SharePointUrl)
 
         # MSAL configuration for getting the access token
         scopes = ["https://graph.microsoft.com/.default"]
         app = PublicClientApplication(client_id=SharePointAppID, authority=f"https://login.microsoftonline.com/{SharePointTenant}")
 
-        print("Getting access token...")
         token_response = app.acquire_token_by_username_password(username=RobotUserName, password=RobotPassword, scopes=scopes)
         access_token = token_response.get("access_token")
 
@@ -194,7 +185,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
 
         # Step 1: Get the SharePoint site information
         site_request_url = f"https://graph.microsoft.com/v1.0/sites/{SharePointUrl}"
-        print(f"Requesting site information from {site_request_url}...")
+    
         site_response = requests.get(site_request_url, headers=headers)
         site_response.raise_for_status()
         site_json = site_response.json()
@@ -202,11 +193,9 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
         if "id" not in site_json:
             raise Exception("Key 'id' not found in site response")
         site_id = site_json["id"]
-        print(f"Site ID: {site_id}")
-
+ 
         # Step 2: Get the document library (drive) information
         drive_request_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drive"
-        print(f"Requesting drive information from {drive_request_url}...")
         drive_response = requests.get(drive_request_url, headers=headers)
         drive_response.raise_for_status()
         drive_json = drive_response.json()
@@ -223,8 +212,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
             "folder": {},
             "@microsoft.graph.conflictBehavior": "fail"  # Or "replace", "fail"
         }
-
-        print(f"Creating folder '{Overmappe}'...")
+        
         folder_response1 = requests.post(drive_item_request_url, headers=headers, json=folder_request_body1)
 
         if folder_response1.status_code == 201:
@@ -240,7 +228,6 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
             "@microsoft.graph.conflictBehavior": "fail"  # Or "replace", "fail"
         }
 
-        print(f"Creating folder '{Undermappe}' inside '{Overmappe}'...")
         folder_response2 = requests.post(drive_item_request_url_for_mappe2, headers=headers, json=folder_request_body2)
 
         if folder_response2.status_code == 201:

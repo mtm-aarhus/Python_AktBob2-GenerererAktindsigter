@@ -131,7 +131,6 @@ def invoke(Arguments, go_Session):
     # SharePoint authentication and client setup
     def sharepoint_client(RobotUserName, RobotPassword, SharePointUrl) -> ClientContext:
         try:
-            print(f"Authenticating with SharePoint: {SharePointUrl}")
             credentials = UserCredential(RobotUserName, RobotPassword)
             ctx = ClientContext(SharePointUrl).with_credentials(credentials)
 
@@ -140,7 +139,6 @@ def invoke(Arguments, go_Session):
             ctx.load(web)
             ctx.execute_query()
 
-            print(f"Authenticated successfully. Site Title: {web.properties['Title']}")
             return ctx
         except Exception as e:
             print(f"Authentication failed: {e}")
@@ -164,7 +162,6 @@ def invoke(Arguments, go_Session):
             with open(local_file_path, "wb") as local_file:
                 client.web.get_file_by_server_relative_path(sharepoint_file_url).download(local_file).execute_query()
 
-            print(f"[Ok] File has been downloaded into: {local_file_path}")
             return local_file_path
         except Exception as e:
             print(f"Error downloading file from SharePoint: {e}")
@@ -182,14 +179,12 @@ def invoke(Arguments, go_Session):
         overmappe_folder = client.web.get_folder_by_server_relative_url(overmappe_url)
         client.load(overmappe_folder)
         client.execute_query()
-        print(f"Overmappe folder found: {overmappe_folder.serverRelativeUrl}")
+
 
         undermappe_url = f"{overmappe_url}/{Undermappe}"
-        print(f"Undermappe URL: {undermappe_url}")
         undermappe_folder = client.web.get_folder_by_server_relative_url(undermappe_url)
         client.load(undermappe_folder)
         client.execute_query()
-        print(f"Undermappe folder found: {undermappe_folder.serverRelativeUrl}")
 
         # Fetch files in the Undermappe folder
         print("Fetching files from the folder...")
@@ -198,12 +193,10 @@ def invoke(Arguments, go_Session):
         client.execute_query()
 
         # Print and process file names
-        print("Files in the folder:")
         data_table = []  # To store file information with dates
 
         for file in files:
             file_name = file.properties["Name"]
-            print(f" - {file_name}")
 
             dokument_date = None  # Initialize dokument_date
 
@@ -213,7 +206,6 @@ def invoke(Arguments, go_Session):
                     date_part = file_name.split("_")[1]
                     date_str = date_part.split(".")[0]  # Part before the first dot
                     dokument_date = datetime.strptime(date_str, "%d-%m-%Y")
-                    print(f"  -> Extracted date: {dokument_date.strftime('%d-%m-%Y')}")
                 except (IndexError, ValueError):
                     print(f"  -> Error parsing date from: {file_name}. Defaulting to 01-01-2023")
                     dokument_date = datetime.strptime("01-01-2023", "%d-%m-%Y")
@@ -233,7 +225,6 @@ def invoke(Arguments, go_Session):
             reverse=True
         )
 
-        print("\nSorted files by date:")
         for entry in data_table:
             print(f" - {entry['FileName']} (Date: {entry['DocumentDate']})")
 
@@ -241,8 +232,8 @@ def invoke(Arguments, go_Session):
         if data_table:
             newest_file = data_table[0]
             newest_file_name = newest_file["FileName"]
+            DokumentlisteDatoString = newest_file["DocumentDate"] 
             sharepoint_file_url = f"{undermappe_url}/{newest_file_name}"
-            print(f"Constructed SharePoint File URL: {sharepoint_file_url}")
 
             local_file_path = download_file_from_sharepoint(client, sharepoint_file_url)
 
@@ -266,5 +257,6 @@ def invoke(Arguments, go_Session):
     finally:
         return {
         "sagstitel": sagstitel,
-        "dt_DocumentList": dt_DocumentList
+        "dt_DocumentList": dt_DocumentList,
+        "out_DokumentlisteDatoString": DokumentlisteDatoString
         }
