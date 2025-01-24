@@ -14,7 +14,12 @@ def upload_file_to_sharepoint(
 ):
     try:
         # Build SharePoint folder path and extract file name
-        sharepoint_folder_path = f"/Aktindsigter/{overmappe}/{undermappe}"
+                # Determine the target SharePoint folder path
+        if undermappe:  # If undermappe is provided, include it in the path
+            sharepoint_folder_path = f"/Aktindsigter/{overmappe}/{undermappe}"
+        else:  # Otherwise, upload only to overmappe
+            sharepoint_folder_path = f"/Aktindsigter/{overmappe}"
+
         file_name = os.path.basename(file_path)
 
         # Normalize the site URL

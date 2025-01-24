@@ -241,7 +241,6 @@ def invoke(Arguments, go_Session):
             try:
                 # Read Excel file into a Pandas DataFrame
                 dt_DocumentList = pd.read_excel(local_file_path)
-            
                 os.remove(local_file_path)
                 # Return the DataFrame to be used later
                 return dt_DocumentList

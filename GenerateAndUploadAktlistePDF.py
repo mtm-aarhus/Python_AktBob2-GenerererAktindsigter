@@ -164,207 +164,207 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF):
     "Begrundelse hvis Nej/Delvis": pd.Series(dtype="string"),
     }
 
-    # Create an empty DataFrame with the defined structure
-    dt_AktlisteTilPDF = pd.DataFrame(dt_AktlisteTilPDF)
+    # # Create an empty DataFrame with the defined structure
+    # dt_AktlisteTilPDF = pd.DataFrame(dt_AktlisteTilPDF)
 
-    for index, row in dt_PdfAktliste.iterrows():
-    # Convert items to strings unless they are explicitly integers
-        Dokumentdato = row["Dokumentdato"]
+    # for index, row in dt_PdfAktliste.iterrows():
+    # # Convert items to strings unless they are explicitly integers
+    #     Dokumentdato = row["Dokumentdato"]
 
-        if isinstance(Dokumentdato, pd.Timestamp):
-            # If Dokumentdato is a Pandas Timestamp
-            Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
-        elif isinstance(Dokumentdato, str):
-            # If Dokumentdato is already a string
-            Dokumentdato = datetime.strptime(Dokumentdato, "%d-%m-%Y").strftime("%d-%m-%Y")
-        else:
-            # If Dokumentdato is something else (e.g., NaT or None), set it to None or a default value
-            Dokumentdato = None
-        # Handle AktID conversion
-        AktID = row['Akt ID']
-        if isinstance(AktID, str):  
-            AktID = int(AktID.replace('.', ''))
-        elif isinstance(AktID, int):  
-            AktID = AktID
+    #     if isinstance(Dokumentdato, pd.Timestamp):
+    #         # If Dokumentdato is a Pandas Timestamp
+    #         Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
+    #     elif isinstance(Dokumentdato, str):
+    #         # If Dokumentdato is already a string
+    #         Dokumentdato = datetime.strptime(Dokumentdato, "%d-%m-%Y").strftime("%d-%m-%Y")
+    #     else:
+    #         # If Dokumentdato is something else (e.g., NaT or None), set it to None or a default value
+    #         Dokumentdato = None
+    #     # Handle AktID conversion
+    #     AktID = row['Akt ID']
+    #     if isinstance(AktID, str):  
+    #         AktID = int(AktID.replace('.', ''))
+    #     elif isinstance(AktID, int):  
+    #         AktID = AktID
     
-        Dokumentkategori = str(row["Dokumentkategori"])
-        Filnavn = str(row["Filnavn"])
-        DokumentID = str(row["Dok ID"])
-        BilagTilDok = str(row["Bilag til Dok ID"])
-        DokBilag = str(row["Bilag"])
-        Omfattet = str(row["Omfattet af aktindsigt?"])
-        Aktstatus = str(row["Gives der aktindsigt?"])
-        Begrundelse = str(row["Begrundelse hvis Nej/Delvis"])
+    #     Dokumentkategori = str(row["Dokumentkategori"])
+    #     Filnavn = str(row["Filnavn"])
+    #     DokumentID = str(row["Dok ID"])
+    #     BilagTilDok = str(row["Bilag til Dok ID"])
+    #     DokBilag = str(row["Bilag"])
+    #     Omfattet = str(row["Omfattet af aktindsigt?"])
+    #     Aktstatus = str(row["Gives der aktindsigt?"])
+    #     Begrundelse = str(row["Begrundelse hvis Nej/Delvis"])
 
-        # Parse and prepare data for the row
-        row_to_add = {
-            "Akt ID": int(AktID),
-            "Filnavn": Filnavn,
-            "Dokumentkategori": Dokumentkategori,
-            "Dokumentdato": datetime.strptime(Dokumentdato, "%d-%m-%Y"),
-            "Dok ID": DokumentID,
-            "Bilag til Dok ID": BilagTilDok,
-            "Bilag": DokBilag,
-            "Omfattet af aktindsigt?": Omfattet,
-            "Gives der aktindsigt?": Aktstatus,
-            "Begrundelse hvis Nej/Delvis": Begrundelse,
-        }
+    #     # Parse and prepare data for the row
+    #     row_to_add = {
+    #         "Akt ID": int(AktID),
+    #         "Filnavn": Filnavn,
+    #         "Dokumentkategori": Dokumentkategori,
+    #         "Dokumentdato": datetime.strptime(Dokumentdato, "%d-%m-%Y"),
+    #         "Dok ID": DokumentID,
+    #         "Bilag til Dok ID": BilagTilDok,
+    #         "Bilag": DokBilag,
+    #         "Omfattet af aktindsigt?": Omfattet,
+    #         "Gives der aktindsigt?": Aktstatus,
+    #         "Begrundelse hvis Nej/Delvis": Begrundelse,
+    #     }
 
-        # Append the row to the DataFrame
-        dt_AktlisteTilPDF = pd.concat([dt_AktlisteTilPDF, pd.DataFrame([row_to_add])], ignore_index=True)
-
-
+    #     # Append the row to the DataFrame
+    #     dt_AktlisteTilPDF = pd.concat([dt_AktlisteTilPDF, pd.DataFrame([row_to_add])], ignore_index=True)
 
 
-        def wrap_text(text, max_chars):
-            if pd.isna(text): 
-                return ""
-            if not isinstance(text, str):
-                text = str(text)
-            words = text.split()
-            wrapped_lines = []
-            line = ""
-            for word in words:
-                if len(line) + len(word) + 1 <= max_chars:
-                    line += " " + word if line else word
-                else:
-                    wrapped_lines.append(line)
-                    line = word
-            if line:
+
+
+    def wrap_text(text, max_chars):
+        if pd.isna(text): 
+            return ""
+        if not isinstance(text, str):
+            text = str(text)
+        words = text.split()
+        wrapped_lines = []
+        line = ""
+        for word in words:
+            if len(line) + len(word) + 1 <= max_chars:
+                line += " " + word if line else word
+            else:
                 wrapped_lines.append(line)
-            return "<br/>".join(wrapped_lines)
+                line = word
+        if line:
+            wrapped_lines.append(line)
+        return "<br/>".join(wrapped_lines)
 
-        def excel_to_pdf(excel_path, image_path, output_pdf_path, sags_id, my_date_string):
-            df = pd.read_excel(excel_path)
+    def excel_to_pdf(excel_path, image_path, output_pdf_path, sags_id, my_date_string):
+        df = pd.read_excel(excel_path)
+        
+        # PDF Setup
+        page_width, page_height = landscape(A4)
+        margin = 40
+
+
+        # Define styles
+        styles = getSampleStyleSheet()
+
+        header_style = ParagraphStyle(
+            'header_style',
+            parent=styles['Normal'],
+            fontName='Helvetica-Bold',
+            fontSize=10,
+            textColor=reportlab_colors.white,
+            alignment=1,  # CENTER
+            leading=12,
+            spaceAfter=5,
+        )
+
+        cell_style = ParagraphStyle(
+            'cell_style',
+            parent=styles['Normal'],
+            fontName='Helvetica',
+            fontSize=8,
+            textColor=reportlab_colors.black,
+            alignment=1,  # CENTER
+            leading=10,
+            spaceAfter=2,
+        )
+
+        # Column configuration
+        column_widths = [50, 150, 80, 70, 60, 60, 55, 70, 70, 100]
+        char_limits = [10, 30, 15, 12, 10, 10, 9, 12, 12, 20]
+
+        headers = ["Akt ID", "Filnavn", "Kategori", "Dato", "Dok ID", "Bilag til Dok ID", 
+                "Bilag", "Omfattet af aktindsigt", "Gives der aktindsigt?", "Begrundelse"]
+
+        # Create header row
+        table_data = [[Paragraph(header, header_style) for header in headers]]
+
+        # Add data rows
+        for _, row in df.iterrows():
+            table_row = [
+                Paragraph(wrap_text(row.get("Akt ID", ""), char_limits[0]), cell_style),
+                Paragraph(wrap_text(row.get("Filnavn", ""), char_limits[1]), cell_style),
+                Paragraph(wrap_text(row.get("Dokumentkategori", ""), char_limits[2]), cell_style),
+                Paragraph(wrap_text(row.get("Dokumentdato", "").strftime("%d-%m-%Y") if isinstance(row.get("Dokumentdato"), pd.Timestamp) else row.get("Dokumentdato", ""), char_limits[3]), cell_style),
+                Paragraph(wrap_text(row.get("Dok ID", ""), char_limits[4]), cell_style),
+                Paragraph(wrap_text(row.get("Bilag til Dok ID", ""), char_limits[5]), cell_style),
+                Paragraph(wrap_text(row.get("Bilag", ""), char_limits[6]), cell_style),
+                Paragraph(wrap_text(row.get("Omfattet af aktindsigt?", ""), char_limits[7]), cell_style),
+                Paragraph(wrap_text(row.get("Gives der aktindsigt?", ""), char_limits[8]), cell_style),
+                Paragraph(wrap_text(row.get("Begrundelse hvis Nej/Delvis", ""), char_limits[9]), cell_style)
+            ]
+            table_data.append(table_row)
+
+        # Create table
+        report_table = ReportTable(table_data, colWidths=column_widths)
+        report_table.setStyle(ReportTableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), reportlab_colors.HexColor("#3661D8")),
+            ('GRID', (0, 0), (-1, -1), 1, reportlab_colors.black),
+            ('BOX', (0, 0), (-1, -1), 1, reportlab_colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ]))
+
+        # Define first page layout
+        def first_page(canvas, doc):
+            canvas.saveState()
             
-            # PDF Setup
-            page_width, page_height = landscape(A4)
-            margin = 40
+            # Draw Image
+            image_width = 100
+            image_height = 45
+            image_x = margin
+            image_y = page_height - margin - image_height
+            canvas.drawImage(image_path, image_x, image_y, width=image_width, height=image_height)
 
-
-            # Define styles
-            styles = getSampleStyleSheet()
-
-            header_style = ParagraphStyle(
-                'header_style',
-                parent=styles['Normal'],
-                fontName='Helvetica-Bold',
-                fontSize=10,
-                textColor=reportlab_colors.white,
-                alignment=1,  # CENTER
-                leading=12,
-                spaceAfter=5,
-            )
-
-            cell_style = ParagraphStyle(
-                'cell_style',
-                parent=styles['Normal'],
-                fontName='Helvetica',
-                fontSize=8,
-                textColor=reportlab_colors.black,
-                alignment=1,  # CENTER
-                leading=10,
-                spaceAfter=2,
-            )
-
-            # Column configuration
-            column_widths = [50, 150, 80, 70, 60, 60, 55, 70, 70, 100]
-            char_limits = [10, 30, 15, 12, 10, 10, 9, 12, 12, 20]
-
-            headers = ["Akt ID", "Filnavn", "Kategori", "Dato", "Dok ID", "Bilag til Dok ID", 
-                    "Bilag", "Omfattet af aktindsigt", "Gives der aktindsigt?", "Begrundelse"]
-
-            # Create header row
-            table_data = [[Paragraph(header, header_style) for header in headers]]
-
-            # Add data rows
-            for _, row in df.iterrows():
-                table_row = [
-                    Paragraph(wrap_text(row.get("Akt ID", ""), char_limits[0]), cell_style),
-                    Paragraph(wrap_text(row.get("Filnavn", ""), char_limits[1]), cell_style),
-                    Paragraph(wrap_text(row.get("Dokumentkategori", ""), char_limits[2]), cell_style),
-                    Paragraph(wrap_text(row.get("Dokumentdato", "").strftime("%d-%m-%Y") if isinstance(row.get("Dokumentdato"), pd.Timestamp) else row.get("Dokumentdato", ""), char_limits[3]), cell_style),
-                    Paragraph(wrap_text(row.get("Dok ID", ""), char_limits[4]), cell_style),
-                    Paragraph(wrap_text(row.get("Bilag til Dok ID", ""), char_limits[5]), cell_style),
-                    Paragraph(wrap_text(row.get("Bilag", ""), char_limits[6]), cell_style),
-                    Paragraph(wrap_text(row.get("Omfattet af aktindsigt?", ""), char_limits[7]), cell_style),
-                    Paragraph(wrap_text(row.get("Gives der aktindsigt?", ""), char_limits[8]), cell_style),
-                    Paragraph(wrap_text(row.get("Begrundelse hvis Nej/Delvis", ""), char_limits[9]), cell_style)
-                ]
-                table_data.append(table_row)
-
-            # Create table
-            report_table = ReportTable(table_data, colWidths=column_widths)
-            report_table.setStyle(ReportTableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), reportlab_colors.HexColor("#3661D8")),
-                ('GRID', (0, 0), (-1, -1), 1, reportlab_colors.black),
-                ('BOX', (0, 0), (-1, -1), 1, reportlab_colors.black),
-                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ]))
-
-            # Define first page layout
-            def first_page(canvas, doc):
-                canvas.saveState()
-                
-                # Draw Image
-                image_width = 100
-                image_height = 45
-                image_x = margin
-                image_y = page_height - margin - image_height
-                canvas.drawImage(image_path, image_x, image_y, width=image_width, height=image_height)
-
-                # Add Title
-                title = f"Aktliste - {sags_id}"
-                canvas.setFont("Helvetica-Bold", 14)
-                title_y = image_y - 20  # Title below the image
-                canvas.drawString(margin, title_y, title)
-                
-                # Measure the width of the title
-                title_width = canvas.stringWidth(title, "Helvetica-Bold", 14)
-
-
-                 # Add Black Line **RIGHT BELOW** the Title
-                line_y = title_y - 5  # 5 units below the title
-                canvas.setStrokeColor(reportlab_colors.black)
-                canvas.setLineWidth(1)
-                canvas.line(margin, line_y, margin + title_width, line_y) 
-               
-                # Add Date
-                date_string = f"Dato for aktindsigt: {my_date_string}"
-                canvas.setFont("Helvetica", 10)
-                text_width = canvas.stringWidth(date_string, "Helvetica", 10)
-                canvas.drawString(page_width - margin - text_width, image_y, date_string)
-
-                canvas.restoreState()
-
-            # Define subsequent pages (only table continues)
-            def later_pages(canvas, doc):
-                canvas.saveState()
-                canvas.restoreState()
-
-            # PDF document setup
-            doc = SimpleDocTemplate(output_pdf_path, pagesize=landscape(A4),
-                                    leftMargin=margin, rightMargin=margin,
-                                    topMargin=margin, bottomMargin=margin)
-
-            # Reserve space at the top for image, title, and date
-            table_start_y = page_height - margin - 100  # Adjusted Y position to avoid overlap
-
-            # Define frames (where table goes)
-            frame_first_page = Frame(margin, margin, page_width - 2 * margin, table_start_y - margin, id='first_page_table_frame')
-            frame_later_pages = Frame(margin, margin, page_width - 2 * margin, page_height - 2 * margin, id='later_page_table_frame')
-
-            # Define page templates
-            first_page_template = PageTemplate(id='FirstPage', frames=frame_first_page, onPage=first_page)
-            later_page_template = PageTemplate(id='LaterPages', frames=frame_later_pages, onPage=later_pages)
+            # Add Title
+            title = f"Aktliste - {sags_id}"
+            canvas.setFont("Helvetica-Bold", 14)
+            title_y = image_y - 20  # Title below the image
+            canvas.drawString(margin, title_y, title)
             
-            doc.addPageTemplates([first_page_template, later_page_template])
+            # Measure the width of the title
+            title_width = canvas.stringWidth(title, "Helvetica-Bold", 14)
 
-            # Build the PDF with the table content
-            doc.build([report_table])
 
-            print(f"PDF saved to {output_pdf_path}")
+                # Add Black Line **RIGHT BELOW** the Title
+            line_y = title_y - 5  # 5 units below the title
+            canvas.setStrokeColor(reportlab_colors.black)
+            canvas.setLineWidth(1)
+            canvas.line(margin, line_y, margin + title_width, line_y) 
+            
+            # Add Date
+            date_string = f"Dato for aktindsigt: {my_date_string}"
+            canvas.setFont("Helvetica", 10)
+            text_width = canvas.stringWidth(date_string, "Helvetica", 10)
+            canvas.drawString(page_width - margin - text_width, image_y, date_string)
+
+            canvas.restoreState()
+
+        # Define subsequent pages (only table continues)
+        def later_pages(canvas, doc):
+            canvas.saveState()
+            canvas.restoreState()
+
+        # PDF document setup
+        doc = SimpleDocTemplate(output_pdf_path, pagesize=landscape(A4),
+                                leftMargin=margin, rightMargin=margin,
+                                topMargin=margin, bottomMargin=margin)
+
+        # Reserve space at the top for image, title, and date
+        table_start_y = page_height - margin - 100  # Adjusted Y position to avoid overlap
+
+        # Define frames (where table goes)
+        frame_first_page = Frame(margin, margin, page_width - 2 * margin, table_start_y - margin, id='first_page_table_frame')
+        frame_later_pages = Frame(margin, margin, page_width - 2 * margin, page_height - 2 * margin, id='later_page_table_frame')
+
+        # Define page templates
+        first_page_template = PageTemplate(id='FirstPage', frames=frame_first_page, onPage=first_page)
+        later_page_template = PageTemplate(id='LaterPages', frames=frame_later_pages, onPage=later_pages)
+        
+        doc.addPageTemplates([first_page_template, later_page_template])
+
+        # Build the PDF with the table content
+        doc.build([report_table])
+
+        print(f"PDF saved to {output_pdf_path}")
 
     PDFAktlisteFilnavn = f"Aktliste - {Sagsnummer} - {DokumentlisteDatoString}.pdf"
 

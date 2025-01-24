@@ -15,7 +15,9 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
     import json
     from SendSMTPMail import send_email, EmailAttachment
     import shutil
-
+    import uuid
+    from SharePointUploader import upload_file_to_sharepoint
+    import re
 
     # henter in_argumenter:
     dt_DocumentList = Arguments_PrepareEachDocumentToUpload.get("in_dt_Documentlist")
@@ -40,8 +42,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
     GoUsername = Arguments_PrepareEachDocumentToUpload.get("in_GoUsername")
     GoPassword = Arguments_PrepareEachDocumentToUpload.get("in_GoPassword")
 
-
-
     # Define the structure of the data table
     dt_AktIndex = {
         "Akt ID": pd.Series(dtype="int32"),
@@ -57,6 +57,256 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
         "IsDocumentPDF": pd.Series(dtype="bool"),
     }
 
+    #Functions: 
+    def sanitize_title(Titel):
+        # 1. Replace double quotes with an empty string
+        Titel = Titel.replace("\"", "")
+
+        # 2. Remove special characters with regex
+        Titel = re.sub(r"[.:>#<*\?/%&{}\$!\"@+\|'=]+", "", Titel)
+
+        # 3. Remove any newline characters
+        Titel = Titel.replace("\n", "").replace("\r", "")
+
+        # 4. Trim leading and trailing whitespace
+        Titel = Titel.strip()
+
+        # 5. Remove non-alphanumeric characters except spaces and Danish letters
+        Titel = re.sub(r"[^a-zA-Z0-9ÆØÅæøå ]", "", Titel)
+
+        # 6. Replace multiple spaces with a single space
+        Titel = re.sub(r" {2,}", " ", Titel)
+
+        return Titel
+    
+    def calculate_available_title_length(base_path, Overmappe, Undermappe, AktID, DokumentID, Titel, max_path_length=400):
+        overmappe_length = len(Overmappe)
+        undermappe_length = len(Undermappe)
+        aktID_length = len(str(AktID))
+        dokID_length = len(str(DokumentID))
+
+        fixed_length = len(base_path) + overmappe_length + undermappe_length + aktID_length + dokID_length + 7
+        available_title_length = max_path_length - fixed_length
+
+        if len(Titel) > available_title_length:
+            return Titel[:available_title_length]
+        
+        return Titel
+
+
+        print("Uploader til Filarkiv")
+        DoesFolderExists = False
+        Filarkiv_DocumentID = None  # Ensure it is initialized
+        FileName = f"{AktID:04} - {DokumentID} - {Titel}"
+        print(f"FilarkivCaseID: {FilarkivCaseID}")
+        url = f"{FilarkivURL}/Documents/CaseDocumentOverview?caseId={FilarkivCaseID}&pageIndex=1&pageSize=500"
+
+        headers = {
+            "Authorization": f"Bearer {Filarkiv_access_token}",
+            "Content-Type": "application/xml"
+        }
+        
+        try:
+            response = requests.get(url, headers=headers)
+            print("FilArkiv respons:", response.status_code)
+            
+            if response.status_code == 200:
+                response_json = response.json()
+                
+                if not response_json or len(response_json) == 0:
+                    print("Der findes ingen dokumenter på sagen")
+                    DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                    DocumentNumber = 1
+                    data = {
+                        "caseId": FilarkivCaseID,
+                        "securityClassificationLevel": 0,
+                        "title": FileName,
+                        "documentNumber": DocumentNumber,
+                        "documentDate": DocumentDate,
+                        "direction": 0
+                    }
+                    json_string = json.dumps(data)
+                    url = "https://core.filarkiv.dk/api/v1/Documents"
+                    headers["Content-Type"] = "application/json"
+                    
+                    response = requests.post(url, headers=headers, data=json_string)  
+                    if response.status_code in [200, 201]:
+                        Filarkiv_DocumentID = response.json().get("id")
+                        print("Anvender følgende FilarkivdokumentID: :", Filarkiv_DocumentID)
+                    else:
+                        print("Failed to create document. Response:", response.text)
+                else:
+                    for current_item in response_json:
+                        title = current_item.get("title", "")
+                        if FileName in current_item.get("title", ""):
+                            print("Dokument Mappen er oprettet")
+                            Filarkiv_DocumentID = current_item.get("id")
+                            DoesFolderExists = True
+                            break
+                        else:
+                            DoesFolderExists = False
+                    
+                    if not DoesFolderExists:
+                        print("Finder det nye dokumentnummer")
+                        HighestDocumentNumber = max([int(i.get("documentNumber", 0)) for i in response_json], default=1)
+                        DocumentNumber = HighestDocumentNumber + 1
+                        DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+                        # Initialize 'data' correctly
+                        data = {
+                            "caseId": FilarkivCaseID,
+                            "securityClassificationLevel": 0,
+                            "title": FileName,
+                            "documentNumber": DocumentNumber,
+                            "documentDate": DocumentDate,
+                            "direction": 0
+                        }
+                        response = requests.post(url, headers=headers, data=json.dumps(data))
+                        if response.status_code in [200, 201]:
+                            Filarkiv_DocumentID = response.json().get("id")
+                            print("Anvender følgende Filarkiv_DocumentID: :", Filarkiv_DocumentID)
+                        else:
+                            print("Failed to create document. Response:", response.text)
+            else:
+                print("Failed to fetch data, status code:", response.status_code)
+        except Exception as e:
+            print("Kunne ikke hente dokumentinformation:", str(e))
+        
+        if not DoesFolderExists:
+            extensions = {
+                ".txt": "text/plain", ".pdf": "application/pdf", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+                ".gif": "image/gif", ".doc": "application/msword", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                ".xls": "application/vnd.ms-excel", ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".csv": "text/csv",
+                ".json": "application/json", ".xml": "application/xml"
+            }
+            extension = os.path.splitext(FilePath)[1]
+            mime_type = extensions.get(extension, "application/octet-stream")
+            FileName += extension
+            print(f"Anvender følgende dokumentID:{Filarkiv_DocumentID}")
+            payload = {"documentId": Filarkiv_DocumentID, "fileName": FileName, "sequenceNumber": 0, "mimeType": mime_type}
+            url = "https://core.filarkiv.dk/api/v1/Files"
+            response = requests.post(url, headers=headers, json=payload)
+            if response.status_code in [200, 201]:
+                FileID = response.json().get('id')
+                print(f"FileID: {FileID}")
+            else:
+                print("Failed to create file metadata.", response.text)
+            
+            url = f"https://core.filarkiv.dk/api/v1/FileIO/Upload/{FileID}"
+            if not os.path.exists(FilePath):
+                print(f"Error: File not found at {FilePath}")
+            else:
+                with open(FilePath, 'rb') as file:
+                    files = [('file', (FileName, file, mime_type))]
+                    response = requests.post(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}"}, files=files)
+                    if response.status_code in [200, 201]:
+                        print("File uploaded successfully.")
+                        print(response.json())
+                    else:
+                        print(f"Failed to upload file. Status Code: {response.status_code}")
+
+    def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID, Titel, FilePath):
+        print("Uploader til Filarkiv")
+        DoesFolderExists = False
+        Filarkiv_DocumentID = None  # Ensure it is initialized
+        FileName = f"{AktID:04} - {DokumentID} - {Titel}"
+        print(f"FilarkivCaseID: {FilarkivCaseID}")
+        url = f"{FilarkivURL}/Documents/CaseDocumentOverview?caseId={FilarkivCaseID}&pageIndex=1&pageSize=500"
+
+        headers = {
+            "Authorization": f"Bearer {Filarkiv_access_token}",
+            "Content-Type": "application/xml"
+        }
+        
+        try:
+            response = requests.get(url, headers=headers)
+            print("FilArkiv respons:", response.status_code)
+            
+            if response.status_code == 200:
+                response_json = response.json()
+                
+                if not response_json:
+                    print("Der findes ingen dokumenter på sagen")
+                    DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                    DocumentNumber = 1
+                    data = {
+                        "caseId": FilarkivCaseID,
+                        "securityClassificationLevel": 0,
+                        "title": FileName,
+                        "documentNumber": DocumentNumber,
+                        "documentDate": DocumentDate,
+                        "direction": 0
+                    }
+                    response = requests.post("https://core.filarkiv.dk/api/v1/Documents", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))  
+                    if response.status_code in [200, 201]:
+                        Filarkiv_DocumentID = response.json().get("id")
+                    else:
+                        print("Failed to create document. Response:", response.text)
+                else:
+                    for current_item in response_json:
+                        if FileName in current_item.get("title", ""):
+                            print("Dokument Mappen er oprettet")
+                            Filarkiv_DocumentID = current_item.get("id")
+                            DoesFolderExists = True
+                            break  # Exit loop once found
+                    if not DoesFolderExists:
+                        print("Finder det nye dokumentnummer")
+                        HighestDocumentNumber = max((int(i.get("documentNumber", 0)) for i in response_json), default=1)
+                        DocumentNumber = HighestDocumentNumber + 1
+                        DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+                        data = {
+                            "caseId": FilarkivCaseID,
+                            "securityClassificationLevel": 0,
+                            "title": FileName,
+                            "documentNumber": DocumentNumber,
+                            "documentDate": DocumentDate,
+                            "direction": 0
+                        }
+                        response = requests.post("https://core.filarkiv.dk/api/v1/Documents", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
+                        if response.status_code in [200, 201]:
+                            Filarkiv_DocumentID = response.json().get("id")
+                            print("Anvender følgende Filarkiv_DocumentID:", Filarkiv_DocumentID)
+                        else:
+                            print("Failed to create document. Response:", response.text)
+            else:
+                print("Failed to fetch data, status code:", response.status_code)
+        except Exception as e:
+            print("Kunne ikke hente dokumentinformation:", str(e))
+        
+        if Filarkiv_DocumentID is None:
+            print("Fejl: Filarkiv_DocumentID blev ikke genereret. Afbryder processen.")
+            return
+        
+        if not DoesFolderExists:
+            extension = os.path.splitext(FilePath)[1]
+            mime_type = {
+                ".txt": "text/plain", ".pdf": "application/pdf", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+                ".gif": "image/gif", ".doc": "application/msword", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                ".xls": "application/vnd.ms-excel", ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".csv": "text/csv",
+                ".json": "application/json", ".xml": "application/xml"
+            }.get(extension, "application/octet-stream")
+            FileName += extension
+            print(f"Anvender følgende dokumentID: {Filarkiv_DocumentID}")
+            response = requests.post("https://core.filarkiv.dk/api/v1/Files", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, json={"documentId": Filarkiv_DocumentID, "fileName": FileName, "sequenceNumber": 0, "mimeType": mime_type})
+            if response.status_code in [200, 201]:
+                FileID = response.json().get('id')
+                print(f"FileID: {FileID}")
+            else:
+                print("Failed to create file metadata.", response.text)
+            
+            url = f"https://core.filarkiv.dk/api/v1/FileIO/Upload/{FileID}"
+            if not os.path.exists(FilePath):
+                print(f"Error: File not found at {FilePath}")
+            else:
+                with open(FilePath, 'rb') as file:
+                    files = [('file', (FileName, file, mime_type))]
+                    response = requests.post(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}"}, files=files)
+                    if response.status_code in [200, 201]:
+                        print("File uploaded successfully.")
+                        print(response.json())
+                    else:
+                        print(f"Failed to upload file. Status Code: {response.status_code}")
+
     # Create an empty DataFrame with the defined structure
     dt_AktIndex = pd.DataFrame(dt_AktIndex)
     
@@ -64,10 +314,10 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
     # ---- If-statement som tjekker om det er en GeoSag eller NovaSag ----
     if GeoSag == True:
         #Sagen er en geo sag 
+        dt_DocumentList['Dokumentdato'] = pd.to_datetime(dt_DocumentList['Dokumentdato'], errors='coerce')
         for index, row in dt_DocumentList.iterrows():
             # Convert items to strings unless they are explicitly integers
             Omfattet = str(row["Omfattet af ansøgningen? (Ja/Nej)"])
-            SagsID = str(Sagsnummer)  # Assuming Sagsnummer is also to be a string
             DokumentID = str(row["Dok ID"])
             
             # Handle AktID conversion
@@ -87,57 +337,15 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
             IsDocumentPDF = True
             print(f"AktID til debug: {AktID}")
 
-            # ---- fjerner uønskede tegn fra titlen og tilpasser længden ----
-            import re
-
             # Declare the necessary variables
             base_path = "Teams/tea-teamsite10506/Delte dokumenter/Aktindsigter/"
-
-            # Function to sanitize the title
-            def sanitize_title(Titel):
-                # 1. Replace double quotes with an empty string
-                Titel = Titel.replace("\"", "")
-
-                # 2. Remove special characters with regex
-                Titel = re.sub(r"[.:>#<*\?/%&{}\$!\"@+\|'=]+", "", Titel)
-
-                # 3. Remove any newline characters
-                Titel = Titel.replace("\n", "").replace("\r", "")
-
-                # 4. Trim leading and trailing whitespace
-                Titel = Titel.strip()
-
-                # 5. Remove non-alphanumeric characters except spaces and Danish letters
-                Titel = re.sub(r"[^a-zA-Z0-9ÆØÅæøå ]", "", Titel)
-
-                # 6. Replace multiple spaces with a single space
-                Titel = re.sub(r" {2,}", " ", Titel)
-
-                return Titel
 
             # Sanitize the title
             Titel = sanitize_title(Titel)
 
+            Titel = calculate_available_title_length(base_path, Overmappe, Undermappe, AktID, DokumentID, Titel)
 
-            # Calculate the dynamic part lengths
-            overmappe_length = len(Overmappe)
-            undermappe_length = len(Undermappe)
-            aktID_length = len(str(AktID))
-            dokID_length = len(str(DokumentID))
-
-            # Calculate the fixed length
-            fixed_length = len(base_path) + overmappe_length + undermappe_length + aktID_length + dokID_length + 7
-            # 7 = 3 slashes + 2 slashes + 2 dashes
-
-            # Define the maximum allowed path length
-            max_path_length = 400
-
-            # Calculate the available length for the title
-            available_title_length = max_path_length - fixed_length
-
-            # Trim the title if necessary
-            if len(Titel) > available_title_length:
-                Titel = Titel[:available_title_length]
+            print("Adjusted Title:", Titel)
 
             if (("ja" in Aktstatus.lower() or "delvis" in Aktstatus.lower()) 
                 and DokumentID != "" 
@@ -176,8 +384,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                     f"{AktID:04} - {DokumentID} - {Titel}"
                     )
 
-
-                
                 # Tjekker om Goref-fil
                 if ".goref" in FilePath:
                     url = f"https://ad.go.aarhuskommune.dk/_goapi/Documents/DocumentBytes/{DokumentID}"
@@ -593,245 +799,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                         raise nested_exception  # Re-raise the error to propagate
 
                 if ".pdf" in FilePath:
-                    print("Uploader til Filarkiv")
-                    DoesFolderExists = False  # Initialize flag
-                    IsDocumentPDF = True
-                    FileName = f"{AktID:04} - {DokumentID} - {Titel}"
-                    print(f"FilarkivCaseID: {FilarkivCaseID}")
-                    #Post document:
-                    url = f"{FilarkivURL}/Documents/CaseDocumentOverview?caseId={FilarkivCaseID}&pageIndex=1&pageSize=500"
-
-                    headers = {
-                        "Authorization": f"Bearer {Filarkiv_access_token}",
-                        "Content-Type": "application/xml"
-                    }
-                    try:
-                        # Send GET request to fetch the case document overview
-                        response = requests.get(url, headers=headers)
-                        print("FilArkiv respons:", response.status_code)
-
-                        if response.status_code == 200:
-                            # Parse JSON response
-                            response_json = response.json()
-                            
-                            # Check if the JSON content is empty
-                            if not response_json or len(response_json) == 0:
-                                print("Der findes ingen dokumenter på sagen")
-                                DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                                DocumentNumber = 1
-                                
-                                # Construct the dictionary
-                                data = {
-                                    "caseId": FilarkivCaseID,
-                                    "securityClassificationLevel": 0,
-                                    "title": FileName,
-                                    "documentNumber": DocumentNumber,
-                                    "documentDate": DocumentDate,
-                                    "direction": 0
-                                }
-
-                                # Convert to JSON string
-                                json_string = json.dumps(data)
-                                # URL and headers
-                                url = "https://core.filarkiv.dk/api/v1/Documents"
-                                headers = {
-                                    "Authorization": f"Bearer {Filarkiv_access_token}",
-                                    "Content-Type": "application/json"
-                                }
-
-                                # Send the POST request
-                                try:
-                                    response = requests.post(url, headers=headers, data=json_string)  
-                                    print("Response status code:", response.status_code)
-                                        
-                                        # Check if the request was successful
-                                    if response.status_code == 200 or response.status_code == 201: 
-                                        # Parse the JSON response
-                                        response_data = response.json()
-                                        
-                                        # Retrieve the "id" value
-                                        Filarkiv_DocumentID = response_data.get("id")
-                                        print("Anvender følgende FilarkivdokumentID: :",  Filarkiv_DocumentID)
-                                    else:
-                                        print("Failed to create document. Response:", response.text)
-
-                                except Exception as e:
-                                    print("An error occurred:", str(e))
-
-
-                            else:
-                                print("Response contains data.")
-
-                                # Iterate through each JSON object
-                                for current_item in response_json:
-                                    title = current_item.get("title", "")
-                                    if FileName in title:
-                                        print("Dokument Mappen er oprettet")
-                                        Filarkiv_DocumentID = current_item.get("id")
-                                        DoesFolderExists = True
-                                        break  # Exit the loop once a match is found
-                                    else:
-                                        DoesFolderExists = False
-
-
-                                if not DoesFolderExists:
-                                    print("Finder det nye dokumentnummer")
-                                    HighestDocumentNumber = 1
-                                    for current_item in response_json:
-                                        # Safely retrieve and convert documentNumber to an integer
-                                        current_document_number = int(current_item.get("documentNumber", 0))  # Default to 0 if not present
-
-                                        # Compare with HighestDocumentNumber
-                                        if current_document_number > HighestDocumentNumber:
-                                            HighestDocumentNumber = current_document_number  # Update the value
-
-
-                                    DocumentNumber = HighestDocumentNumber + 1
-
-                                    DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                                    
-                                    # Construct the dictionary
-                                    data = {
-                                        "caseId": FilarkivCaseID,
-                                        "securityClassificationLevel": 0,
-                                        "title": FileName,
-                                        "documentNumber": DocumentNumber,
-                                        "documentDate": DocumentDate,
-                                        "direction": 0
-                                    }
-
-                                    # Convert to JSON string
-                                    json_string = json.dumps(data)
-
-                                    # URL and headers
-                                    url = "https://core.filarkiv.dk/api/v1/Documents"
-                                    headers = {
-                                        "Authorization": f"Bearer {Filarkiv_access_token}",
-                                        "Content-Type": "application/json"
-                                    }
-
-                                    # Send the POST request
-                                    try:
-                                        response = requests.post(url, headers=headers, data=json_string)  
-                                        print("Response status code:", response.status_code)
-                                            
-                                            # Check if the request was successful
-                                        if response.status_code == 200 or response.status_code == 201: 
-                                            # Parse the JSON response
-                                            response_data = response.json()
-                                            
-                                            # Retrieve the "id" value
-                                            Filarkiv_DocumentID = response_data.get("id")
-                                            print("Anvender følgende  Filarkiv_DocumentID: :",  Filarkiv_DocumentID)
-                                        else:
-                                            print("Failed to create document. Response:", response.text)
-
-                                    except Exception as e:
-                                        print("An error occurred:", str(e))
-
-                        else:
-                            print("Failed to fetch data, status code:", response.status_code)
-
-                    except Exception as e:
-                        print("Kunne ikke hente dokumentinformation:", str(e))
-
-
-                    if not DoesFolderExists:
-                        #Create file meta data 
-                        # Dictionary of extensions and their corresponding MIME types
-                        extensions = {
-                            ".txt": "text/plain",
-                            ".pdf": "application/pdf",
-                            ".jpg": "image/jpeg",
-                            ".jpeg": "image/jpeg",
-                            ".png": "image/png",
-                            ".gif": "image/gif",
-                            ".doc": "application/msword",
-                            ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                            ".xls": "application/vnd.ms-excel",
-                            ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            ".csv": "text/csv",
-                            ".json": "application/json",
-                            ".xml": "application/xml",
-                            # Add more file types and MIME types as needed
-                        }
-
-                        # Default MIME type
-                        mime_type = "application/octet-stream"
-                        file_type = ""
-
-                        # Get the file extension
-                        extension = os.path.splitext(FilePath)[1]
-
-                        if extension:
-                            file_type = extension  # Assign the file extension to file_type variable
-                            mime_type = extensions.get(extension, mime_type)  # Get MIME type or use default
-
-                        # Output the results
-                        print(f"MIME Type: {mime_type}")
-                        print(f"File Type: {file_type}")
-                        print(f"Filarkiv_DocumentID: {Filarkiv_DocumentID}")
-                        FileName = FileName + file_type
-                        
-                        payload = {
-                            "documentId":  Filarkiv_DocumentID,
-                            "fileName": FileName,
-                            "sequenceNumber": 0,
-                            "mimeType": mime_type
-                        }
-
-                        # API endpoint URL
-                        url = "https://core.filarkiv.dk/api/v1/Files"
-
-                        # Headers
-                        headers = {
-                            "Authorization": f"Bearer {Filarkiv_access_token}",
-                            "Content-Type": "application/json"
-                        }
-
-                        # Make the API call
-                        response = requests.post(url, headers=headers, json=payload)
-
-                        # Check if the request was successful
-                        if response.status_code == 200 or response.status_code == 201:
-                            # Extract the "id" from the response
-                            response_data = response.json()
-                            if "id" in response_data:
-                                FileID = response_data['id']
-                                print(f"FileID: {FileID}")
-                            else:
-                                print("ID not found in response.")
-                        else:
-                            print(f"Failed to make API call. Status Code: {response.status_code}")
-                            print(f"Response: {response.text}")
-
-
-                        #Uploader filen til Filarkiv
-                        url = f"https://core.filarkiv.dk/api/v1/FileIO/Upload/{FileID}"
-
-                        if not os.path.exists(FilePath):
-                            print(f"Error: File not found at {FilePath}")
-                        else:
-                            # Prepare the file for upload
-                            with open(FilePath, 'rb') as file:
-                                files = [
-                                    ('file', (FileName, file, mime_type))
-                                ]
-                                headers = {
-                                    "Authorization": f"Bearer {Filarkiv_access_token}",
-                                }
-                                payload = {}
-                                # Send the POST request
-                                try:
-                                    response = requests.post(url, headers=headers, data=payload, files=files)
-                                    # Check the response
-                                    if response.status_code in [200, 201]:
-                                        print("File uploaded successfully.")
-                                        print(response.json())  # Print response as JSON if applicable
-                                    else:
-                                        print(f"Failed to upload file. Status Code: {response.status_code}")
-                                except Exception as e:
-                                    print(f"An error occurred: {e}")
+                    upload_to_filarkiv(FilarkivURL,FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID,Titel, file_path)
 
                 
                 else: # Filtypen er ikke understøttet, uploader til Sharepoint
@@ -841,112 +809,17 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
 
                     if os.path.getsize(FilePath) > 262143999:
                         print("Filen er større end 262 mb")
-                        # Input variables
-                        sharepoint_folder_path = f"/Aktindsigter/{Overmappe}/{Undermappe}"
-
-                        # Normalize the site URL
-                        if site_url.startswith("https://"):
-                            site_url = site_url[8:]
-
-                        site_url = site_url.replace(".sharepoint.com", ".sharepoint.com:")
-
-                        scopes = ["https://graph.microsoft.com/.default"]
-
-                        # Create the MSAL app for token generation
-                        msal_app = PublicClientApplication(
-                            client_id=SharePointAppID,
-                            authority=f"https://login.microsoftonline.com/{SharePointTenant}"
+                        upload_file_to_sharepoint(
+                            site_url=SharePointURL,
+                            overmappe=Overmappe,
+                            undermappe=Undermappe,
+                            file_path=file_path,
+                            sharepoint_app_id=SharePointAppID,
+                            sharepoint_tenant=SharePointTenant,
+                            robot_username=RobotUserName,
+                            robot_password=RobotPassword
                         )
 
-                        print("Getting access token...")
-                        token_response = msal_app.acquire_token_by_username_password(
-                            username=RobotUserName,
-                            password=RobotPassword,
-                            scopes=scopes
-                        )
-
-                        if "access_token" not in token_response:
-                            raise Exception(f"Failed to acquire token: {token_response}")
-
-                        access_token = token_response["access_token"]
-                        headers = {"Authorization": f"Bearer {access_token}"}
-
-                        # Get the site ID
-                        site_request_url = f"https://graph.microsoft.com/v1.0/sites/{site_url}"
-                        print(f"Requesting site information from {site_request_url}...")
-                        site_response = requests.get(site_request_url, headers=headers)
-                        site_json = site_response.json()
-
-                        if "id" not in site_json:
-                            raise Exception("Key 'id' not found in site response")
-
-                        site_id = site_json["id"]
-
-
-                        # Get the drive ID
-                        drive_request_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drive"
-                        drive_response = requests.get(drive_request_url, headers=headers)
-                        drive_json = drive_response.json()
-
-                        if "id" not in drive_json:
-                            raise Exception("Key 'id' not found in drive response")
-
-                        drive_id = drive_json["id"]
-
-                        # Create upload session
-                        upload_session_request_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/root:{sharepoint_folder_path}/{os.path.basename(FilePath)}:/createUploadSession"
-                        print(f"Creating upload session at {upload_session_request_url}...")
-                        upload_session_body = {
-                            "@microsoft.graph.conflictBehavior": "replace",
-                            "name": os.path.basename(FilePath)
-                        }
-                        upload_session_response = requests.post(
-                            upload_session_request_url,
-                            headers=headers,
-                            json=upload_session_body
-                        )
-
-                        if not upload_session_response.ok:
-                            raise Exception(f"Failed to create upload session: {upload_session_response.text}")
-
-                        upload_session_json = upload_session_response.json()
-
-                        if "uploadUrl" not in upload_session_json:
-                            raise Exception("Key 'uploadUrl' not found in upload session response")
-
-                        upload_url = upload_session_json["uploadUrl"]
-                        print(f"Upload URL: {upload_url}")
-
-                        # Upload the file in chunks
-                        with open(FilePath, "rb") as file_stream:
-                            total_length = os.path.getsize(FilePath)
-                            max_slice_size = 320 * 16384
-                            bytes_remaining = total_length
-                            slice_start = 0
-
-                            while bytes_remaining > 0:
-                                slice_size = min(max_slice_size, bytes_remaining)
-                                file_stream.seek(slice_start)
-                                slice_data = file_stream.read(slice_size)
-
-                                headers = {
-                                    "Content-Range": f"bytes {slice_start}-{slice_start + slice_size - 1}/{total_length}",
-                                    "Content-Type": "application/octet-stream"
-                                }
-
-                                print(f"Uploading bytes {slice_start}-{slice_start + slice_size - 1} of {total_length}...")
-                                slice_response = requests.put(upload_url, headers=headers, data=slice_data)
-
-                                if not slice_response.ok:
-                                    raise Exception(f"Slice upload failed: {slice_response.text}")
-
-                                bytes_remaining -= slice_size
-                                slice_start += slice_size
-                                print(f"Uploaded {slice_start} bytes of {total_length} bytes")
-
-                        print("Upload complete")
-                    
-             
                     else:
                         print("Filen er mindre end 250 MB")
 
@@ -1024,110 +897,16 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                         except Exception as ex:
                             print(f"Error: {ex}")
                             print("Filen kunne ikke overføres, prøver chunk upload")
-                            
-                            sharepoint_folder_path = f"/Aktindsigter/{Overmappe}/{Undermappe}"
-
-                            # Normalize the site URL
-                            if site_url.startswith("https://"):
-                                site_url = site_url[8:]
-
-                            site_url = site_url.replace(".sharepoint.com", ".sharepoint.com:")
-
-                            scopes = ["https://graph.microsoft.com/.default"]
-
-                            # Create the MSAL app for token generation
-                            msal_app = PublicClientApplication(
-                                client_id=SharePointAppID,
-                                authority=f"https://login.microsoftonline.com/{SharePointTenant}"
+                            upload_file_to_sharepoint(
+                                site_url=SharePointURL,
+                                overmappe=Overmappe,
+                                undermappe=Undermappe,
+                                file_path=file_path,
+                                sharepoint_app_id=SharePointAppID,
+                                sharepoint_tenant=SharePointTenant,
+                                robot_username=RobotUserName,
+                                robot_password=RobotPassword
                             )
-
-                            print("Getting access token...")
-                            token_response = msal_app.acquire_token_by_username_password(
-                                username=RobotUserName,
-                                password=RobotPassword,
-                                scopes=scopes
-                            )
-
-                            if "access_token" not in token_response:
-                                raise Exception(f"Failed to acquire token: {token_response}")
-
-                            access_token = token_response["access_token"]
-                            headers = {"Authorization": f"Bearer {access_token}"}
-
-                            # Get the site ID
-                            site_request_url = f"https://graph.microsoft.com/v1.0/sites/{site_url}"
-                            site_response = requests.get(site_request_url, headers=headers)
-                            site_json = site_response.json()
-
-                            if "id" not in site_json:
-                                raise Exception("Key 'id' not found in site response")
-
-                            site_id = site_json["id"]
-
-
-                            # Get the drive ID
-                            drive_request_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drive"
-                            drive_response = requests.get(drive_request_url, headers=headers)
-                            drive_json = drive_response.json()
-
-                            if "id" not in drive_json:
-                                raise Exception("Key 'id' not found in drive response")
-
-                            drive_id = drive_json["id"]
-                            print(f"Drive ID: {drive_id}")
-
-                            # Create upload session
-                            upload_session_request_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/root:{sharepoint_folder_path}/{os.path.basename(FilePath)}:/createUploadSession"
-                            print(f"Creating upload session at {upload_session_request_url}...")
-                            upload_session_body = {
-                                "@microsoft.graph.conflictBehavior": "replace",
-                                "name": os.path.basename(FilePath)
-                            }
-                            upload_session_response = requests.post(
-                                upload_session_request_url,
-                                headers=headers,
-                                json=upload_session_body
-                            )
-
-                            if not upload_session_response.ok:
-                                raise Exception(f"Failed to create upload session: {upload_session_response.text}")
-
-                            upload_session_json = upload_session_response.json()
-
-                            if "uploadUrl" not in upload_session_json:
-                                raise Exception("Key 'uploadUrl' not found in upload session response")
-
-                            upload_url = upload_session_json["uploadUrl"]
-                            print(f"Upload URL: {upload_url}")
-
-                            # Upload the file in chunks
-                            with open(FilePath, "rb") as file_stream:
-                                total_length = os.path.getsize(FilePath)
-                                max_slice_size = 320 * 16384
-                                bytes_remaining = total_length
-                                slice_start = 0
-
-                                while bytes_remaining > 0:
-                                    slice_size = min(max_slice_size, bytes_remaining)
-                                    file_stream.seek(slice_start)
-                                    slice_data = file_stream.read(slice_size)
-
-                                    headers = {
-                                        "Content-Range": f"bytes {slice_start}-{slice_start + slice_size - 1}/{total_length}",
-                                        "Content-Type": "application/octet-stream"
-                                    }
-
-                                    print(f"Uploading bytes {slice_start}-{slice_start + slice_size - 1} of {total_length}...")
-                                    slice_response = requests.put(upload_url, headers=headers, data=slice_data)
-
-                                    if not slice_response.ok:
-                                        raise Exception(f"Slice upload failed: {slice_response.text}")
-
-                                    bytes_remaining -= slice_size
-                                    slice_start += slice_size
-                                    print(f"Uploaded {slice_start} bytes of {total_length} bytes")
-
-                            print("Upload complete")
                 
                 Titel = FilePath.split("\\Downloads\\")[1]
 
@@ -1270,9 +1049,477 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
             except Exception as e:
                 print(f"Error deleting {file_path}: {e}")
 
+    #Det er en nova sag
     else:
-        print("Det er en NovaSag")
+        #Det er en Nova sag
+        print("Det er en Nova sag")
+        for index, row in dt_DocumentList.iterrows():
+            # Convert items to strings unless they are explicitly integers
+            Omfattet = str(row["Omfattet af ansøgningen? (Ja/Nej)"])
+            DokumentID = str(row["Dok ID"])
+            
+            # Handle AktID conversion
+            AktID = row['Akt ID']
+            if isinstance(AktID, str):  
+                AktID = int(AktID.replace('.', ''))
+            elif isinstance(AktID, int):  
+                AktID = AktID
 
+            Titel = str(row["Dokumenttitel"])
+            BilagTilDok = str(row["Bilag til Dok ID"])
+            DokBilag = str(row["Bilag"])
+            Dokumentkategori = str(row["Dokumentkategori"])
+            Aktstatus = str(row["Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)"])
+            Begrundelse = str(row["Begrundelse hvis nej eller delvis"])
+            #Skal slettes: 
+                # Check if it's a Timestamp and convert it correctly
+            Dokumentdato =row['Dokumentdato']
+            if isinstance(Dokumentdato, pd.Timestamp):
+                Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
+            else:
+                Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
+            #Dokumentdato = datetime.strptime(row["Dokumentdato"], "%d-%m-%Y").strftime("%d-%m-%Y")
+            IsDocumentPDF = True
+            print(Dokumentdato)
+            print(f"AktID til debug: {AktID}")
+
+            # Declare the necessary variables
+            base_path = "Teams/tea-teamsite10506/Delte dokumenter/Aktindsigter/"
+
+            # Sanitize the title
+            Titel = sanitize_title(Titel)
+
+            Titel = calculate_available_title_length(base_path, Overmappe, Undermappe, AktID, DokumentID, Titel)
+
+            print("Adjusted Title:", Titel)
+
+            if (("ja" in Aktstatus.lower() or "delvis" in Aktstatus.lower()) 
+                and DokumentID != "" 
+                and "ja" in Omfattet.lower()):
+                
+                print("Henter dokument information")
+                print(DokumentID)
+                TransactionID = str(uuid.uuid4())
+                url = f"{KMDNovaURL}/Document/GetList?api-version=2.0-Case"
+
+                headers = {
+                    "Authorization": f"Bearer {KMD_access_token}",
+                    "Content-Type": "application/json"
+                }
+
+                payload = {
+                    "common": {
+                        "transactionId": TransactionID,
+                        #"uuid": DokumentID ## skal hente dokument id og ikke dokumentnr, find ud af hvornår den skal hentes.
+                    },
+                    "paging": {
+                        "startRow": 1,
+                        "numberOfRows": 100
+                    },
+                    "documentNumber": DokumentID,
+                    "caseNumber": Sagsnummer,
+                    "getOutput": {
+                        "documentDate": True,
+                        "title": True,
+                        "fileExtension": True
+                        }
+                    }
+
+                try:
+                    response = requests.put(url, headers=headers, json=payload)
+                    if response.status_code == 200:
+                        print(response.status_code)
+                    else:
+                        print("Failed to fetch Sagstitel from NOVA. Status Code:", response.status_code)
+                except Exception as e:
+                    print("Failed to fetch Sagstitel (Nova):", str(e))
+
+                DokumentType = response.json()["documents"][0]["fileExtension"]
+                FileSize = response.json()["documents"][0]["fileSize"]
+                DocumentUuid = response.json()["documents"][0]["documentUuid"]
+                print(DokumentType)
+                
+                #Downloader file
+                
+                TransactionID = str(uuid.uuid4())
+                url = f"{KMDNovaURL}/Document/GetFile?api-version=2.0-Case"
+                file_path = os.path.join("C:\\Users", os.getlogin(), "Downloads", f"{DokumentID}.{DokumentType}")
+
+                headers = {
+                    "Authorization": f"Bearer {KMD_access_token}",
+                    "Content-Type": "application/json"
+                }
+
+                payload = {
+                    "common": {
+                        "transactionId": TransactionID,
+                        "uuid": DocumentUuid
+                    }
+                }
+
+                try:
+                    # Send request to API (Use GET if API expects it; otherwise, use POST)
+                    response = requests.put(url, headers=headers, json=payload)
+
+                    if response.status_code == 200:
+                        # Save the entire file directly without chunking
+                        with open(file_path, "wb") as file:
+                            file.write(response.content)
+                        
+                        print(f"File successfully saved at: {file_path}")
+                    else:
+                        print("Failed to fetch file from NOVA. Status Code:", response.status_code)
+                        print("Response:", response.text)  # Print error message from API
+
+                except Exception as e:
+                    print("Failed to fetch file from NOVA:", str(e))
+                
+                
+                CanDocumentBeConverted = False
+                conversionPossible = False
+
+                # List of supported file extensions
+                supported_extensions = [
+                    "bmp", "csv", "doc", "docm", "dwf", "dwg", "dxf", "emf", "eml",
+                    "epub", "fodt", "gif", "htm", "html", "ico", "jpeg", "jpg", "msg",
+                    "odp", "ods", "odt", "pdf", "png", "pos", "pps", "ppt", "pptx", "psd",
+                    "rtf", "tif", "tiff", "tsv", "txt", "vdw", "vdx", "vsd", "vss", "vst",
+                    "vsx", "vtx", "webp", "wmf", "xls", "xlsm", "xlsx", "xltx", "heic","docx"
+                ]
+                # Check if the input file extension exists in the list
+                if DokumentType.lower() in supported_extensions:
+                    CanDocumentBeConverted = True
+                else:
+                    CanDocumentBeConverted = False
+
+                if CanDocumentBeConverted:
+                    print("Filen skal ikke konverteres")
+
+                else:
+                    print("Filen skal konverteres - attempting cloudconvert")
+    
+                    # Create the API URL
+                    url = f"https://api.cloudconvert.com/v2/convert/formats?filter[input_format]={DokumentType}&filter[output_format]=pdf&filter[operation]=convert"
+
+                    # Add the authorization header
+                    headers = {
+                        "Authorization": CloudConvertAPI
+                    }
+
+                    # Initialize conversionPossible
+                    conversionPossible = False
+
+                    # Execute the request
+                    response = requests.get(url, headers=headers)
+
+                    # Process the response
+                    if response.status_code == 200 and response.text.strip():
+                        # Parse the response content to a dictionary
+                        jsonResponse = json.loads(response.text)
+                        
+                        # Check if the data array contains any elements
+                        data = jsonResponse.get("data", [])
+                        if data:
+                            # Iterate through each conversion option
+                            for item in data:
+                                operation = item.get("operation")
+                                inputFormatCheck = item.get("input_format")
+                                outputFormat = item.get("output_format")
+                                
+                                # Check if it matches the desired conversion
+                                if operation == "convert" and inputFormatCheck == DokumentType and outputFormat == "pdf":
+                                    conversionPossible = True
+                                    break
+                    
+                    if not conversionPossible:
+                        print(f"Skipping cause CloudConvert doesn't support: {DokumentType}->PDF")
+                        ByteResult = bytes()                  
+                        #Skal der sættes en bolean value?
+                    else:
+                        print("Conversion is supported!")
+                                                
+                        # Step 1: Create the job with an import/upload task
+                        create_job_url = "https://api.cloudconvert.com/v2/jobs"
+                        create_job_headers = {
+                            "Authorization": CloudConvertAPI,
+                            "Content-Type": "application/json",
+                        }
+                        json_body = {
+                            "tasks": {
+                                "import_1": {
+                                    "operation": "import/upload"
+                                },
+                            },
+                            "tag": f"Aktbob-{DokumentID}-{time.strftime('%H-%M-%S')}",
+                        }
+                        # Send the request to create the job
+                        response = requests.post(create_job_url, headers=headers, json=json_body)
+                        job_response_data = response.json()
+
+
+                        # Extract upload URL and parameters
+                        tasks = job_response_data.get("data", {}).get("tasks", [])
+                        if not tasks:
+                            print("Error: No tasks found in job creation response.")
+                            exit(1)
+
+                        # Find the first task containing result.form
+                        upload_url = None
+                        upload_parameters = None
+                        upload_task_id = None
+
+                        for task in tasks:
+                            if task.get("operation") == "import/upload" and "result" in task:
+                                form = task["result"].get("form")
+                                if form:
+                                    upload_url = form.get("url")
+                                    upload_parameters = form.get("parameters", {})  # Ensure it's a dictionary
+                                    upload_task_id = task["id"]
+                                    break  # Found the required task
+
+                        # Validate extracted data
+                        if not upload_url or not upload_parameters:
+                            print("Error: Could not retrieve upload URL or parameters.")
+                            exit(1)
+
+                        # ------------------- STEP 2: UPLOAD FILE -------------------
+
+                        # Convert upload_parameters dictionary to key-value pairs
+                        upload_data = {key: value for key, value in upload_parameters.items()} 
+
+                        # Perform file upload to AWS S3 (CloudConvert Storage)
+                        with open(file_path, "rb") as file:
+                            upload_files = {"file": file}
+                            upload_response = requests.post(upload_url, data=upload_data, files=upload_files)
+
+                        # Check upload response
+                        if upload_response.status_code == 201:  # AWS S3 responds with 201 on success
+                            print("File uploaded successfully!")
+                        else:
+                            print(f"Upload failed: {upload_response.status_code} - {upload_response.text}")
+                            exit(1)
+
+                        # Remove the original file after upload
+                        os.remove(file_path)
+
+                        # Step 3: Create convert and export tasks
+                        convert_export_body = {
+                            "tasks": {
+                                "convert_1": {
+                                    "operation": "convert",
+                                    "input": [upload_task_id],
+                                    "input_format": DokumentType,
+                                    "output_format": "pdf",
+                                },
+                                "export_1": {
+                                    "operation": "export/url",
+                                    "input": ["convert_1"],
+                                }
+                            },
+                            "tag": f"Aktbob-{DokumentID}-{time.strftime('%H-%M-%S')}",
+                        }
+                        convert_export_response = requests.post(
+                            create_job_url, headers=create_job_headers, json=convert_export_body
+                        )
+                        convert_export_response_data = convert_export_response.json()
+
+
+                        if "INVALID_CONVERSION_TYPE" not in convert_export_response.text:
+                            export_task_id = convert_export_response_data["data"]["tasks"][1]["id"]
+
+                            # Step 4: Check export task status
+                            while True:
+                                status_check_url = f"https://api.cloudconvert.com/v2/tasks/{export_task_id}"
+                                status_check_response = requests.get(status_check_url, headers=create_job_headers)
+                                status_check_data = status_check_response.json()
+
+                                task_status = status_check_data["data"]["status"]
+
+                                if task_status == "finished":
+                                    # Extract the download URL
+                                    download_url = status_check_data["data"]["result"]["files"][0]["url"]
+
+                                    # Download the file
+                                    file_path = os.path.join("C:\\Users", os.getlogin(), "Downloads", f"{DokumentID}.pdf")
+                                    #file_path = "Output.pdf"
+                                    with requests.get(download_url, stream=True) as r:
+                                        with open(file_path, "wb") as file:
+                                            for chunk in r.iter_content(chunk_size=8192):
+                                                file.write(chunk)
+
+                                    print("File downloaded successfully.")
+
+                                    # Read the file into ByteResult
+                                    with open(file_path, "rb") as file:
+                                        ByteResult = file.read()
+
+                                    break
+                                elif task_status not in ["waiting", "processing"]:
+                                    print("An error occurred:", status_check_response.text)
+                                    ByteResult = b""
+                                    break
+
+                                time.sleep(5)  # Wait for 5 seconds before checking again
+
+
+                if conversionPossible or CanDocumentBeConverted:
+                    
+                    upload_to_filarkiv(FilarkivURL,FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID,Titel, file_path)
+
+
+                else: 
+                    print("Could not be converted or uploaded - uploading directly to SharePoint")
+                    IsDocumentPDF = False 
+                    upload_file_to_sharepoint(
+                        site_url=SharePointURL,
+                        overmappe=Overmappe,
+                        undermappe=Undermappe,
+                        file_path=file_path,
+                        sharepoint_app_id=SharePointAppID,
+                        sharepoint_tenant=SharePointTenant,
+                        robot_username=RobotUserName,
+                        robot_password=RobotPassword
+                    )
+                Titel = f"{AktID:04} - {DokumentID} - {Titel}"
+            
+            else:
+                print("Dokumentet skal ikke med i ansøgningen")
+                Titel = f"{AktID:04} - {DokumentID} - {Titel}"
+
+    
+
+            # Parse and prepare data for the row
+            row_to_add = {
+                "Akt ID": int(AktID),
+                "Filnavn": Titel,
+                "Dokumentkategori": Dokumentkategori,
+                "Dokumentdato": datetime.strptime(Dokumentdato, "%d-%m-%Y"),
+                "Dok ID": DokumentID,
+                "Bilag til Dok ID": BilagTilDok,
+                "Bilag": DokBilag,
+                "Omfattet af aktindsigt?": Omfattet,
+                "Gives der aktindsigt?": Aktstatus,
+                "Begrundelse hvis Nej/Delvis": Begrundelse,
+                "IsDocumentPDF": IsDocumentPDF,
+            }
+
+            # Append the row to the DataFrame
+            dt_AktIndex = pd.concat([dt_AktIndex, pd.DataFrame([row_to_add])], ignore_index=True)
+
+
+        # Sort the DataFrame by the column "Akt ID" in ascending order
+        dt_AktIndex = dt_AktIndex.sort_values(by="Akt ID", ascending=True)
+
+        # Reset the index (optional, to clean up the index after sorting)
+        dt_AktIndex = dt_AktIndex.reset_index(drop=True)
+
+
+        # Initialize an empty list
+        ListOfNonPDFDocs = []
+
+        # Iterate through the DataFrame rows
+        for _, row in dt_AktIndex.iterrows():  # Assuming dt_AktIndex is the DataFrame
+            if row["IsDocumentPDF"] is not True:  # Check if the row's "IsDocumentPDF" is False
+                # Add the "Filnavn" to the list if "IsDocumentPDF" is False
+                ListOfNonPDFDocs.append(row["Filnavn"])
+
+        # Check if ListOfNonPDFDocs is empty or not
+        if not ListOfNonPDFDocs:  # This checks if the list is None or has no elements
+            print("Listen er tom")
+        else:
+            # Initialize FinalString
+            FinalString = ""
+
+            # Iterate through the list and format the rows
+            for currentText in ListOfNonPDFDocs:
+                FormattedRow = currentText + "<br><br>"  # Format each item
+                FinalString += FormattedRow  # Concatenate to FinalString
+
+            #Henter delingslink til Sharepoint
+            credentials = UserCredential(RobotUserName, RobotPassword)
+            ctx = ClientContext(SharePointURL).with_credentials(credentials)
+
+            # Define the server-relative URL of the folder or file
+            folder_or_file_url = f"/Teams/tea-teamsite10506/Delte Dokumenter/Aktindsigter/{Overmappe}/{Undermappe}"  
+            target_item = ctx.web.get_folder_by_server_relative_url(folder_or_file_url)  # Use get_file_by_server_relative_url for files
+
+            try:
+                # Share a folder or file link (Organization-only access with View permissions)
+                result = target_item.share_link(SharingLinkKind.OrganizationView).execute_query()
+                print("Sharing link created successfully!")
+                link_url = result.value.sharingLinkInfo.Url
+
+                # Verify the sharing link type
+                result = Web.get_sharing_link_kind(ctx, link_url).execute_query()
+                sharing_kind = result.value
+                sharing_messages = {
+                    2: "Organization view access link",
+                    3: "Organization edit access link"
+                }
+                print(sharing_messages.get(sharing_kind, "Unknown sharing link kind"))
+
+                # Optional: Unshare the link
+                # Uncomment this if you want to remove the sharing link later
+                # target_item.unshare_link(SharingLinkKind.OrganizationView).execute_query()
+                # print("Sharing link unshared successfully!")
+
+            except Exception as e:
+                print(f"Error: {e}")
+
+                # ---- Send mail til sagsansvarlig ----
+        
+            # Define email details
+            sender = "Aktbob<rpamtm001@aarhus.dk>" # Replace with actual sender
+            subject = f"Fil kan ikke konverteres til PDF - {Sagsnummer}"
+            body = (
+                "Kære Sagsbehandler,<br><br>"
+                "Følgende dokumenter kunne ikke konverteres til PDF:<br><br>"
+                f"{FinalString}"
+                "Dokumenterne er blevet uploaded til sharepoint mappen: "
+                f'<a href="{link_url}">SharePoint</a><br><br>'
+                "Kontroller venligst manuelt dokumenterne.<br><br>"
+                "Med venlig hilsen<br><br>"
+                "Teknik & Miljø<br><br>"
+                "Digitalisering<br><br>"
+                "Aarhus Kommune"
+            )
+            smtp_server = "smtp.adm.aarhuskommune.dk"   # Replace with your SMTP server
+            smtp_port = 25                    # Replace with your SMTP port
+
+            # Call the send_email function
+            send_email(
+                receiver=UdviklerMailAktbob,
+                sender=sender,
+                subject=subject,
+                body=body,
+                smtp_server=smtp_server,
+                smtp_port=smtp_port,
+                html_body=True
+            )
+
+        #Fjerner IsdocumentPDF fra datatabellen
+        dt_AktIndex = dt_AktIndex.drop('IsDocumentPDF',axis=1)
+    
+        # Base path (replace with your actual path)
+        base_path = os.path.join("C:\\", "Users", os.getlogin(), "Downloads")
+
+        # Iterate through the rows of the DataFrame and delete the files
+        for _, row in dt_AktIndex.iterrows():
+            file_name = row['Filnavn']
+            file_path = os.path.join(base_path, file_name)
+
+            try:
+                if os.path.exists(file_path):
+                    if os.path.isfile(file_path):  # Check if it's a file
+                        os.remove(file_path)
+                        print(f"Deleted file: {file_path}")
+                    elif os.path.isdir(file_path):  # Check if it's a directory
+                        shutil.rmtree(file_path, ignore_errors=True)
+                        print(f"Deleted directory: {file_path}")
+                else:
+                    print(f"File not found: {file_path}")
+            except Exception as e:
+                print(f"Error deleting {file_path}: {e}")
 
 
 

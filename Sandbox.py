@@ -32,6 +32,9 @@ GoUsername = GOAPILIVECRED.username
 GoPassword = GOAPILIVECRED.password
 KMDNovaURL = orchestrator_connection.get_constant("KMDNovaURL").value
 FilarkivURL = orchestrator_connection.get_constant("FilarkivURL").value
+AktbobAPI = orchestrator_connection.get_credential("AktbobAPIKey")
+AktbobAPIKey = AktbobAPI.password
+
 
 # ---- Henter access tokens ----
 KMD_access_token = GetKMDToken(orchestrator_connection)
@@ -51,18 +54,28 @@ def GO_Session(GoUsername, GoPassword):
 go_session = GO_Session(GoUsername, GoPassword)
 
 
-# ---- Henter kø-elementer ----
-Sagsnummer = "GEO-2024-043144"
+#---- Henter kø-elementer ----
+#GO
+# Sagsnummer = "GEO-2024-043144"
+# MailModtager = "Gujc@aarhus.dk"
+# DeskProID = "2088"
+# DeskProTitel = "Aktindsigt i aktindsigter"
+# PodioID = "2931863091"
+# Overmappe = "2088 - Aktindsigt i aktindsigter"
+# Undermappe = "GEO-2024-043144 - GustavTestAktIndsigt2"
+# GeoSag = True
+# NovaSag = False
+
+# #Nova
+Sagsnummer = "S2021-456011"
 MailModtager = "Gujc@aarhus.dk"
 DeskProID = "2088"
 DeskProTitel = "Aktindsigt i aktindsigter"
 PodioID = "2931863091"
 Overmappe = "2088 - Aktindsigt i aktindsigter"
-Undermappe = "GEO-2024-043144 - GustavTestAktIndsigt2"
-GeoSag = True
-NovaSag = False
-
-
+Undermappe = "S2021-456011 - TEST - Ejendom uden ejendomsnr"
+GeoSag = False
+NovaSag = True
 
 # ---- Run "GetDokumentlist" ----
 Arguments = {
@@ -219,3 +232,30 @@ print(Test)
 
 
 # ---- Run "SendFilarkivCaseId&PodioIDToPodio"
+# Define the API endpoint
+url = "https://aktbob-external-api.grayglacier-2d22de15.northeurope.azurecontainerapps.io/Api/CheckOCRScreeningStatus/Case"
+
+# Define headers
+headers = {
+    "ApiKey": AktbobAPIKey,  # Ensure ApiKey is defined
+    "Content-Type": "application/json"
+}
+
+# Define JSON body
+json_body = {
+    "filArkivCaseId": FilarkivCaseID,  # Ensure FilarkivCaseID is defined
+    "podioItemId": PodioID  # Ensure PodioID is defined
+}
+
+# Make the POST request
+response = requests.post(url, headers=headers, json=json_body)
+
+# Handle response
+if response.status_code == 200:
+    print("Response Status:", response.status_code)
+    print("Response:", response.text)
+else:
+    print("Error Status:", response.status_code)
+    print("Error Response:", response.text)
+
+
