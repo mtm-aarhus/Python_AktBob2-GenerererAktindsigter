@@ -131,9 +131,6 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF):
     downloads_path = os.path.join("C:\\Users", os.getlogin(), "Downloads")
     file_path = os.path.join(downloads_path, AktlisteFileName)
 
-
-
-
     # Upload Excel to Sharepoint
     upload_file_to_sharepoint(
         site_url=SharePointURL,
@@ -146,75 +143,7 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF):
         robot_password=RobotPassword
     )
 
-
-    #Sorting the data 
-    dt_PdfAktliste = dt_AktIndex.sort_values(by=dt_AktIndex.columns[0], ascending=True, ignore_index=True)
-
-    #Opretter en tom datatable
-    dt_AktlisteTilPDF = {
-    "Akt ID": pd.Series(dtype="int32"),
-    "Filnavn": pd.Series(dtype="string"),
-    "Dokumentkategori": pd.Series(dtype="string"),
-    "Dokumentdato": pd.Series(dtype="datetime64[ns]"),
-    "Dok ID": pd.Series(dtype="string"),
-    "Bilag til Dok ID": pd.Series(dtype="string"),
-    "Bilag": pd.Series(dtype="string"),
-    "Omfattet af aktindsigt?": pd.Series(dtype="string"),
-    "Gives der aktindsigt?": pd.Series(dtype="string"),
-    "Begrundelse hvis Nej/Delvis": pd.Series(dtype="string"),
-    }
-
-    # # Create an empty DataFrame with the defined structure
-    # dt_AktlisteTilPDF = pd.DataFrame(dt_AktlisteTilPDF)
-
-    # for index, row in dt_PdfAktliste.iterrows():
-    # # Convert items to strings unless they are explicitly integers
-    #     Dokumentdato = row["Dokumentdato"]
-
-    #     if isinstance(Dokumentdato, pd.Timestamp):
-    #         # If Dokumentdato is a Pandas Timestamp
-    #         Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
-    #     elif isinstance(Dokumentdato, str):
-    #         # If Dokumentdato is already a string
-    #         Dokumentdato = datetime.strptime(Dokumentdato, "%d-%m-%Y").strftime("%d-%m-%Y")
-    #     else:
-    #         # If Dokumentdato is something else (e.g., NaT or None), set it to None or a default value
-    #         Dokumentdato = None
-    #     # Handle AktID conversion
-    #     AktID = row['Akt ID']
-    #     if isinstance(AktID, str):  
-    #         AktID = int(AktID.replace('.', ''))
-    #     elif isinstance(AktID, int):  
-    #         AktID = AktID
-    
-    #     Dokumentkategori = str(row["Dokumentkategori"])
-    #     Filnavn = str(row["Filnavn"])
-    #     DokumentID = str(row["Dok ID"])
-    #     BilagTilDok = str(row["Bilag til Dok ID"])
-    #     DokBilag = str(row["Bilag"])
-    #     Omfattet = str(row["Omfattet af aktindsigt?"])
-    #     Aktstatus = str(row["Gives der aktindsigt?"])
-    #     Begrundelse = str(row["Begrundelse hvis Nej/Delvis"])
-
-    #     # Parse and prepare data for the row
-    #     row_to_add = {
-    #         "Akt ID": int(AktID),
-    #         "Filnavn": Filnavn,
-    #         "Dokumentkategori": Dokumentkategori,
-    #         "Dokumentdato": datetime.strptime(Dokumentdato, "%d-%m-%Y"),
-    #         "Dok ID": DokumentID,
-    #         "Bilag til Dok ID": BilagTilDok,
-    #         "Bilag": DokBilag,
-    #         "Omfattet af aktindsigt?": Omfattet,
-    #         "Gives der aktindsigt?": Aktstatus,
-    #         "Begrundelse hvis Nej/Delvis": Begrundelse,
-    #     }
-
-    #     # Append the row to the DataFrame
-    #     dt_AktlisteTilPDF = pd.concat([dt_AktlisteTilPDF, pd.DataFrame([row_to_add])], ignore_index=True)
-
-
-
+    #Omdanner PDF til Excel
 
     def wrap_text(text, max_chars):
         if pd.isna(text): 
@@ -378,8 +307,6 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF):
 
     downloads_path = os.path.join("C:\\Users", os.getlogin(), "Downloads")
     pdf_path = os.path.join(downloads_path, PDFAktlisteFilnavn)
-
-    
 
     # Upload Excel to Sharepoint
     upload_file_to_sharepoint(

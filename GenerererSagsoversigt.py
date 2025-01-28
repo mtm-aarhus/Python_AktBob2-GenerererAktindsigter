@@ -14,7 +14,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib import colors as reportlab_colors
     from SharePointUploader import upload_file_to_sharepoint
-
+    import uuid
     # henter in_argumenter:
 
     RobotUserName = Arguments_GenererSagsoversigt.get("in_RobotUserName")
@@ -23,12 +23,14 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
     SharePointAppID = Arguments_GenererSagsoversigt.get("in_SharePointAppID")
     SharePointTenant = Arguments_GenererSagsoversigt.get("in_SharePointTenant")
     SharePointURL = Arguments_GenererSagsoversigt.get("in_SharePointURL")
-    #Sagsnummer = Arguments_GenererSagsoversigt.get("in_Sagsnummer")
+    Sagsnummer = Arguments_GenererSagsoversigt.get("in_Sagsnummer")
     Sagstitel = Arguments_GenererSagsoversigt.get("in_SagsTitel")
     Overmappe = Arguments_GenererSagsoversigt.get("in_Overmappe")
     Undermappe = Arguments_GenererSagsoversigt.get("in_Undermappe")
     GoUsername = Arguments_GenererSagsoversigt.get("in_GoUsername")
     GoPassword = Arguments_GenererSagsoversigt.get("in_GoPassword")
+    NovaToken = Arguments_GenererSagsoversigt.get("in_NovaToken")
+    KMDNovaURL = Arguments_GenererSagsoversigt.get("in_KMDNovaURL")
     max_retries = 2  # Number of retry attempts
     
     def sharepoint_client(RobotUserName, RobotPassword, SharePointURL) -> ClientContext:
@@ -46,6 +48,8 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
         except Exception as e:
             print(f"Authentication failed: {e}")
             raise
+    
+    #Følgende to hører sammen:
     def extract_case_info(metadata_json):
 
         try:
@@ -69,7 +73,6 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
         except Exception as e:
             print(f"Error extracting metadata: {e}")
             return "Unknown", None
-
     def fetch_metadata(Sagsnummer):
 
         url = f"https://ad.go.aarhuskommune.dk/_goapi/Cases/Metadata/{Sagsnummer}"
@@ -94,6 +97,61 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
                     print(f"Failed to fetch metadata after {max_retries} retries for {Sagsnummer}.")
                     return "Unknown", None  # Return default values if all retries fail
                 time.sleep(5)  # Wait before the next retry
+    
+    def GetNovaCaseinfo(Sagsnummer):
+        TransactionID = str(uuid.uuid4())
+        url = f"{KMDNovaURL}/Case/GetList?api-version=2.0-Case"
+
+        headers = {
+            "Authorization": f"Bearer {NovaToken}",
+            "Content-Type": "application/json"
+        }
+
+        payload = {
+            "common": {
+                "transactionId": TransactionID
+            },
+            "paging": {
+                "startRow": 1,
+                "numberOfRows": 100
+            },
+            "caseAttributes": {
+                "userFriendlyCaseNumber": Sagsnummer
+            },
+            "caseGetOutput": {
+                "caseAttributes": {
+                    "title": True,
+                    "userFriendlyCaseNumber": True,
+                    "caseDate": True
+                }
+            }
+        }
+
+        try:
+            response = requests.put(url, headers=headers, json=payload)
+            print("Nova API Response:", response.status_code)
+
+            if response.status_code == 200:
+                case_data = response.json().get('cases', [{}])[0].get('caseAttributes', {})
+                sagstitel = case_data.get('title', 'N/A')
+                Startdato = case_data.get('caseDate', None)
+
+                # Convert Startdato from string to datetime object
+                if Startdato:
+                    try:
+                        Startdato = datetime.fromisoformat(Startdato)  # Convert from 'YYYY-MM-DDTHH:MM:SS' to datetime
+                    except ValueError:
+                        print(f"Invalid date format for Startdato: {Startdato}")
+                        Startdato = None  # If format is wrong, set to None
+
+            else:
+                print("Failed to fetch Sagstitel from NOVA. Status Code:", response.status_code)
+                sagstitel, Startdato = None, None
+        except Exception as e:
+            print("Failed to fetch Sagstitel (Nova):", str(e))
+            sagstitel, Startdato = None, None
+
+        return sagstitel, Startdato
 
     def get_folders_from_sharepoint(client: ClientContext, overmappe_url: str):
 
@@ -120,8 +178,23 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
                 if " - " in Sagsnummer:
                     Sagsnummer = Sagsnummer.split(" - ")[0]
 
+                geosag_pattern = r"^[A-Z]{3}-\d{4}-\d{6}$"
+                novasag_pattern = r"^[A-Za-z]\d{4}-\d{1,10}$"
+
                 # Fetch metadata using the folder name
-                Sagstitel, Startdato = fetch_metadata(Sagsnummer)
+                if re.fullmatch(geosag_pattern, Sagsnummer):
+                    Sagstitel, Startdato = fetch_metadata(Sagsnummer)
+                elif re.fullmatch(novasag_pattern, Sagsnummer):
+                    Sagstitel, Startdato = GetNovaCaseinfo(Sagsnummer)
+                else:
+                    print("Det er hverken et geosagsnummer eller Novasagsnummer")
+
+                # # Fetch metadata using the folder name
+                # if GeoSag == True:
+                #     Sagstitel, Startdato = fetch_metadata(Sagsnummer)
+                # else:
+                #     # Henter Nova sagsinfo
+                #     Sagstitel, Startdato = GetNovaCaseinfo(Sagsnummer)
 
                 data_table.append({
                     "Sagsnummer": Sagsnummer,  
@@ -138,14 +211,12 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
                 # Convert date back to `dd-MM-yyyy` format for final output
                 dt_Sagsliste["Startdato"] = dt_Sagsliste["Startdato"].apply(lambda x: x.strftime("%d-%m-%Y") if pd.notna(x) else "Unknown")
 
-            print(dt_Sagsliste)
-
             return dt_Sagsliste
         except Exception as e:
             print(f"Error retrieving folders: {e}")
             return None
     
-
+    #Følgende to høre sammen:
     def wrap_text(text, max_chars):
     
         if pd.isna(text): 
@@ -164,7 +235,6 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
         if line:
             wrapped_lines.append(line)
         return "<br/>".join(wrapped_lines)
-
     def dataframe_to_pdf(df, image_path, output_pdf_path, sags_id, my_date_string):
 
         # PDF Setup
@@ -310,7 +380,6 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
 
             dataframe_to_pdf(dt_Sagsliste, image_path, output_pdf_path, Overmappe, datetime.today().strftime("%d-%m-%Y"))
 
-            print(f"PDF saved at: {output_pdf_path}")
 
         else:
             print("No data found. PDF generation skipped.")

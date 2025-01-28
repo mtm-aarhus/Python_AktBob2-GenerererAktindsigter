@@ -56,26 +56,26 @@ go_session = GO_Session(GoUsername, GoPassword)
 
 #---- Henter kø-elementer ----
 #GO
-# Sagsnummer = "GEO-2024-043144"
-# MailModtager = "Gujc@aarhus.dk"
-# DeskProID = "2088"
-# DeskProTitel = "Aktindsigt i aktindsigter"
-# PodioID = "2931863091"
-# Overmappe = "2088 - Aktindsigt i aktindsigter"
-# Undermappe = "GEO-2024-043144 - GustavTestAktIndsigt2"
-# GeoSag = True
-# NovaSag = False
-
-# #Nova
-Sagsnummer = "S2021-456011"
+Sagsnummer = "GEO-2024-043144"
 MailModtager = "Gujc@aarhus.dk"
 DeskProID = "2088"
 DeskProTitel = "Aktindsigt i aktindsigter"
 PodioID = "2931863091"
 Overmappe = "2088 - Aktindsigt i aktindsigter"
-Undermappe = "S2021-456011 - TEST - Ejendom uden ejendomsnr"
-GeoSag = False
-NovaSag = True
+Undermappe = "GEO-2024-043144 - GustavTestAktIndsigt2"
+GeoSag = True
+NovaSag = False
+
+# #Nova
+# Sagsnummer = "S2021-456011"
+# MailModtager = "Gujc@aarhus.dk"
+# DeskProID = "2088"
+# DeskProTitel = "Aktindsigt i aktindsigter"
+# PodioID = "2931863091"
+# Overmappe = "2088 - Aktindsigt i aktindsigter"
+# Undermappe = "S2021-456011 - TEST - Ejendom uden ejendomsnr"
+# GeoSag = False
+# NovaSag = True
 
 # ---- Run "GetDokumentlist" ----
 Arguments = {
@@ -181,7 +181,7 @@ Arguments_PrepareEachDocumentToUpload = {
 PrepareEachDocumentToUpload_Output_arguments = PrepareEachDocumentToUpload.invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload)
 dt_AktIndex = PrepareEachDocumentToUpload_Output_arguments.get("out_dt_AktIndex")
 
-
+print(f"Sagsnummer:{Sagsnummer}")
 
 # ---- Run "Generate&UploadAktlistPDF" ----
 
@@ -219,15 +219,16 @@ Arguments_GenererSagsoversigt = {
 "in_Overmappe": Overmappe,
 "in_Undermappe": Undermappe,
 "in_GoUsername":GoUsername,
-"in_GoPassword": GoPassword
+"in_GoPassword": GoPassword,
+"in_NovaToken": KMD_access_token,
+"in_KMDNovaURL": KMDNovaURL
 }
 
 
 GenererSagsoversigt_Output_arguments = GenerererSagsoversigt.invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt)
 Test = GenererSagsoversigt_Output_arguments.get("out_Text")
 print(Test)
-
-
+print(f"Sagsnummer:{Sagsnummer}")
 
 
 
