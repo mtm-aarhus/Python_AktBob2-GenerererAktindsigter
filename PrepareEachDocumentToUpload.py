@@ -191,9 +191,22 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                     response = requests.post(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}"}, files=files)
                     if response.status_code in [200, 201]:
                         print("File uploaded successfully.")
-                        print(response.json())
                     else:
                         print(f"Failed to upload file. Status Code: {response.status_code}")
+
+                    #Sætter den høje prioritet på dokumentet
+                    url = f"https://core.filarkiv.dk/api/v1/FileProcess/UpdatePriority"
+
+                    data = {
+                            "fileId": FileID,
+                            "priority": 1000
+                    }
+                    response = requests.post(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
+                    if response.status_code in [200, 201]:
+                        print("Det lykkedes at opdaterer prioriteten")
+                    else:
+                        print("Fajlede i prioritering:", response.text)
+
 
     def check_conversion_possible(dokument_type, cloudconvert_api):
         print("Filen skal konverteres - attempting CloudConvert")

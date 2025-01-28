@@ -224,11 +224,25 @@ Arguments_GenererSagsoversigt = {
 "in_KMDNovaURL": KMDNovaURL
 }
 
-
 GenererSagsoversigt_Output_arguments = GenerererSagsoversigt.invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt)
 Test = GenererSagsoversigt_Output_arguments.get("out_Text")
 print(Test)
 print(f"Sagsnummer:{Sagsnummer}")
+
+
+if NovaSag == True: 
+    # ---- Run "GenerateNovaCase" ----
+    Arguments_GenerateNovaCase = {
+    "in_Sagsnummer": Sagsnummer,
+    "in_NovaToken": KMD_access_token,
+    "in_KMDNovaURL": KMDNovaURL
+    }
+
+    GenerateNovaCase_Output_arguments = GenerererSagsoversigt.invoke_GenererSagsoversigt(Arguments_GenerateNovaCase)
+    Test = GenerateNovaCase_Output_arguments.get("out_Text")
+    print(Test)
+
+
 
 
 
