@@ -707,8 +707,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                         robot_password=RobotPassword
                     )
                     
-                
-                #Titel = file_path.split("\\Downloads\\")[1] # hvad anvendes denne til?
 
             else:
                 print("Dokumentet skal ikke med i ansøgningen")
@@ -733,56 +731,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                 IsDocumentPDF,
             )
             
-            dt_non_pdf_docs.extend(non_pdf_docs)
-
-    # Send email with non-pdf's
-    if dt_non_pdf_docs:
-        # Send Email Notification
-        FinalString = "<br><br>".join(set(dt_non_pdf_docs))  # Remove duplicates
-
-        # SharePoint integration
-        credentials = UserCredential(RobotUserName, RobotPassword)
-        ctx = ClientContext(SharePointURL).with_credentials(credentials)
-        folder_or_file_url = f"/Teams/tea-teamsite10506/Delte Dokumenter/Aktindsigter/{Overmappe}/{Undermappe}"
-        target_item = ctx.web.get_folder_by_server_relative_url(folder_or_file_url)
-
-
-        try:
-            result = target_item.share_link(2).execute_query()  # Organization view link
-            link_url = result.value.sharingLinkInfo.Url
-
-            # Prepare email
-            sender = "Aktbob<rpamtm001@aarhus.dk>"
-            subject = f"Fil kan ikke konverteres til PDF - {Sagsnummer}"
-            body = (
-                "Kære Sagsbehandler,<br><br>"
-                "Følgende dokumenter kunne ikke konverteres til PDF:<br><br>"
-                f"{FinalString}<br><br>"
-                "Dokumenterne er blevet uploaded til SharePoint-mappen: "
-                f'<a href="{link_url}">SharePoint</a><br><br>'
-                "Kontroller venligst manuelt dokumenterne.<br><br>"
-                "Med venlig hilsen<br><br>"
-                "Teknik & Miljø<br><br>"
-                "Digitalisering<br><br>"
-                "Aarhus Kommune"
-            )
-
-            smtp_server = "smtp.adm.aarhuskommune.dk"
-            smtp_port = 25
-
-
-            send_email(
-                receiver=UdviklerMailAktbob,
-                sender=sender,
-                subject=subject,
-                body=body,
-                smtp_server=smtp_server,
-                smtp_port=smtp_port,
-                html_body=True
-            )
-
-        except Exception as e:
-            print(f"Error sending email: {e}")      
+            dt_non_pdf_docs.extend(non_pdf_docs) 
 
     #Det er en nova sag
     else:
@@ -918,7 +867,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                     "epub", "fodt", "gif", "htm", "html", "ico", "jpeg", "jpg", "msg",
                     "odp", "ods", "odt", "pdf", "png", "pos", "pps", "ppt", "pptx", "psd",
                     "rtf", "tif", "tiff", "tsv", "txt", "vdw", "vdx", "vsd", "vss", "vst",
-                    "vsx", "vtx", "webp", "wmf", "xls", "xlsm", "xlsx", "xltx", "heic"#,"docx"
+                    "vsx", "vtx", "webp", "wmf", "xls", "xlsm", "xlsx", "xltx", "heic","docx"
                 ]
                 # Check if the input file extension exists in the list
                 if DokumentType.lower() in supported_extensions:
@@ -946,7 +895,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                 if conversionPossible or CanDocumentBeConverted:
                     
                     upload_to_filarkiv(FilarkivURL,FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID,Titel, file_path)
-
+                    if conversionPossible:
+                        DokumentType = "pdf"
 
                 else: # Uploader til Sharepoint
                     print("Could not be converted or uploaded - uploading directly to SharePoint")
@@ -962,15 +912,16 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                         robot_password=RobotPassword
                     )
                
-            
+
             else:
                 print("Dokumentet skal ikke med i ansøgningen")
-            
+                Titel = f"{AktID:04} - {DokumentID} - {Titel}"
+                
             #Ændre dokumenttitlen:
             Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
 
             # Call function
-            dt_AktIndex = process_documents(
+            dt_AktIndex,non_pdf_docs= process_documents(
                 dt_AktIndex,
                 AktID,
                 Titel,
@@ -983,21 +934,65 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                 Aktstatus,
                 Begrundelse,
                 IsDocumentPDF,
-                RobotUserName,
-                RobotPassword,
-                SharePointURL,
-                Overmappe,
-                Undermappe,
-                Sagsnummer,
-                UdviklerMailAktbob,
-                send_email
             )
+            
+            dt_non_pdf_docs.extend(non_pdf_docs)
 
     
-        # Remove 'IsDocumentPDF' column
+    #Send Email
+    if dt_non_pdf_docs:
+        # Send Email Notification
+        FinalString = "<br><br>".join(set(dt_non_pdf_docs))  # Remove duplicates
+
+        # SharePoint integration
+        credentials = UserCredential(RobotUserName, RobotPassword)
+        ctx = ClientContext(SharePointURL).with_credentials(credentials)
+        folder_or_file_url = f"/Teams/tea-teamsite10506/Delte Dokumenter/Aktindsigter/{Overmappe}/{Undermappe}"
+        target_item = ctx.web.get_folder_by_server_relative_url(folder_or_file_url)
+
+
+        try:
+            result = target_item.share_link(2).execute_query()  # Organization view link
+            link_url = result.value.sharingLinkInfo.Url
+
+            # Prepare email
+            sender = "Aktbob<rpamtm001@aarhus.dk>"
+            subject = f"Fil kan ikke konverteres til PDF - {Sagsnummer}"
+            body = (
+                "Kære Sagsbehandler,<br><br>"
+                "Følgende dokumenter kunne ikke konverteres til PDF:<br><br>"
+                f"{FinalString}<br><br>"
+                "Dokumenterne er blevet uploaded til SharePoint-mappen: "
+                f'<a href="{link_url}">SharePoint</a><br><br>'
+                "Kontroller venligst manuelt dokumenterne.<br><br>"
+                "Med venlig hilsen<br><br>"
+                "Teknik & Miljø<br><br>"
+                "Digitalisering<br><br>"
+                "Aarhus Kommune"
+            )
+
+            smtp_server = "smtp.adm.aarhuskommune.dk"
+            smtp_port = 25
+
+
+            send_email(
+                receiver=UdviklerMailAktbob,
+                sender=sender,
+                subject=subject,
+                body=body,
+                smtp_server=smtp_server,
+                smtp_port=smtp_port,
+                html_body=True
+            )
+
+        except Exception as e:
+            print(f"Error sending email: {e}")     
     
     dt_AktIndex = dt_AktIndex.drop('IsDocumentPDF', axis=1)
     
+
+
+
     return {
     "out_dt_AktIndex": dt_AktIndex,
     }

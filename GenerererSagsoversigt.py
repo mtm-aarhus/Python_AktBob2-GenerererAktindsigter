@@ -189,13 +189,6 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
                 else:
                     print("Det er hverken et geosagsnummer eller Novasagsnummer")
 
-                # # Fetch metadata using the folder name
-                # if GeoSag == True:
-                #     Sagstitel, Startdato = fetch_metadata(Sagsnummer)
-                # else:
-                #     # Henter Nova sagsinfo
-                #     Sagstitel, Startdato = GetNovaCaseinfo(Sagsnummer)
-
                 data_table.append({
                     "Sagsnummer": Sagsnummer,  
                     "Sagstitel": Sagstitel,

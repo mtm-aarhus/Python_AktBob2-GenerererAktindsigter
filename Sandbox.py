@@ -56,26 +56,26 @@ go_session = GO_Session(GoUsername, GoPassword)
 
 #---- Henter kø-elementer ----
 #GO
-Sagsnummer = "GEO-2024-043144"
-MailModtager = "Gujc@aarhus.dk"
-DeskProID = "2088"
-DeskProTitel = "Aktindsigt i aktindsigter"
-PodioID = "2931863091"
-Overmappe = "2088 - Aktindsigt i aktindsigter"
-Undermappe = "GEO-2024-043144 - GustavTestAktIndsigt2"
-GeoSag = True
-NovaSag = False
-
-# #Nova
-# Sagsnummer = "S2021-456011"
+# Sagsnummer = "GEO-2024-043144"
 # MailModtager = "Gujc@aarhus.dk"
 # DeskProID = "2088"
 # DeskProTitel = "Aktindsigt i aktindsigter"
 # PodioID = "2931863091"
 # Overmappe = "2088 - Aktindsigt i aktindsigter"
-# Undermappe = "S2021-456011 - TEST - Ejendom uden ejendomsnr"
-# GeoSag = False
-# NovaSag = True
+# Undermappe = "GEO-2024-043144 - GustavTestAktIndsigt2"
+# GeoSag = True
+# NovaSag = False
+
+# #Nova
+Sagsnummer = "S2021-456011"
+MailModtager = "Gujc@aarhus.dk"
+DeskProID = "2088"
+DeskProTitel = "Aktindsigt i aktindsigter"
+PodioID = "2931863091"
+Overmappe = "2088 - Aktindsigt i aktindsigter"
+Undermappe = "S2021-456011 - TEST - Ejendom uden ejendomsnr"
+GeoSag = False
+NovaSag = True
 
 # ---- Run "GetDokumentlist" ----
 Arguments = {
