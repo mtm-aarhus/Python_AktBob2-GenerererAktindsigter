@@ -9,6 +9,7 @@ import GenerateCaseFolder
 import PrepareEachDocumentToUpload
 import GenerateAndUploadAktlistePDF
 import GenerererSagsoversigt
+import GenerateNovaCase
 from email.message import EmailMessage
 from getpass import getpass
 import smtplib
@@ -238,12 +239,9 @@ if NovaSag == True:
     "in_KMDNovaURL": KMDNovaURL
     }
 
-    GenerateNovaCase_Output_arguments = GenerererSagsoversigt.invoke_GenererSagsoversigt(Arguments_GenerateNovaCase)
+    GenerateNovaCase_Output_arguments = GenerateNovaCase.invoke_GenerateNovaCase(Arguments_GenerateNovaCase)
     Test = GenerateNovaCase_Output_arguments.get("out_Text")
     print(Test)
-
-
-
 
 
 # ---- Run "SendFilarkivCaseId&PodioIDToPodio"

@@ -32,7 +32,9 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
     NovaToken = Arguments_GenererSagsoversigt.get("in_NovaToken")
     KMDNovaURL = Arguments_GenererSagsoversigt.get("in_KMDNovaURL")
     max_retries = 2  # Number of retry attempts
-    
+    print(RobotPassword)
+    print(RobotPassword)
+    print(SharePointURL)
     def sharepoint_client(RobotUserName, RobotPassword, SharePointURL) -> ClientContext:
 
         try:
