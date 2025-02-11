@@ -646,36 +646,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
 
                             if ByteResult:
                                 print(f"File saved as: {FilnavnFørPdf}")
-                            
-                            # url = f"https://ad.go.aarhuskommune.dk/_goapi/Documents/DocumentBytes/{DokumentID}"
-
-                            # # Make the request
-                            # try:
-                            #     response = requests.get(
-                            #         url,
-                            #         auth=HttpNtlmAuth(GoUsername, GoPassword),
-                            #         headers={"Content-Type": "application/json"},
-                            #         timeout=None  # No timeout (similar to client.Timeout = -1)
-                            #     )
-
-                            #     # Check the response
-                            #     if response.status_code == 200:
-                            #         ByteResult = response.content  # Equivalent to response.RawBytes in C#
-                            #     else:
-                            #         print(f"Request failed with status code {response.status_code}")
-
-                            # except Exception as e:
-                            #     print(f"An error occurred: {e}")
-
-                            # # Variables
-                            # FilnavnFørPdf = f"Output.{DokumentType}" ## OBS DENNE SKAL BRUGES SOM FILEN DER SKAL OPLOADES TIL CLOUDCONVERT
-
-                            # # Write ByteResult to a file
-                            # ByteResult = b""  # Replace with the actual byte content
-                            # with open(FilnavnFørPdf, "wb") as file:
-                            #     file.write(ByteResult)
-
-
 
                             file_path = convert_file_to_pdf(CloudConvertAPI, FilnavnFørPdf, DokumentID, DokumentType,Titel, AktID)
                             if file_path:
