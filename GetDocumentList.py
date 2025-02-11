@@ -33,10 +33,8 @@ def invoke(Arguments, go_Session):
                 sagstitel = sagstitel[:50].strip()
             
             return sagstitel
-
         except Exception as e:
-            print(f"Error during sanitization: {str(e)}")
-            return sagstitel
+            raise Exception(f"Error during sanitazation: {str(e)}")
 
     # Initialize variables
     RobotUserName = Arguments.get("in_RobotUserName")
@@ -70,7 +68,7 @@ def invoke(Arguments, go_Session):
             else:
                 print("Metadata field is missing in the response.")
         except Exception as e:
-            print("Failed to extract Sagstitel (Geo):", str(e))
+            raise Exception("Failed to extract Sagstitel (Geo):", str(e))
 
 
     # --- Check if it's a Nova-sag ---
@@ -113,7 +111,7 @@ def invoke(Arguments, go_Session):
             else:
                 print("Failed to fetch Sagstitel from NOVA. Status Code:", response.status_code)
         except Exception as e:
-            print("Failed to fetch Sagstitel (Nova):", str(e))
+            raise Exception("Failed to fetch Sagstitel (Nova):", str(e))
 
     # Sanitize sagstitel regardless of source or failure
     sagstitel = sanitize_sagstitel(sagstitel)
@@ -141,8 +139,7 @@ def invoke(Arguments, go_Session):
 
             return ctx
         except Exception as e:
-            print(f"Authentication failed: {e}")
-            raise
+            raise Exception(f"Authentication failed: {e}")
 
 
     # File downloading logic from SharePoint
@@ -164,8 +161,7 @@ def invoke(Arguments, go_Session):
 
             return local_file_path
         except Exception as e:
-            print(f"Error downloading file from SharePoint: {e}")
-            raise
+            raise Exception(f"Error downloading file from SharePoint: {e}")
 
 
     # Main logic
@@ -245,14 +241,13 @@ def invoke(Arguments, go_Session):
                 # Return the DataFrame to be used later
                 return dt_DocumentList
             except Exception as e:
-                print(f"Failed to load Excel file: {e}")
-                raise
+                raise Exception(f"Failed to load Excel file: {e}")
         else:
-            print(f"Downloaded file is not an Excel file: {local_file_path}")
-            return None
+            raise Exception(f"Downloaded file is not an Excel file: {local_file_path}")
 
     except Exception as e:
-        print(f"Error: {e}")
+        return None(f"Error: {e}")
+    
     finally:
         return {
         "sagstitel": sagstitel,

@@ -42,4 +42,4 @@ def upload_file_to_sharepoint(site_url,Overmappe, Undermappe, file_path, RobotUs
         print(f"File uploaded successfully using chunked upload.")
 
     except Exception as e:
-        print(f"Failed to upload file '{file_path}': {e}")
+        raise Exception(f"Failed to upload file '{file_path}': {e}")

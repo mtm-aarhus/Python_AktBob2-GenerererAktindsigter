@@ -46,8 +46,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
             
             return ctx
         except Exception as e:
-            print(f"Authentication failed: {e}")
-            raise
+            raise Exception(f"Authentication failed: {e}")
     
     #Følgende to hører sammen:
     def extract_case_info(metadata_json):
@@ -378,7 +377,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
             print("No data found. PDF generation skipped.")
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        raise Exception(f"An error occurred: {e}")
 
     # Upload Excel to Sharepoint
     upload_file_to_sharepoint(
@@ -391,7 +390,11 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
     )
 
     #Deleting local files: 
-    #os.remove(output_pdf_path)
+    try:
+        os.remove(output_pdf_path)
+    
+    except Exception as e:
+        raise Exception(f"Could not delete local file: {e}")
 
     return {
         "out_Text": f"Det virker",

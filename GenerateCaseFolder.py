@@ -93,7 +93,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
                     print("FilArkiv respons:", response.status_code)
 
                 except Exception as e:
-                    print("Kunne ikke omdøbe sagen:", str(e))
+                    raise Exception("Kunne ikke omdøbe sagen:", str(e))
 
              
             # Prepare the payload for creating a new case
@@ -126,7 +126,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
                 Out_FilarkivCaseID = response_json["id"]
 
             except Exception as e:
-                print("Kunne ikke oprette sagen på ny:", str(e))
+                raise Exception("Kunne ikke oprette sagen på ny:", str(e))
 
 
         else:
@@ -162,10 +162,10 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
                 Out_FilarkivCaseID = response_json["id"]
 
             except Exception as e:
-                print("Kunne ikke oprette sagen på ny:", str(e))
+                raise Exception("Kunne ikke oprette sagen på ny:", str(e))
 
     except Exception as e:
-            print("Error occurred while processing the request:", str(e))
+            raise Exception("Error occurred while processing the request:", str(e))
 
     # ---- Opretter Aktindsigtsmapperne i SharePoint ---- #
 
@@ -218,8 +218,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
             print(f"Folder '{Undermappe}' already exists inside '{Overmappe}'.")
 
     except Exception as ex:
-        print(f"Error: {ex}")
-        raise
+        raise Exception(f"Error: {ex}")
 
     finally:
         return {

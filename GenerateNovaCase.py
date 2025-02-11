@@ -145,7 +145,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase):
             print("Failed to send request. Status Code:", response.status_code)
             print("Response Data:", response.text)  # Print error response
     except Exception as e:
-        print("Failed to fetch case data:", str(e))
+        raise Exception("Failed to fetch case data:", str(e))
 
 
 
@@ -222,7 +222,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase):
             print("Failed to send request. Status Code:", response.status_code)
             print("Response Data:", response.text)  # Print error response
     except Exception as e:
-        print("Failed to fetch Sagstitel (Nova):", str(e))
+        raise Exception("Failed to fetch Sagstitel (Nova):", str(e))
 
     return {
     "Test": "Aktindsigtssagen er oprettet i Nova"

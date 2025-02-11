@@ -159,7 +159,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
             else:
                 print("Failed to fetch data, status code:", response.status_code)
         except Exception as e:
-            print("Kunne ikke hente dokumentinformation:", str(e))
+            raise Exception("Kunne ikke hente dokumentinformation:", str(e))
         
         if Filarkiv_DocumentID is None:
             print("Fejl: Filarkiv_DocumentID blev ikke genereret. Afbryder processen.")
@@ -234,7 +234,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                             conversion_possible = True
                             break
         except requests.RequestException as e:
-            print(f"Error during API request: {e}")
+            raise Exception(f"Error during API request: {e}")
         
         return conversion_possible
 
@@ -392,7 +392,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                         shutil.rmtree(file_path, ignore_errors=True)
                         print(f"Deleted directory: {file_path}")
             except Exception as e:
-                print(f"Error deleting {file_path}: {e}")
+                raise Exception(f"Error deleting {file_path}: {e}")
 
         return dt_AktIndex, ListOfNonPDFDocs
 
@@ -628,7 +628,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                             print("ByteResult received successfully.")
 
                     except Exception as e:
-                        print(f"An exception occurred: {e}")
+                        raise Exception(f"An exception occurred: {e}")
                     
                     
                     # tjekker om go-conversion lykkedes eller ej
@@ -796,7 +796,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                     else:
                         print("Failed to fetch Sagstitel from NOVA. Status Code:", response.status_code)
                 except Exception as e:
-                    print("Failed to fetch Sagstitel (Nova):", str(e))
+                    raise Exception("Failed to fetch Sagstitel (Nova):", str(e))
 
                 DokumentType = response.json()["documents"][0]["fileExtension"]
                 DocumentUuid = response.json()["documents"][0]["documentUuid"]
@@ -835,7 +835,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                         print("Response:", response.text)  # Print error message from API
 
                 except Exception as e:
-                    print("Failed to fetch file from NOVA:", str(e))
+                    raise Exception("Failed to fetch file from NOVA:", str(e))
                 
                 
                 CanDocumentBeConverted = False
@@ -964,7 +964,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
             )
 
         except Exception as e:
-            print(f"Error sending email: {e}")     
+            raise Exception(f"Error sending email: {e}")     
     
     dt_AktIndex = dt_AktIndex.drop('IsDocumentPDF', axis=1)
     

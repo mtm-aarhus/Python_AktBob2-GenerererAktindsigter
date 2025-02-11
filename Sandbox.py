@@ -248,29 +248,30 @@ if NovaSag == True:
 
 # ---- Run "SendFilarkivCaseId&PodioIDToPodio"
 # Define the API endpoint
-url = "https://aktbob-external-api.grayglacier-2d22de15.northeurope.azurecontainerapps.io/Api/CheckOCRScreeningStatus/Case"
+try:
+    url = "https://aktbob-external-api.grayglacier-2d22de15.northeurope.azurecontainerapps.io/Api/CheckOCRScreeningStatus/Case"
 
-# Define headers
-headers = {
-    "ApiKey": AktbobAPIKey,  # Ensure ApiKey is defined
-    "Content-Type": "application/json"
-}
+    # Define headers
+    headers = {
+        "ApiKey": AktbobAPIKey,  # Ensure ApiKey is defined
+        "Content-Type": "application/json"
+    }
 
-# Define JSON body
-json_body = {
-    "filArkivCaseId": FilarkivCaseID,  # Ensure FilarkivCaseID is defined
-    "podioItemId": PodioID  # Ensure PodioID is defined
-}
+    # Define JSON body
+    json_body = {
+        "filArkivCaseId": FilarkivCaseID,  # Ensure FilarkivCaseID is defined
+        "podioItemId": PodioID  # Ensure PodioID is defined
+    }
 
-# Make the POST request
-response = requests.post(url, headers=headers, json=json_body)
+    # Make the POST request
+    response = requests.post(url, headers=headers, json=json_body)
 
-# Handle response
-if response.status_code == 200:
+    # Handle response
+
     print("Response Status:", response.status_code)
     print("Response:", response.text)
-else:
-    print("Error Status:", response.status_code)
-    print("Error Response:", response.text)
+except requests.exceptions.RequestException as e:
+    print(f"Error making request: {e}")
+    raise Exception(f"Request to API failed: {e}")
 
 
