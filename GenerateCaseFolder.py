@@ -5,6 +5,9 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
     import os 
     import json
     from msal import PublicClientApplication
+    from office365.sharepoint.client_context import ClientContext
+    from office365.runtime.auth.user_credential import UserCredential
+    from office365.sharepoint.webs.web import Web
 
     RobotUserName = Arguments_GenerateCaseFolder.get("in_RobotUserName")
     RobotPassword = Arguments_GenerateCaseFolder.get("in_RobotPassword")
@@ -165,75 +168,54 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder):
             print("Error occurred while processing the request:", str(e))
 
     # ---- Opretter Aktindsigtsmapperne i SharePoint ---- #
-    try:
-        if SharePointUrl.startswith("https://"):
-            SharePointUrl = SharePointUrl[8:]
 
-        SharePointUrl = SharePointUrl.replace(".sharepoint.com", ".sharepoint.com:")
 
-        # MSAL configuration for getting the access token
-        scopes = ["https://graph.microsoft.com/.default"]
-        app = PublicClientApplication(client_id=SharePointAppID, authority=f"https://login.microsoftonline.com/{SharePointTenant}")
-
-        token_response = app.acquire_token_by_username_password(username=RobotUserName, password=RobotPassword, scopes=scopes)
-        access_token = token_response.get("access_token")
-
-        if not access_token:
-            raise Exception("Failed to acquire access token. Check your credentials.")
-
-        headers = {"Authorization": f"Bearer {access_token}"}
-
-        # Step 1: Get the SharePoint site information
-        site_request_url = f"https://graph.microsoft.com/v1.0/sites/{SharePointUrl}"
+    # Authenticate
+    credentials = UserCredential(RobotUserName, RobotPassword)
+    ctx = ClientContext(SharePointUrl).with_credentials(credentials)
     
-        site_response = requests.get(site_request_url, headers=headers)
-        site_response.raise_for_status()
-        site_json = site_response.json()
 
-        if "id" not in site_json:
-            raise Exception("Key 'id' not found in site response")
-        site_id = site_json["id"]
- 
-        # Step 2: Get the document library (drive) information
-        drive_request_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drive"
-        drive_response = requests.get(drive_request_url, headers=headers)
-        drive_response.raise_for_status()
-        drive_json = drive_response.json()
+    def folder_exists(ctx, folder_url):
+        """Check if a folder exists in SharePoint."""
+        try:
+            folder = ctx.web.get_folder_by_server_relative_url(folder_url)
+            ctx.load(folder)
+            ctx.execute_query()
+            return True
+        except:
+            return False
 
-        if "id" not in drive_json:
-            raise Exception("Key 'id' not found in drive response")
-        drive_id = drive_json["id"]
-        print(f"Drive ID: {drive_id}")
+    try:
+        # Ensure that the SharePoint site is accessible
+        web = ctx.web
+        ctx.load(web)
+        ctx.execute_query()
+        print(f"Connected to SharePoint site: {web.properties['Title']}")
 
-        # Step 3: Create Folder1 (Mappe1)
-        drive_item_request_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/root:/Aktindsigter:/children"
-        folder_request_body1 = {
-            "name": Overmappe,
-            "folder": {},
-            "@microsoft.graph.conflictBehavior": "fail"  # Or "replace", "fail"
-        }
-        
-        folder_response1 = requests.post(drive_item_request_url, headers=headers, json=folder_request_body1)
+        # Define the document library name (update if different)
+        library_name = "/Teams/tea-teamsite10506/Delte Dokumenter/Aktindsigter"  # Update if your document library has a different name
 
-        if folder_response1.status_code == 201:
+
+
+        # Construct folder paths (relative to the SharePoint site)
+        overmappe_path = f"{library_name}/{Overmappe}"
+        undermappe_path = f"{library_name}/{Overmappe}/{Undermappe}"
+
+        # Step 1: Check and create Folder1 (Overmappe)
+        if not folder_exists(ctx, overmappe_path):
+            ctx.web.folders.add(overmappe_path)
+            ctx.execute_query()
             print(f"Folder '{Overmappe}' created successfully.")
         else:
-            print(f"Error: Failed to create folder '{Overmappe}'. Status Code: {folder_response1.status_code}, Details: {folder_response1.text}")
+            print(f"Folder '{Overmappe}' already exists.")
 
-        # Step 4: Create Folder2 (Mappe2 inside Mappe1)
-        drive_item_request_url_for_mappe2 = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/root:/Aktindsigter/{Overmappe}:/children"
-        folder_request_body2 = {
-            "name": Undermappe,
-            "folder": {},
-            "@microsoft.graph.conflictBehavior": "fail"  # Or "replace", "fail"
-        }
-
-        folder_response2 = requests.post(drive_item_request_url_for_mappe2, headers=headers, json=folder_request_body2)
-
-        if folder_response2.status_code == 201:
+        # Step 2: Check and create Folder2 (Undermappe inside Overmappe)
+        if not folder_exists(ctx, undermappe_path):
+            ctx.web.folders.add(undermappe_path)
+            ctx.execute_query()
             print(f"Folder '{Undermappe}' created successfully inside '{Overmappe}'.")
         else:
-            print(f"Error: Failed to create folder '{Undermappe}' inside '{Overmappe}'. Status Code: {folder_response2.status_code}, Details: {folder_response2.text}")
+            print(f"Folder '{Undermappe}' already exists inside '{Overmappe}'.")
 
     except Exception as ex:
         print(f"Error: {ex}")

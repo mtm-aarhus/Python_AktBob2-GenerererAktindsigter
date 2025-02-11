@@ -591,7 +591,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                 if DokumentType.lower() == "pdf": # Hvis PDF downloader den byte-filen
                     print("Allerede PDf - downloader byte")
                     
-                    ByteResult = fetch_document_bytes(session, DokumentID, max_retries=30, retry_interval=5)
+                    ByteResult = fetch_document_bytes(session, DokumentID, max_retries=5, retry_interval=30)
 
                     if ByteResult:
                         print(f"File size: {len(ByteResult)} bytes")
@@ -687,7 +687,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                     print(f"Could not be converted, uploading as {file_path}.{DokumentType}")
 
                     file_path = f"{file_path}.{DokumentType}"
-                    ByteResult = fetch_document_bytes(session, DokumentID, file_path, max_retries=60, retry_interval=5)
+                    ByteResult = fetch_document_bytes(session, DokumentID, file_path, max_retries=5, retry_interval=60)
 
                     if ByteResult:
                         print("File downloaded successfully.")
@@ -711,13 +711,11 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                     IsDocumentPDF = False 
                     upload_file_to_sharepoint(
                         site_url=SharePointURL,
-                        overmappe=Overmappe,
-                        undermappe=Undermappe,
+                        Overmappe=Overmappe,
+                        Undermappe=Undermappe,
                         file_path=file_path,
-                        sharepoint_app_id=SharePointAppID,
-                        sharepoint_tenant=SharePointTenant,
-                        robot_username=RobotUserName,
-                        robot_password=RobotPassword
+                        RobotUserName=RobotUserName,
+                        RobotPassword=RobotPassword
                     )
                     
 
@@ -795,7 +793,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                 and "ja" in Omfattet.lower()):
                 
                 print("Henter dokument information")
-                print(DokumentID)
                 TransactionID = str(uuid.uuid4())
                 url = f"{KMDNovaURL}/Document/GetList?api-version=2.0-Case"
 
@@ -915,15 +912,13 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
                     print("Could not be converted or uploaded - uploading directly to SharePoint")
                     IsDocumentPDF = False 
                     upload_file_to_sharepoint(
-                        site_url=SharePointURL,
-                        overmappe=Overmappe,
-                        undermappe=Undermappe,
-                        file_path=file_path,
-                        sharepoint_app_id=SharePointAppID,
-                        sharepoint_tenant=SharePointTenant,
-                        robot_username=RobotUserName,
-                        robot_password=RobotPassword
-                    )
+                            site_url=SharePointURL,
+                            Overmappe=Overmappe,
+                            Undermappe=Undermappe,
+                            file_path=file_path,
+                            RobotUserName=RobotUserName,
+                            RobotPassword=RobotPassword
+                        )
                
 
             else:

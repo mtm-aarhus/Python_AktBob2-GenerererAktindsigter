@@ -57,26 +57,27 @@ go_session = GO_Session(GoUsername, GoPassword)
 
 #---- Henter kø-elementer ----
 #GO
-# Sagsnummer = "GEO-2024-043144"
-# MailModtager = "Gujc@aarhus.dk"
-# DeskProID = "2088"
-# DeskProTitel = "Aktindsigt i aktindsigter"
-# PodioID = "2931863091"
-# Overmappe = "2088 - Aktindsigt i aktindsigter"
-# Undermappe = "GEO-2024-043144 - GustavTestAktIndsigt2"
-# GeoSag = True
-# NovaSag = False
-
-# #Nova
-Sagsnummer = "S2021-456011"
+Sagsnummer = "GEO-2024-043144"
 MailModtager = "Gujc@aarhus.dk"
 DeskProID = "2088"
 DeskProTitel = "Aktindsigt i aktindsigter"
 PodioID = "2931863091"
 Overmappe = "2088 - Aktindsigt i aktindsigter"
-Undermappe = "S2021-456011 - TEST - Ejendom uden ejendomsnr"
-GeoSag = False
-NovaSag = True
+Undermappe = "GEO-2024-043144 - GustavTestAktIndsigt2"
+GeoSag = True
+NovaSag = False
+
+# #Nova
+# Sagsnummer = "S2021-456011"
+# MailModtager = "Gujc@aarhus.dk"
+# DeskProID = "2088"
+# DeskProTitel = "Aktindsigt i aktindsigter"
+# PodioID = "2931863091"
+# Overmappe = "2088 - Aktindsigt i aktindsigter"
+# Undermappe = "S2021-456011 - TEST - Ejendom uden ejendomsnr"
+# GeoSag = False
+# NovaSag = True
+# AktSagsURL = "https://go.aarhuskommune.dk/cases/AKT27/AKT-2024-000965"
 
 # ---- Run "GetDokumentlist" ----
 Arguments = {
@@ -124,34 +125,34 @@ GenerateCaseFolder_Output_arguments = GenerateCaseFolder.invoke_GenerateCasefold
 FilarkivCaseID = GenerateCaseFolder_Output_arguments.get("out_FilarkivCaseID")
 print(f"FilarkivCaseID: {FilarkivCaseID}")
 
-# ---- Send mail til sagsansvarlig ----
-# if __name__ == "__main__":
-#     # Define email details
-#     sender = "Aktbob<rpamtm001@aarhus.dk>" # Replace with actual sender
-#     subject = f"Robotten er gået i gang med aktindsigt for {Sagsnummer}"
-#     body = """Robotten er nu gået i gang med din aktindsigt, og du vil modtage en mail, når den er færdig.<br><br>
-#     Processen tager typisk et par minutter, men den kan nogle gange være undervejs i flere timer alt efter antallet af dokumenter, 
-#     der gives aktindsigt til i dokumentlisten og hastigheden på GetOrganized's API.<br><br>
-#     Det anbefales at følge <a href="https://aarhuskommune.sharepoint.com/:w:/t/tea-teamsite10506/EVjuZhmtsHRGi6H7-COs26AB6afOXvReKSnWJ1XK1mKxZw?e=n03h0t/">vejledningen</a>, 
-#     hvor du også finder svar på de fleste spørgsmål og fejltyper.<br><br>
-#     Med venlig hilsen<br><br>
-#     Teknik & Miljø<br><br>
-#     Digitalisering<br><br>
-#     Aarhus Kommune
-#     """
-#     smtp_server = "smtp.adm.aarhuskommune.dk"   # Replace with your SMTP server
-#     smtp_port = 25                    # Replace with your SMTP port
+####---- Send mail til sagsansvarlig ----####
+if __name__ == "__main__":
+    # Define email details
+    sender = "Aktbob<rpamtm001@aarhus.dk>" # Replace with actual sender
+    subject = f"Robotten er gået i gang med aktindsigt for {Sagsnummer}"
+    body = """Robotten er nu gået i gang med din aktindsigt, og du vil modtage en mail, når den er færdig.<br><br>
+    Processen tager typisk et par minutter, men den kan nogle gange være undervejs i flere timer alt efter antallet af dokumenter, 
+    der gives aktindsigt til i dokumentlisten og hastigheden på GetOrganized's API.<br><br>
+    Det anbefales at følge <a href="https://aarhuskommune.sharepoint.com/:w:/t/tea-teamsite10506/EVjuZhmtsHRGi6H7-COs26AB6afOXvReKSnWJ1XK1mKxZw?e=n03h0t/">vejledningen</a>, 
+    hvor du også finder svar på de fleste spørgsmål og fejltyper.<br><br>
+    Med venlig hilsen<br><br>
+    Teknik & Miljø<br><br>
+    Digitalisering<br><br>
+    Aarhus Kommune
+    """
+    smtp_server = "smtp.adm.aarhuskommune.dk"   # Replace with your SMTP server
+    smtp_port = 25                    # Replace with your SMTP port
 
-#     # Call the send_email function
-#     send_email(
-#         receiver=UdviklerMailAktbob,
-#         sender=sender,
-#         subject=subject,
-#         body=body,
-#         smtp_server=smtp_server,
-#         smtp_port=smtp_port,
-#         html_body=True
-#     )
+    # Call the send_email function
+    send_email(
+        receiver=UdviklerMailAktbob,
+        sender=sender,
+        subject=subject,
+        body=body,
+        smtp_server=smtp_server,
+        smtp_port=smtp_port,
+        html_body=True
+    )
 
 
 # ---- Run "PrepareEachDocumentToUpload" ----
@@ -236,7 +237,8 @@ if NovaSag == True:
     Arguments_GenerateNovaCase = {
     "in_Sagsnummer": Sagsnummer,
     "in_NovaToken": KMD_access_token,
-    "in_KMDNovaURL": KMDNovaURL
+    "in_KMDNovaURL": KMDNovaURL,
+    "in_AktSagsURL": AktSagsURL
     }
 
     GenerateNovaCase_Output_arguments = GenerateNovaCase.invoke_GenerateNovaCase(Arguments_GenerateNovaCase)

@@ -32,9 +32,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
     NovaToken = Arguments_GenererSagsoversigt.get("in_NovaToken")
     KMDNovaURL = Arguments_GenererSagsoversigt.get("in_KMDNovaURL")
     max_retries = 2  # Number of retry attempts
-    print(RobotPassword)
-    print(RobotPassword)
-    print(SharePointURL)
+
     def sharepoint_client(RobotUserName, RobotPassword, SharePointURL) -> ClientContext:
 
         try:
@@ -368,7 +366,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
         dt_Sagsliste = get_folders_from_sharepoint(client, overmappe_url)
 
         if dt_Sagsliste is not None and not dt_Sagsliste.empty:
-            downloads_path = os.path.join("C:\\Users", os.getlogin(), "Downloads")
+            downloads_path = os.path.join("C:\\", "Users", os.getlogin(), "Downloads")
             image_path = os.path.join(os.getcwd(), "aak.jpg")
             PDFAktlisteFilnavn = f"Sagsoversigt.pdf"
             output_pdf_path = os.path.join(downloads_path, PDFAktlisteFilnavn)
@@ -382,24 +380,18 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-
     # Upload Excel to Sharepoint
     upload_file_to_sharepoint(
         site_url=SharePointURL,
-        overmappe=Overmappe,
-        undermappe="",
+        Overmappe=Overmappe,
+        Undermappe="",
         file_path=output_pdf_path,
-        sharepoint_app_id=SharePointAppID,
-        sharepoint_tenant=SharePointTenant,
-        robot_username=RobotUserName,
-        robot_password=RobotPassword
+        RobotUserName=RobotUserName,
+        RobotPassword=RobotPassword
     )
 
     #Deleting local files: 
-    os.remove(output_pdf_path)
-
-
-
+    #os.remove(output_pdf_path)
 
     return {
         "out_Text": f"Det virker",

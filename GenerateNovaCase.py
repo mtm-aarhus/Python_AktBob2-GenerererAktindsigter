@@ -1,21 +1,18 @@
 def invoke_GenerateNovaCase(Arguments_GenerateNovaCase):
-
-    print("Opretter Nova Aktindsigtssagen")
-    from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
     import uuid
     import requests
     import json
     import os
     from GetKmdAcessToken import GetKMDToken
     from datetime import datetime
-    orchestrator_connection = OrchestratorConnection("Henter Assets", os.getenv('OpenOrchestratorSQL'),os.getenv('OpenOrchestratorKey'), None)
-    # henter in_argumenter:
-    #KMDNovaURL = Arguments_GenerateNovaCase.get("in_KMDNovaURL")
-    KMDNovaURL = "https://novaapi.kmdnova.dk/api"
-    KMD_access_token = GetKMDToken(orchestrator_connection)
-    #Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
-    Sagsnummer = "S2021-456011"
-    ### --- Henter caseinfo --- ###
+    
+     # henter in_argumenter:
+    Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
+    KMDNovaURL = Arguments_GenerateNovaCase.get("in_KMDNovaURL")
+    KMD_access_token = Arguments_GenerateNovaCase.get("in_NovaToken")
+    AktSagsURL = Arguments_GenerateNovaCase.get("in_AktSagsURL")
+ 
+     ### --- Henter caseinfo --- ###
     TransactionID = str(uuid.uuid4())
 
     # Define API URL
@@ -175,7 +172,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase):
         "caseAttributes": {
             "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer}",
             "caseDate": CurrentDate,
-            "description": "GO: https://google.com" #Skal ændres til GO aktindsigtssags link
+            "description": AktSagsURL
         },
         "caseClassification": {
             "kleNumber": {"code": "02.00.00"}, #Fast - men spørg Byggeri om det rigtige anvendes
