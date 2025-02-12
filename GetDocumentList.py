@@ -123,7 +123,7 @@ def invoke(Arguments, go_Session):
 
     # Inputs
     site_relative_path = "/Teams/tea-teamsite10506/Delte Dokumenter"
-    download_path = os.path.join(os.path.expanduser("~"), "Downloads")
+    download_path = os.path.join("C:\\Users", os.getlogin(), "Downloads")
 
 
     # SharePoint authentication and client setup
@@ -158,99 +158,88 @@ def invoke(Arguments, go_Session):
             # Download the file
             with open(local_file_path, "wb") as local_file:
                 client.web.get_file_by_server_relative_path(sharepoint_file_url).download(local_file).execute_query()
-
             return local_file_path
         except Exception as e:
             raise Exception(f"Error downloading file from SharePoint: {e}")
 
 
     # Main logic
-    try:
-        # Authenticate to SharePoint
-        client = sharepoint_client(RobotUserName, RobotPassword, SharePointUrl)
+    # Authenticate to SharePoint
+    client = sharepoint_client(RobotUserName, RobotPassword, SharePointUrl)
 
-        # Construct paths for Overmappe and Undermappe without over-encoding
-        overmappe_url = f"{site_relative_path}/Dokumentlister/{Overmappe}"
-        print(f"Overmappe URL: {overmappe_url}")
-        overmappe_folder = client.web.get_folder_by_server_relative_url(overmappe_url)
-        client.load(overmappe_folder)
-        client.execute_query()
+    # Construct paths for Overmappe and Undermappe without over-encoding
+    overmappe_url = f"{site_relative_path}/Dokumentlister/{Overmappe}"
+    print(f"Overmappe URL: {overmappe_url}")
+    overmappe_folder = client.web.get_folder_by_server_relative_url(overmappe_url)
+    client.load(overmappe_folder)
+    client.execute_query()
 
 
-        undermappe_url = f"{overmappe_url}/{Undermappe}"
-        undermappe_folder = client.web.get_folder_by_server_relative_url(undermappe_url)
-        client.load(undermappe_folder)
-        client.execute_query()
+    undermappe_url = f"{overmappe_url}/{Undermappe}"
+    undermappe_folder = client.web.get_folder_by_server_relative_url(undermappe_url)
+    client.load(undermappe_folder)
+    client.execute_query()
 
-        # Fetch files in the Undermappe folder
-        print("Fetching files from the folder...")
-        files = undermappe_folder.files
-        client.load(files)
-        client.execute_query()
+    # Fetch files in the Undermappe folder
+    print("Fetching files from the folder...")
+    files = undermappe_folder.files
+    client.load(files)
+    client.execute_query()
 
-        # Print and process file names
-        data_table = []  # To store file information with dates
+    # Print and process file names
+    data_table = []  # To store file information with dates
 
-        for file in files:
-            file_name = file.properties["Name"]
+    for file in files:
+        file_name = file.properties["Name"]
 
-            dokument_date = None  # Initialize dokument_date
+        dokument_date = None  # Initialize dokument_date
 
-            if "_" in file_name:
-                try:
-                    # Extract the part after the first underscore
-                    date_part = file_name.split("_")[1]
-                    date_str = date_part.split(".")[0]  # Part before the first dot
-                    dokument_date = datetime.strptime(date_str, "%d-%m-%Y")
-                except (IndexError, ValueError):
-                    print(f"  -> Error parsing date from: {file_name}. Defaulting to 01-01-2023")
-                    dokument_date = datetime.strptime("01-01-2023", "%d-%m-%Y")
-            else:
-                print(f"  -> No underscore found in: {file_name}. Defaulting to 01-01-2023")
-                dokument_date = datetime.strptime("01-01-2023", "%d-%m-%Y")
-
-            data_table.append({
-                "FileName": file_name,
-                "DocumentDate": dokument_date.strftime('%d-%m-%Y')
-            })
-
-        # Sort files by date in descending order
-        data_table = sorted(
-            data_table, 
-            key=lambda x: datetime.strptime(x["DocumentDate"], "%d-%m-%Y"), 
-            reverse=True
-        )
-
-        for entry in data_table:
-            print(f" - {entry['FileName']} (Date: {entry['DocumentDate']})")
-
-        # Download the newest file if available
-        if data_table:
-            newest_file = data_table[0]
-            newest_file_name = newest_file["FileName"]
-            DokumentlisteDatoString = newest_file["DocumentDate"] 
-            sharepoint_file_url = f"{undermappe_url}/{newest_file_name}"
-
-            local_file_path = download_file_from_sharepoint(client, sharepoint_file_url)
-
-        if local_file_path.endswith('.xlsx'):
+        if "_" in file_name:
             try:
-                # Read Excel file into a Pandas DataFrame
-                dt_DocumentList = pd.read_excel(local_file_path)
-                os.remove(local_file_path)
-                # Return the DataFrame to be used later
-                return dt_DocumentList
-            except Exception as e:
-                raise Exception(f"Failed to load Excel file: {e}")
+                # Extract the part after the first underscore
+                date_part = file_name.split("_")[1]
+                date_str = date_part.split(".")[0]  # Part before the first dot
+                dokument_date = datetime.strptime(date_str, "%d-%m-%Y")
+            except (IndexError, ValueError):
+                print(f"  -> Error parsing date from: {file_name}. Defaulting to 01-01-2023")
+                dokument_date = datetime.strptime("01-01-2023", "%d-%m-%Y")
         else:
-            raise Exception(f"Downloaded file is not an Excel file: {local_file_path}")
+            print(f"  -> No underscore found in: {file_name}. Defaulting to 01-01-2023")
+            dokument_date = datetime.strptime("01-01-2023", "%d-%m-%Y")
 
-    except Exception as e:
-        return None(f"Error: {e}")
-    
-    finally:
-        return {
-        "sagstitel": sagstitel,
-        "dt_DocumentList": dt_DocumentList,
-        "out_DokumentlisteDatoString": DokumentlisteDatoString
-        }
+        data_table.append({
+            "FileName": file_name,
+            "DocumentDate": dokument_date.strftime('%d-%m-%Y')
+        })
+
+    # Sort files by date in descending order
+    data_table = sorted(
+        data_table, 
+        key=lambda x: datetime.strptime(x["DocumentDate"], "%d-%m-%Y"), 
+        reverse=True
+    )
+
+    for entry in data_table:
+        print(f" - {entry['FileName']} (Date: {entry['DocumentDate']})")
+
+    # Download the newest file if available
+    if data_table:
+        newest_file = data_table[0]
+        newest_file_name = newest_file["FileName"]
+        DokumentlisteDatoString = newest_file["DocumentDate"] 
+        sharepoint_file_url = f"{undermappe_url}/{newest_file_name}"
+
+        local_file_path = download_file_from_sharepoint(client, sharepoint_file_url)
+    if local_file_path.endswith('.xlsx'):
+        # Read Excel file into a Pandas DataFrame
+        dt_DocumentList = pd.read_excel(local_file_path)
+        os.remove(local_file_path)
+        # Return the DataFrame to be used later
+    else:
+        raise Exception(f"Downloaded file is not an Excel file: {local_file_path}")
+
+    return {
+    "sagstitel": sagstitel,
+    "dt_DocumentList": dt_DocumentList,
+    "out_DokumentlisteDatoString": DokumentlisteDatoString
+    }
