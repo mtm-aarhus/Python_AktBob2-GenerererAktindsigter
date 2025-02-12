@@ -7,13 +7,12 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload):
     import os
     import time
     from datetime import datetime
-    from msal import PublicClientApplication
     from office365.sharepoint.client_context import ClientContext
     from office365.sharepoint.sharing.links.kind import SharingLinkKind
     from office365.sharepoint.webs.web import Web
     from office365.runtime.auth.user_credential import UserCredential
     import json
-    from SendSMTPMail import send_email, EmailAttachment
+    from SendSMTPMail import send_email
     import shutil
     import uuid
     from SharePointUploader import upload_file_to_sharepoint

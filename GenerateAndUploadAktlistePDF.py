@@ -5,7 +5,6 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF):
     from openpyxl.utils import get_column_letter
     from openpyxl.styles import Alignment
     from openpyxl.worksheet.table import Table, TableStyleInfo
-    from PIL import ImageFont, ImageDraw, Image
     import pandas as pd
     from datetime import datetime 
     import time        
@@ -15,10 +14,7 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF):
     from openpyxl.utils import get_column_letter
     from openpyxl.worksheet.table import Table, TableStyleInfo
     from openpyxl.worksheet.dimensions import ColumnDimension
-    from PIL import ImageFont  
     import textwrap
-    import math
-    import reportlab
     # ReportLab Imports
     from reportlab.pdfgen import canvas as reportlab_canvas
     from reportlab.lib.pagesizes import A4, landscape
