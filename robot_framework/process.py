@@ -95,7 +95,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     # ---- Run "GetDocumentList" ----
     GetDocumentList_Output_arguments = GetDocumentList.invoke(Arguments, go_session)
     Sagstitel = GetDocumentList_Output_arguments.get("sagstitel")
-    orchestrator_connection.log_info("Sagstitel:", Sagstitel)
+    orchestrator_connection.log_info(f"Sagstitel: {Sagstitel}")
     dt_DocumentList = GetDocumentList_Output_arguments.get("dt_DocumentList")
     DokumentlisteDatoString = GetDocumentList_Output_arguments.get("out_DokumentlisteDatoString")
 
@@ -178,7 +178,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     PrepareEachDocumentToUpload_Output_arguments = PrepareEachDocumentToUpload.invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload)
     dt_AktIndex = PrepareEachDocumentToUpload_Output_arguments.get("out_dt_AktIndex")
-
     orchestrator_connection.log_info(f"Sagsnummer:{Sagsnummer}")
 
     # ---- Run "Generate&UploadAktlistPDF" ----
@@ -225,6 +224,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     GenererSagsoversigt_Output_arguments = GenerererSagsoversigt.invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt)
     Test = GenererSagsoversigt_Output_arguments.get("out_Text")
     orchestrator_connection.log_info(Test)
+    orchestrator_connection.log_info(f"Sagsnummer:{Sagsnummer}")
 
 
     if NovaSag == True: 
