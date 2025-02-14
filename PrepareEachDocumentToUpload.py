@@ -154,7 +154,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         response = requests.post("https://core.filarkiv.dk/api/v1/Documents", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
                         if response.status_code in [200, 201]:
                             Filarkiv_DocumentID = response.json().get("id")
-                            orchestrator_connection.log_info("Anvender følgende Filarkiv_DocumentID:", Filarkiv_DocumentID)
+                            orchestrator_connection.log_info(f"Anvender følgende Filarkiv_DocumentID: {Filarkiv_DocumentID}")
                         else:
                             print("Failed to create document. Response:", response.text)
             else:
