@@ -1,4 +1,6 @@
-def invoke(Arguments, go_Session): 
+from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
+
+def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnection): 
     import requests
     import uuid
     import re
@@ -52,7 +54,7 @@ def invoke(Arguments, go_Session):
 
     # --- Check if it's a Geo-sag ---
     if GeoSag:
-        print("Sagen er en Geo-sag, henter derfor sagstitel i GO")
+        orchestrator_connection.log_info("Sagen er en Geo-sag, henter derfor sagstitel i GO")
         url = f"https://ad.go.aarhuskommune.dk/_goapi/Cases/Metadata/{Sagsnummer}"
 
         try:
@@ -73,7 +75,7 @@ def invoke(Arguments, go_Session):
 
     # --- Check if it's a Nova-sag ---
     elif NovaSag:
-        print("Sagen er en Novasag, henter Sagstitel i NOVA")
+        orchestrator_connection.log_info("Sagen er en Novasag, henter Sagstitel i NOVA")
         TransactionID = str(uuid.uuid4())
         url = f"{KMDNovaURL}/Case/GetList?api-version=2.0-Case"
 
@@ -220,7 +222,7 @@ def invoke(Arguments, go_Session):
     )
 
     for entry in data_table:
-        print(f" - {entry['FileName']} (Date: {entry['DocumentDate']})")
+        orchestrator_connection.log_info(f" - {entry['FileName']} (Date: {entry['DocumentDate']})")
 
     # Download the newest file if available
     if data_table:

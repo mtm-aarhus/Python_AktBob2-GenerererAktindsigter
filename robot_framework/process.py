@@ -93,7 +93,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
 
     # ---- Run "GetDocumentList" ----
-    GetDocumentList_Output_arguments = GetDocumentList.invoke(Arguments, go_session)
+    GetDocumentList_Output_arguments = GetDocumentList.invoke(Arguments, go_session,orchestrator_connection)
     Sagstitel = GetDocumentList_Output_arguments.get("sagstitel")
     orchestrator_connection.log_info(f"Sagstitel: {Sagstitel}")
     dt_DocumentList = GetDocumentList_Output_arguments.get("dt_DocumentList")
