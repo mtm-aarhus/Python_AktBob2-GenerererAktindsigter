@@ -1,4 +1,5 @@
-def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF):
+from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
+def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF, orchestrator_connection: OrchestratorConnection):
     import os
     import shutil
     from openpyxl import Workbook
@@ -117,7 +118,7 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF):
                 os.makedirs(downloads_folder)
             destination_path = os.path.join(downloads_folder, os.path.basename(file_path))
             shutil.move(file_path, destination_path)
-            print(f"File moved to {destination_path}")
+            orchestrator_connection.log_info(f"File moved to {destination_path}")
         except Exception as e:
                 raise Exception(f"Error creating Excel file: {str(e)}")
         
@@ -291,7 +292,7 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF):
             # Build the PDF with the table content
             doc.build([report_table])
 
-            print(f"PDF saved to {output_pdf_path}")
+            orchestrator_connection.log_info(f"PDF saved to {output_pdf_path}")
         
         except Exception as e:
             raise RuntimeError(f"Error in generating pdf: {str(e)}")

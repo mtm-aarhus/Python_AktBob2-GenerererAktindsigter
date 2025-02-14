@@ -1,4 +1,6 @@
-def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
+from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
+
+def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_connection: OrchestratorConnection):
     import os
     from office365.sharepoint.client_context import ClientContext
     from office365.runtime.auth.user_credential import UserCredential
@@ -93,7 +95,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
             except Exception as retry_exception:
                 print(f"Retry {attempt + 1} for {Sagsnummer} failed: {retry_exception}")
                 if attempt == max_retries - 1:
-                    print(f"Failed to fetch metadata after {max_retries} retries for {Sagsnummer}.")
+                    orchestrator_connection.log_info(f"Failed to fetch metadata after {max_retries} retries for {Sagsnummer}.")
                     return "Unknown", None  # Return default values if all retries fail
                 time.sleep(5)  # Wait before the next retry
     
@@ -140,11 +142,11 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
                     try:
                         Startdato = datetime.fromisoformat(Startdato)  # Convert from 'YYYY-MM-DDTHH:MM:SS' to datetime
                     except ValueError:
-                        print(f"Invalid date format for Startdato: {Startdato}")
+                        orchestrator_connection.log_info(f"Invalid date format for Startdato: {Startdato}")
                         Startdato = None  # If format is wrong, set to None
 
             else:
-                print("Failed to fetch Sagstitel from NOVA. Status Code:", response.status_code)
+                orchestrator_connection.log_info("Failed to fetch Sagstitel from NOVA. Status Code:", response.status_code)
                 sagstitel, Startdato = None, None
         except Exception as e:
             print("Failed to fetch Sagstitel (Nova):", str(e))
@@ -186,7 +188,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
                 elif re.fullmatch(novasag_pattern, Sagsnummer):
                     Sagstitel, Startdato = GetNovaCaseinfo(Sagsnummer)
                 else:
-                    print("Det er hverken et geosagsnummer eller Novasagsnummer")
+                    orchestrator_connection.log_info("Det er hverken et geosagsnummer eller Novasagsnummer")
 
                 data_table.append({
                     "Sagsnummer": Sagsnummer,  
@@ -346,7 +348,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
         # Build the PDF with the table content
         doc.build([report_table])
 
-        print(f"PDF saved to {output_pdf_path}")
+        orchestrator_connection.log_info(f"PDF saved to {output_pdf_path}")
 
 
 
@@ -374,7 +376,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
 
 
         else:
-            print("No data found. PDF generation skipped.")
+            orchestrator_connection.log_info("No data found. PDF generation skipped.")
 
     except Exception as e:
         raise Exception(f"An error occurred: {e}")
@@ -397,5 +399,5 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt):
         raise Exception(f"Could not delete local file: {e}")
 
     return {
-        "out_Text": f"Det virker",
+        "out_Text": f"Sagsoversigt oprettet",
     }

@@ -1,4 +1,5 @@
-def invoke_GenerateNovaCase(Arguments_GenerateNovaCase):
+from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
+def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: OrchestratorConnection):
     import uuid
     import requests
     import json
@@ -217,7 +218,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase):
         
         # Handle response
         if response.status_code == 200:
-            print("Request Successful. Status Code:", response.status_code)
+            orchestrator_connection.log_info("Request Successful. Status Code:", response.status_code)
         else:
             print("Failed to send request. Status Code:", response.status_code)
             print("Response Data:", response.text)  # Print error response
