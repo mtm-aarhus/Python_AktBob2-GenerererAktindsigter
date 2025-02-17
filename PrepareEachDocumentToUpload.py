@@ -693,6 +693,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             else:
                 orchestrator_connection.log_info("Dokumentet skal ikke med i ansøgningen")
                 Titel = f"{AktID:04} - {DokumentID} - {Titel}"
+                DokumentType = "pdf"
                 
             #Ændre dokumenttitlen:
             Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
