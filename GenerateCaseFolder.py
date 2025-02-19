@@ -124,8 +124,6 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder, orchestrator_connect
             try:
                 # Send POST request to create a new case
                 response = requests.post(url, headers=headers, data=json_payload)
-                print("Response Status Code:", response.status_code)
-                print("Response Text:", response.text)
                 response_json = response.json()
                 Out_FilarkivCaseID = response_json["id"]
 
@@ -157,7 +155,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder, orchestrator_connect
                 "Authorization": f"Bearer {Filarkiv_access_token}",
                 "Content-Type": "application/Json"
             }
-            print(json_payload)
+
             try:
                 # Send POST request to create a new case
                 response = requests.post(url, headers=headers, data=json_payload)
