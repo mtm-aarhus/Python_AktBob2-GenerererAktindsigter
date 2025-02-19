@@ -155,7 +155,9 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder, orchestrator_connect
                 "Authorization": f"Bearer {Filarkiv_access_token}",
                 "Content-Type": "application/Json"
             }
-
+            print(json_payload)
+            print(url)
+            print(headers)
             try:
                 # Send POST request to create a new case
                 response = requests.post(url, headers=headers, data=json_payload)
