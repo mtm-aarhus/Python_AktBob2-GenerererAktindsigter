@@ -77,7 +77,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder, orchestrator_connect
                     "caseTypeId": CaseTypeId,
                     "caseStatusId": CaseStatusId,
                     "archiveId": archiveId,
-                    "caseReference": DeskProID,
+                    "caseReference": str(DeskProID),
                     "securityClassificationLevel": 0  
                 }
 
@@ -107,7 +107,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder, orchestrator_connect
                 "caseTypeId": CaseTypeId,
                 "caseStatusId": CaseStatusId,
                 "archiveId": archiveId,
-                "caseReference": DeskProID,
+                "caseReference": str(DeskProID),
                 "securityClassificationLevel": 0
             }
 
@@ -144,7 +144,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder, orchestrator_connect
                 "caseTypeId": CaseTypeId,
                 "caseStatusId": CaseStatusId,
                 "archiveId": archiveId,
-                "caseReference": DeskProID,
+                "caseReference": str(DeskProID),
                 "securityClassificationLevel": 0
             }
 
