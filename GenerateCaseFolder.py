@@ -128,7 +128,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder, orchestrator_connect
                 Out_FilarkivCaseID = response_json["id"]
 
             except Exception as e:
-                raise Exception("Kunne ikke oprette sagen på ny:", str(e))
+                raise Exception("Kunne ikke oprette sagen på ny.......", str(e))
 
 
         else:
