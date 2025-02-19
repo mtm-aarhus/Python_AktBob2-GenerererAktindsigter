@@ -10,10 +10,7 @@ import PrepareEachDocumentToUpload
 import GenerateAndUploadAktlistePDF
 import GenerererSagsoversigt
 import GenerateNovaCase
-from email.message import EmailMessage
-from getpass import getpass
-import smtplib
-from io import BytesIO
+import json
 from SendSMTPMail import send_email, EmailAttachment  # Import the function and dataclass
 
 #   ---- Henter Assets ----
@@ -56,7 +53,6 @@ go_session = GO_Session(GoUsername, GoPassword)
 
 
 #---- Henter kø-elementer ----
-#GO
 Sagsnummer = "GEO-2024-043144"
 MailModtager = "Gujc@aarhus.dk"
 DeskProID = "2088"

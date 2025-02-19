@@ -22,7 +22,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
 
     orchestrator_connection.log_trace("Running process.")
-
     GraphAppIDAndTenant = orchestrator_connection.get_credential("GraphAppIDAndTenant")
     SharePointAppID = GraphAppIDAndTenant.username
     SharePointTenant = GraphAppIDAndTenant.password
@@ -63,6 +62,8 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
        #---- Henter kø-elementer ----
     queue = json.loads(queue_element.data)
+    orchestrator_connection.log_info("Assigning variables")
+
     Sagsnummer = queue.get("Sagsnummer")
     MailModtager = queue.get("MailModtager")
     DeskProID = queue.get("DeskProID")
@@ -74,6 +75,16 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     NovaSag = queue.get("NovaSag")
     AktSagsURL = queue.get("AktSagsURL")
 
+
+    orchestrator_connection.log_info(f"Sagsnummer: {Sagsnummer}")
+    orchestrator_connection.log_info(f"DeskProID: {DeskProID}")
+    orchestrator_connection.log_info(f"DeskProTitel: {DeskProTitel}")
+    orchestrator_connection.log_info(f"PodioID{PodioID}")
+    orchestrator_connection.log_info(f"Overmappe{Overmappe}")
+    orchestrator_connection.log_info(f"Undermappe{Undermappe}")
+    orchestrator_connection.log_info(f"GeoSag{GeoSag}")
+    orchestrator_connection.log_info(f"NovaSag{NovaSag}")
+    orchestrator_connection.log_info(f"AktSagsURL{AktSagsURL}")
 
     # ---- Run "GetDokumentlist" ----
     Arguments = {
