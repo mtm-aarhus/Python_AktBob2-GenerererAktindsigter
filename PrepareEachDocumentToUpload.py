@@ -535,18 +535,11 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             Dokumentkategori = str(row["Dokumentkategori"])
             Aktstatus = str(row["Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)"])
             Begrundelse = str(row["Begrundelse hvis nej eller delvis"])
-            # Dokumentdato =row['Dokumentdato']
-            # if isinstance(Dokumentdato, pd.Timestamp):
-            #     Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
-            # else:
-            #     Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
-            Dokumentdato = row['Dokumentdato']
+            Dokumentdato =row['Dokumentdato']
             if isinstance(Dokumentdato, pd.Timestamp):
                 Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
-            elif isinstance(Dokumentdato, str):
-                Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
             else:
-                raise ValueError(f"Unexpected data type: {type(Dokumentdato)}")
+                Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
             
             IsDocumentPDF = True
             orchestrator_connection.log_info(f"AktID til debug: {AktID}")
@@ -745,12 +738,18 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             Aktstatus = str(row["Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)"])
             Begrundelse = str(row["Begrundelse hvis nej eller delvis"])
 
-            Dokumentdato =row['Dokumentdato']
+            # Dokumentdato =row['Dokumentdato']
+            # if isinstance(Dokumentdato, pd.Timestamp):
+            #     Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
+            # else:
+            #     Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
+            Dokumentdato = row['Dokumentdato']
             if isinstance(Dokumentdato, pd.Timestamp):
                 Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
-            else:
+            elif isinstance(Dokumentdato, str):
                 Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
-            #Dokumentdato = datetime.strptime(row["Dokumentdato"], "%d-%m-%Y").strftime("%d-%m-%Y")
+            else:
+                raise ValueError(f"Unexpected data type: {type(Dokumentdato)}")
             IsDocumentPDF = True
             print(Dokumentdato)
             orchestrator_connection.log_info(f"AktID til debug: {AktID}")
