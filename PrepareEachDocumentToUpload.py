@@ -552,7 +552,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
             Titel = calculate_available_title_length(base_path, Overmappe, Undermappe, AktID, DokumentID, Titel)
 
-            print("Adjusted Title:", Titel)
 
             if (("ja" in Aktstatus.lower() or "delvis" in Aktstatus.lower()) 
                 and DokumentID != "" 
@@ -757,8 +756,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             Titel = sanitize_title(Titel)
 
             Titel = calculate_available_title_length(base_path, Overmappe, Undermappe, AktID, DokumentID, Titel)
-
-            print("Adjusted Title:", Titel)
 
             if (("ja" in Aktstatus.lower() or "delvis" in Aktstatus.lower()) 
                 and DokumentID != "" 
