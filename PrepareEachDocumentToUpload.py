@@ -750,7 +750,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             if isinstance(Dokumentdato, pd.Timestamp):
                 Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
             elif isinstance(Dokumentdato, str):
-                Dokumentdato = datetime.strptime(Dokumentdato, "%d-%m-%y").strftime("%d-%m-%Y")
+                Dokumentdato = datetime.strptime(Dokumentdato, "%d-%m-%Y").strftime("%d-%m-%Y")
             else:
                 raise ValueError(f"Unexpected data type: {type(Dokumentdato)}")
             IsDocumentPDF = True
