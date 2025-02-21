@@ -255,7 +255,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     # ---- Run "SendFilarkivCaseId&PodioIDToPodio"
     # Define the API endpoint
     try:
-        url = "https://aktbob-external-api.grayglacier-2d22de15.northeurope.azurecontainerapps.io/Api/CheckOCRScreeningStatus/Case"
+        url = "https://aktbob-external-api.grayglacier-2d22de15.northeurope.azurecontainerapps.io/Api/Jobs/CheckOCRScreeningStatus"
 
         # Define headers
         headers = {

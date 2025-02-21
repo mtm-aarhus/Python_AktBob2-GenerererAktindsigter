@@ -752,7 +752,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             else:
                 raise ValueError(f"Unexpected data type: {type(Dokumentdato)}")
             IsDocumentPDF = True
-            print(Dokumentdato)
             orchestrator_connection.log_info(f"AktID til debug: {AktID}")
 
             # Declare the necessary variables
