@@ -898,7 +898,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                
 
             else:
-                print("Dokumentet skal ikke med i ansøgningen")
                 Titel = f"{AktID:04} - {DokumentID} - {Titel}"
                 DokumentType = "pdf"    
             
