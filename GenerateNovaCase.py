@@ -226,5 +226,5 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         raise Exception("Failed to fetch Sagstitel (Nova):", str(e))
 
     return {
-    "Test": "Aktindsigtssagen er oprettet i Nova"
+    "out_Text": "Aktindsigtssagen er oprettet i Nova"
     }
