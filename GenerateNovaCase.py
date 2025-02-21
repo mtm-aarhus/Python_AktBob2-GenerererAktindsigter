@@ -218,7 +218,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         
         # Handle response
         if response.status_code == 200:
-            orchestrator_connection.log_info("Request Successful. Status Code:", response.status_code)
+            orchestrator_connection.log_info(f"Request Successful. Status Code:{response.status_code}")
         else:
             print("Failed to send request. Status Code:", response.status_code)
             print("Response Data:", response.text)  # Print error response
