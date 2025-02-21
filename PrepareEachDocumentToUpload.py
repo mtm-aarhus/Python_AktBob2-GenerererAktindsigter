@@ -745,8 +745,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             #     Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
             
             Dokumentdato = row['Dokumentdato']
-            print(Dokumentdato)
-            print(type(Dokumentdato))
             if isinstance(Dokumentdato, pd.Timestamp):
                 Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
             elif isinstance(Dokumentdato, str):
@@ -902,7 +900,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             else:
                 print("Dokumentet skal ikke med i ansøgningen")
                 Titel = f"{AktID:04} - {DokumentID} - {Titel}"
-                
+                DokumentType = "pdf"    
+            
             #Ændre dokumenttitlen:
             Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
 
