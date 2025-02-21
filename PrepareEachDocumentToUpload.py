@@ -743,7 +743,10 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             #     Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
             # else:
             #     Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
+            
             Dokumentdato = row['Dokumentdato']
+            print(Dokumentdato)
+            print(type(Dokumentdato))
             if isinstance(Dokumentdato, pd.Timestamp):
                 Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
             elif isinstance(Dokumentdato, str):
