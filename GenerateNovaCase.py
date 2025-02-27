@@ -171,7 +171,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "uuid": Uuid  
         },
         "caseAttributes": {
-            "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer}",
+            "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer} - Se beskrivelse",#spørg Byggeri om det rigtige anvendes
             "caseDate": CurrentDate,
             "description": AktSagsURL
         },

@@ -200,7 +200,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
                     data = {
                             "fileId": FileID,
-                            "priority": 1000
+                            "priority": 10000
                     }
                     response = requests.post(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
                     if response.status_code in [200, 201]:
