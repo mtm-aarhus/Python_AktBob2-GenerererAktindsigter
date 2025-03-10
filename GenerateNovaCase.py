@@ -211,7 +211,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             }
         ]
     }
-
+    print(payload)
     # Make the API request
     try:
         response = requests.post(url, headers=headers, json=payload)
