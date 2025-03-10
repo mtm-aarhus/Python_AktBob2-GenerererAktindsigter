@@ -194,9 +194,21 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF, 
                 leading=10,
                 spaceAfter=2,
             )
+            cell_style_dok_id = ParagraphStyle(
+                'cell_style_dok_id',
+                parent=styles['Normal'],
+                fontName='Helvetica',
+                fontSize=8,
+                textColor=reportlab_colors.black,
+                alignment=1,  # CENTER
+                leading=10,
+                spaceAfter=2,
+                valign='TOP'  # Ensures text starts from the top
+            )
+
 
             # Column configuration
-            column_widths = [50, 150, 80, 70, 80, 60, 55, 60, 60, 100]
+            column_widths = [50, 150, 80, 70, 75, 60, 50, 65, 65, 100]
             char_limits = [10, 30, 15, 12, 10, 10, 9, 12, 12, 20]
 
             headers = ["Akt ID", "Filnavn", "Kategori", "Dato", "Dok ID", "Bilag til Dok ID", 
@@ -212,7 +224,7 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF, 
                     Paragraph(wrap_text(row.get("Filnavn", ""), char_limits[1]), cell_style),
                     Paragraph(wrap_text(row.get("Dokumentkategori", ""), char_limits[2]), cell_style),
                     Paragraph(wrap_text(row.get("Dokumentdato", "").strftime("%d-%m-%Y") if isinstance(row.get("Dokumentdato"), pd.Timestamp) else row.get("Dokumentdato", ""), char_limits[3]), cell_style),
-                    Paragraph(wrap_text(row.get("Dok ID", ""), char_limits[4]), cell_style),
+                    Paragraph(wrap_text(row.get("Dok ID", ""), char_limits[4]), cell_style_dok_id),
                     Paragraph(wrap_text(row.get("Bilag til Dok ID", ""), char_limits[5]), cell_style),
                     Paragraph(wrap_text(row.get("Bilag", ""), char_limits[6]), cell_style),
                     Paragraph(wrap_text(row.get("Omfattet af aktindsigt?", ""), char_limits[7]), cell_style),
