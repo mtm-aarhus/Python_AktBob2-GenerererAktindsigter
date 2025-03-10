@@ -211,13 +211,13 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             }
         ]
     }
-    print(payload)
     # Make the API request
     try:
         response = requests.post(url, headers=headers, json=payload)
         
         # Handle response
         if response.status_code == 200:
+            print(response.text)
             orchestrator_connection.log_info(f"Request Successful. Status Code:{response.status_code}")
         else:
             print("Failed to send request. Status Code:", response.status_code)
