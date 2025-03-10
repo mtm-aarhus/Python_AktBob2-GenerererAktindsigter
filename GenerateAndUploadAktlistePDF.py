@@ -90,6 +90,8 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF, 
                     if value and col_index == 1:  # Specific to "Filnavn" column
                         lines = textwrap.wrap(str(value), width=70)  # Adjust line wrap width
                         max_lines = max(max_lines, len(lines))
+                    if col_index == 4:  # Adjust height for DOKID
+                        worksheet.row_dimensions[row_index + 2].height = 20
 
                 # Dynamically adjust row height based on line count
                 worksheet.row_dimensions[row_index + 2].height = 15 * max_lines
