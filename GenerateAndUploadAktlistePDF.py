@@ -203,7 +203,8 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF, 
                 alignment=1,  # CENTER
                 leading=10,
                 spaceAfter=2,
-                valign='TOP'  # Ensures text starts from the top
+                valign='TOP',
+                wordWrap= 'CJK'  # Ensures text starts from the top
             )
 
 
