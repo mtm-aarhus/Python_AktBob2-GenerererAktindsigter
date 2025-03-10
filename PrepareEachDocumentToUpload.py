@@ -539,7 +539,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             if isinstance(Dokumentdato, pd.Timestamp):
                 Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
                 print(f"følgende dokument: {Titel} - har følgende dato:({type(Dokumentdato)})")
-                else:
+            else:
                 print(f"følgende dokument: {Titel} - har følgende dato:({type(Dokumentdato)})")
                 Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
             
