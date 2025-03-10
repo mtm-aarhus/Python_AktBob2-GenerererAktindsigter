@@ -512,7 +512,9 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
     # ---- If-statement som tjekker om det er en GeoSag eller NovaSag ----
     if GeoSag == True:
         #Sagen er en geo sag 
-        dt_DocumentList['Dokumentdato'] = pd.to_datetime(dt_DocumentList['Dokumentdato'], errors='coerce')
+        #dt_DocumentList['Dokumentdato'] = pd.to_datetime(dt_DocumentList['Dokumentdato'], errors='coerce')
+        dt_DocumentList['Dokumentdato'] = pd.to_datetime(dt_DocumentList['Dokumentdato'], format="%d-%m-%Y", errors='coerce')
+
         with requests.Session() as session:
             session.auth = HttpNtlmAuth(GoUsername, GoPassword)
             session.headers.update({"Content-Type": "application/json"}) 
