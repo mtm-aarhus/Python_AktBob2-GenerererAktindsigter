@@ -179,7 +179,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "kleNumber": {"code": "02.00.00"}, #Fast - men spørg Byggeri om det rigtige anvendes
             "proceedingFacet": {"code": "A53"}#Fast - men spørg Byggeri om det rigtige anvendes
         },
-        "state": progressState, 
+        "state": "Afgjort", 
         "sensitivity": "Følsomme",# Fast
         "caseworker": { #Fast - men spørg Byggeri om det rigtige anvendes
             "kspIdentity": {
