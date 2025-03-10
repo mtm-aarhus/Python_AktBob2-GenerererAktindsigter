@@ -196,7 +196,7 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF, 
             )
 
             # Column configuration
-            column_widths = [50, 150, 80, 70, 60, 60, 55, 70, 70, 100]
+            column_widths = [50, 150, 80, 70, 80, 60, 55, 60, 60, 100]
             char_limits = [10, 30, 15, 12, 10, 10, 9, 12, 12, 20]
 
             headers = ["Akt ID", "Filnavn", "Kategori", "Dato", "Dok ID", "Bilag til Dok ID", 
