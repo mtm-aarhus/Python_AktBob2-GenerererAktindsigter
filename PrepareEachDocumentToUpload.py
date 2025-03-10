@@ -541,6 +541,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 print(f"følgende dokument: {Titel} - har følgende dato:({type(Dokumentdato)})")
             else:
                 print(f"følgende dokument: {Titel} - har følgende dato:({type(Dokumentdato)})")
+                print(Dokumentdato)
                 Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
             
             IsDocumentPDF = True
