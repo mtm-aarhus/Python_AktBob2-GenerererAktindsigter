@@ -538,7 +538,9 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             Dokumentdato =row['Dokumentdato']
             if isinstance(Dokumentdato, pd.Timestamp):
                 Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
-            else:
+                print(f"følgende dokument: {Titel} - har følgende dato:({type(Dokumentdato)})")
+                else:
+                print(f"følgende dokument: {Titel} - har følgende dato:({type(Dokumentdato)})")
                 Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
             
             IsDocumentPDF = True
