@@ -572,7 +572,9 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 Feedback = Metadata["Feedback"]
                 file_path = Metadata["file_path"]
                 FilIsPDF = False 
-
+                CanDocumentBeConverted = False
+                conversionPossible = False
+                
                 # Tjekker om Goref-fil
                 if ".goref" in file_path:
                     
@@ -653,9 +655,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             print("No file was downloaded.")
                         
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)  
-               
-                        CanDocumentBeConverted = False
-                        conversionPossible = False
                             
                         # List of supported file extensions
                         supported_extensions = [
