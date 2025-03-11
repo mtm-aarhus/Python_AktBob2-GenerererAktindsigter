@@ -411,32 +411,36 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         #         raise Exception(f"Error deleting {file_path}: {e}")
         # Append the row to the DataFrame
         
+        # Append the row to the DataFrame
         dt_AktIndex = pd.concat([dt_AktIndex, pd.DataFrame([row_to_add])], ignore_index=True)
 
         # Sort and reset index
         dt_AktIndex = dt_AktIndex.sort_values(by="Akt ID", ascending=True).reset_index(drop=True)
 
-
-        non_pdf_df = dt_AktIndex[dt_AktIndex["IsDocumentPDF"] != True].copy()  # Filter safely
-
-        #2. Remove file extensions from "Filnavn"
-        for index, row in non_pdf_df.iterrows():
-            parts = row["Filnavn"].rsplit(".", 1)  # Split at last dot
-
-            if len(parts) == 2:  # If there's an extension
-                filename_without_extension, extension = parts
-                non_pdf_df.at[index, "Filnavn"] = filename_without_extension  # Update name
-
-        #  3. Convert to list (without duplicates)
-        ListOfNonPDFDocs = list(set(non_pdf_df["Filnavn"]))
-
-        #  Print final list of unique non-PDF document names
-        print("Non-PDF Documents:", ListOfNonPDFDocs)
-
-        #  4. Delete the non-PDF files
+        # ✅ 1. Prepare base path for deletion
         base_path = os.path.join("C:\\", "Users", os.getlogin(), "Downloads")
 
-        for file_name in ListOfNonPDFDocs:
+        # ✅ 2. Initialize a set to store unique non-PDF document names
+        non_pdf_docs = set()
+
+        # ✅ 3. Loop through all files and process them correctly
+        for index, row in dt_AktIndex.iterrows():
+            file_name = row["Filnavn"]  # Original filename
+
+            # ✅ If it's NOT a PDF, remove the file extension
+            if not row["IsDocumentPDF"]:
+                parts = file_name.rsplit(".", 1)  # Split at last dot
+
+                if len(parts) == 2:  # If there's an extension
+                    filename_without_extension, extension = parts
+                    print(f"Updating 'Filnavn': {file_name} → {filename_without_extension}")
+                    dt_AktIndex.at[index, "Filnavn"] = filename_without_extension  # ✅ Update DataFrame
+                    file_name = filename_without_extension  # ✅ Use updated name
+
+                # ✅ Add the cleaned non-PDF file name to the list
+                non_pdf_docs.add(file_name)
+
+            # ✅ 4. Delete ALL files (PDF and non-PDF)
             file_path = os.path.join(base_path, file_name)
 
             try:
@@ -449,6 +453,12 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         print(f"Deleted directory: {file_path}")
             except Exception as e:
                 raise Exception(f"Error deleting {file_path}: {e}")
+
+        # ✅ 5. Convert non-PDF docs set back to a list (only cleaned non-PDFs)
+        ListOfNonPDFDocs = list(non_pdf_docs)
+
+        # ✅ Print final list of unique non-PDF document names
+        print("Non-PDF Documents:", ListOfNonPDFDocs)
         return dt_AktIndex, ListOfNonPDFDocs
 
     def fetch_document_info(DokumentID, session, AktID, Titel):
