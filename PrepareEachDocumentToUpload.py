@@ -717,9 +717,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     DokumentType = "pdf"
                 
                 else: # Filtypen er ikke understøttet, uploader til Sharepoint
-                    print(f"før{file_path}")
-                    file_path = (f"{file_path}.{DokumentType}")
-                    print(file_path)
                     orchestrator_connection.log_info("Could not be converted or uploaded - uploading directly to SharePoint")
                     IsDocumentPDF = False 
                     upload_file_to_sharepoint(
@@ -738,8 +735,10 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 DokumentType = "pdf"
                 
             #Ændre dokumenttitlen:
-            
-            Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
+            if FilIsPDF or conversionPossible or CanDocumentBeConverted:
+                Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
+            else: 
+                Titel = f"{AktID:04} - {DokumentID} - {Titel}"
 
             # Call function
             dt_AktIndex,non_pdf_docs= process_documents(
