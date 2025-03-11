@@ -571,7 +571,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 VersionUI = Metadata["VersionUI"]
                 Feedback = Metadata["Feedback"]
                 file_path = Metadata["file_path"]
-
+                FilIsPDF = False 
 
                 # Tjekker om Goref-fil
                 if ".goref" in file_path:
@@ -594,17 +594,21 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     Feedback = Metadata["Feedback"]
                     file_path = Metadata["file_path"]
 
+
                 if DokumentType.lower() == "pdf": # Hvis PDF downloader den byte-filen
-                    print("Allerede PDf - downloader byte")
-                    
+                    #Downloader fil fra GO    
                     ByteResult = fetch_document_bytes(session, DokumentID, max_retries=5, retry_interval=30)
 
                     if ByteResult:
                         print(f"File size: {len(ByteResult)} bytes")
                     else:
                         print("No file was downloaded.")
-
                     
+                    download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)  
+               
+                    file_path = (f"{file_path}.pdf") 
+                    FilIsPDF = True 
+                      
                 else: #Dokumentet er ikke en pdf - forsøger at konverterer
                     
                     # Forsøger med GO-conversion
@@ -639,46 +643,63 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     
                     # tjekker om go-conversion lykkedes eller ej
                     if "Document could not be converted" in Feedback or len(ByteResult) == 0:
+                        print("Go-convervision mislykkedes forsøger med Filarkiv")
+                        #Downloader fil fra GO    
+                        ByteResult = fetch_document_bytes(session, DokumentID, max_retries=5, retry_interval=30)
 
-                        conversionPossible= check_conversion_possible(DokumentType, CloudConvertAPI)
-                        
-                        if not conversionPossible:
-                            print(f"Skipping cause CloudConvert doesn't support: {DokumentType}->PDF")
-                            ByteResult = bytes()                  
+                        if ByteResult:
+                            print(f"File size: {len(ByteResult)} bytes")
                         else:
+                            print("No file was downloaded.")
+                        
+                        download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)  
+               
+                        CanDocumentBeConverted = False
+                        conversionPossible = False
+                            
+                        # List of supported file extensions
+                        supported_extensions = [
+                            "bmp", "csv", "doc", "docm", "dwf", "dwg", "dxf", "emf", "eml",
+                            "epub", "fodt", "gif", "htm", "html", "ico", "jpeg", "jpg", "msg",
+                            "odp", "ods", "odt", "pdf", "png", "pos", "pps", "ppt", "pptx", "psd",
+                            "rtf", "tif", "tiff", "tsv", "txt", "vdw", "vdx", "vsd", "vss", "vst",
+                            "vsx", "vtx", "webp", "wmf", "xls", "xlsm", "xlsx", "xltx", "heic","docx"
+                        ]
+                        # Check if the input file extension exists in the list
+                        if DokumentType.lower() in supported_extensions:
+                            CanDocumentBeConverted = True
+                        else:
+                            CanDocumentBeConverted = False
 
-                            FilnavnFørPdf = f"Output.{DokumentType}"
-                            ByteResult = fetch_document_bytes(session, DokumentID, file_path=FilnavnFørPdf)
+                        if CanDocumentBeConverted:
+                            print("Filen konverteres med Filarkiv")
 
-                            if ByteResult:
-                                print(f"File saved as: {FilnavnFørPdf}")
+                        else:
+                            conversionPossible = check_conversion_possible(DokumentType, CloudConvertAPI)
+                            
+                            if not conversionPossible:
+                                print(f"Skipping cause CloudConvert doesn't support: {DokumentType}->PDF")
+                                ByteResult = bytes()                  
+                                #Skal der sættes en bolean value?
+                            else:
+                                print("Forsøger med CloudConvert")
+                                file_path = convert_file_to_pdf(CloudConvertAPI, file_path, DokumentID, DokumentType,Titel, AktID)
+                                if file_path:
+                                    print(f"PDF saved at: {file_path}")
+                                    DokumentType = "pdf"
+                                                    
+                    else: # Go-conversion lykkedes downloader fil
 
-                            file_path = convert_file_to_pdf(CloudConvertAPI, FilnavnFørPdf, DokumentID, DokumentType,Titel, AktID)
-                            if file_path:
-                                print(f"PDF saved at: {file_path}")
-                                DokumentType = "pdf"
+                        if ByteResult:
+                            print(f"File size: {len(ByteResult)} bytes")
+                        else:
+                            print("No file was downloaded.")
+                        
+                        download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)  
+                        file_path = (f"{file_path}.pdf")  
+            
 
-
-                if "Document could not be converted" in Feedback or len(ByteResult) == 0:
-                    print(f"Could not be converted, uploading as {file_path}.{DokumentType}")
-
-                    file_path = f"{file_path}.{DokumentType}"
-                    ByteResult = fetch_document_bytes(session, DokumentID, file_path, max_retries=5, retry_interval=60)
-
-                    if ByteResult:
-                        print("File downloaded successfully.")
-                    else:
-                        print("ByteResult is empty.")
-
-                else: 
-                    file_path = (f"{file_path}.pdf")   
-
-                
-                #Downloader filen og konventerer fra byte til fil
-                download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)
-                
-
-                if ".pdf" in file_path: # SKAL MÅSKE ÆNDRES, SÅ DEN TAGER HØJDE FOR ANDET END PDF. 
+                if FilIsPDF or conversionPossible or CanDocumentBeConverted:
                     upload_to_filarkiv(FilarkivURL,FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID,Titel, file_path)
                     DokumentType = "pdf"
                 
@@ -744,12 +765,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             Aktstatus = str(row["Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)"])
             Begrundelse = str(row["Begrundelse hvis nej eller delvis"])
 
-            # Dokumentdato =row['Dokumentdato']
-            # if isinstance(Dokumentdato, pd.Timestamp):
-            #     Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
-            # else:
-            #     Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
-            
             Dokumentdato = row['Dokumentdato']
             if isinstance(Dokumentdato, pd.Timestamp):
                 Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
