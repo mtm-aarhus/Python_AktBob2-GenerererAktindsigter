@@ -19,6 +19,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
     import uuid
     from SharePointUploader import upload_file_to_sharepoint
     import re
+    import mimetypes
+
 
     # henter in_argumenter:
     dt_DocumentList = Arguments_PrepareEachDocumentToUpload.get("in_dt_Documentlist")
@@ -532,7 +534,20 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 AktID = AktID
 
             Titel = str(row["Dokumenttitel"])
-            print(Titel)
+            print(f"Original Titel: {Titel}")
+            # Split title into name and extension
+            parts = Titel.rsplit('.', 1)  # Splits at the last dot
+            if len(parts) == 2:
+                name, ext = parts
+                # Check if it's a known file extension
+                if mimetypes.guess_type(f"file.{ext}")[0]:  
+                    Titel = name  # Remove extension
+                    print(f"Updated Titel (without filetype): {Titel}")
+                else:
+                    print("No known filetype detected.")
+            else:
+                print("No file extension detected.")
+
             BilagTilDok = str(row["Bilag til Dok ID"])
             DokBilag = str(row["Bilag"])
             Dokumentkategori = str(row["Dokumentkategori"])
@@ -568,7 +583,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 VersionUI = Metadata["VersionUI"]
                 Feedback = Metadata["Feedback"]
                 file_path = Metadata["file_path"]
-                print(f"Filpath er: {file_path}")
                 FilIsPDF = False 
                 CanDocumentBeConverted = False
                 conversionPossible = False
