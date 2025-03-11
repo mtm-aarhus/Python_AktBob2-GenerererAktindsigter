@@ -538,13 +538,9 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             Aktstatus = str(row["Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)"])
             Begrundelse = str(row["Begrundelse hvis nej eller delvis"])
             Dokumentdato =row['Dokumentdato']
-            print(str(Dokumentdato))
             if isinstance(Dokumentdato, pd.Timestamp):
                 Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
-                print(f"følgende dokument: {Titel} - har følgende dato:({type(Dokumentdato)})")
             else:
-                print(f"følgende dokument: {Titel} - har følgende dato:({type(Dokumentdato)})")
-                print(Dokumentdato)
                 Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
             
             IsDocumentPDF = True
@@ -574,7 +570,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 FilIsPDF = False 
                 CanDocumentBeConverted = False
                 conversionPossible = False
-                
+
+                print(f"DokumentType er: {DokumentType}")
                 # Tjekker om Goref-fil
                 if ".goref" in file_path:
                     
