@@ -566,7 +566,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 DokumentType = Metadata["DokumentType"]
                 VersionUI = Metadata["VersionUI"]
                 Feedback = Metadata["Feedback"]
-                file_path = Metadata["file_path"]
+                #file_path = Metadata["file_path"]
+                file_path = os.path.join("C:\\Users", os.getlogin(), "Downloads", f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}")
                 print(f"Filpath er: {file_path}")
                 FilIsPDF = False 
                 CanDocumentBeConverted = False
@@ -634,16 +635,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             print(f"Status Code: {response.status_code}")
                         else:
                             print("ByteResult received successfully.")
-                        file_path = None
-                        if file_path:
-                            file_path_with_extension = f"{file_path}.{DokumentType}" if DokumentType else file_path
-                            with open(file_path_with_extension, "wb") as file:
-                                file.write(ByteResult)
-                                orchestrator_connection.log_info(f"File saved: {file_path_with_extension}")  
-
-
-
-
+                        
                     except Exception as e:
                         raise Exception(f"An exception occurred: {e}")
                     
