@@ -392,3 +392,48 @@
                 
             #Ændre dokumenttitlen:
             Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
+
+
+
+
+
+
+
+
+
+                def fetch_document_bytes(session, DokumentID, file_path=None, dokument_type=None, max_retries=30, retry_interval=5, delete_after_use=False):
+
+        url = f"https://ad.go.aarhuskommune.dk/_goapi/Documents/DocumentBytes/{DokumentID}"
+        ByteResult = None
+
+        for attempt in range(max_retries):
+            try:
+                response = session.get(url, timeout=60)
+
+                if response.status_code == 200:
+                    ByteResult = response.content
+                    print(f"Success! ByteResult size: {len(ByteResult)} bytes")
+                    break
+                else:
+                    print(f"Attempt {attempt + 1}: Failed with status code {response.status_code}")
+            except Exception as e:
+                print(f"Attempt {attempt + 1}: Exception occurred - {e}")
+
+            time.sleep(retry_interval)
+        else:
+            print("Max retries reached. File download failed.")
+            return None
+
+        # If a file path is given, save to file
+        if file_path:
+            file_path_with_extension = f"{file_path}.{dokument_type}" if dokument_type else file_path
+            with open(file_path_with_extension, "wb") as file:
+                file.write(ByteResult)
+                orchestrator_connection.log_info(f"File saved: {file_path_with_extension}")
+
+            # If delete_after_use is True, remove the file
+            if delete_after_use:
+                os.remove(file_path_with_extension)
+                print("File deleted after use.")
+
+        return ByteResult

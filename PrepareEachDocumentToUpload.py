@@ -634,6 +634,15 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             print(f"Status Code: {response.status_code}")
                         else:
                             print("ByteResult received successfully.")
+                        file_path = f"Output.{DokumentType}"
+                        if file_path:
+                            file_path_with_extension = f"{file_path}.{DokumentType}" if DokumentType else file_path
+                            with open(file_path_with_extension, "wb") as file:
+                                file.write(ByteResult)
+                                orchestrator_connection.log_info(f"File saved: {file_path_with_extension}")  
+
+
+
 
                     except Exception as e:
                         raise Exception(f"An exception occurred: {e}")
@@ -689,11 +698,11 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         print("Go-conversion lykkedes")
                         if ByteResult:
                             print(f"File size: {len(ByteResult)} bytes")
-                            print(f"ByteResults er: {ByteResult}")
                         else:
                             print("No file was downloaded.")
                         
-                        file_path = (f"{file_path}.pdf")  
+                        #file_path = (f"{file_path}.pdf")
+                    
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)
                         print(f"Go-conversion Filpath efter download: {file_path}")    
                         
