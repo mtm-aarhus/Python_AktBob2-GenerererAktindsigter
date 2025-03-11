@@ -634,7 +634,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             print(f"Status Code: {response.status_code}")
                         else:
                             print("ByteResult received successfully.")
-                        file_path = f"Output.{DokumentType}"
+                        file_path = None
                         if file_path:
                             file_path_with_extension = f"{file_path}.{DokumentType}" if DokumentType else file_path
                             with open(file_path_with_extension, "wb") as file:
