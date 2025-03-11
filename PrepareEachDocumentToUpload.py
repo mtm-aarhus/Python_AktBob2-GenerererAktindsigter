@@ -644,6 +644,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     if "Document could not be converted" in Feedback or len(ByteResult) == 0:
                         print("Go-convervision mislykkedes forsøger med Filarkiv")
                         #Downloader fil fra GO    
+                        file_path = f"{file_path}.{DokumentType}"
                         ByteResult = fetch_document_bytes(session, DokumentID, max_retries=5, retry_interval=30)
 
                         if ByteResult:
@@ -692,7 +693,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         else:
                             print("No file was downloaded.")
                         
-                        #file_path = (f"{file_path}.pdf")  
+                        file_path = (f"{file_path}.pdf")  
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)
                         print(f"Go-conversion Filpath efter download: {file_path}")    
                         
