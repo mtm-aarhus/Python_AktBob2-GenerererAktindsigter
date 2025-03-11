@@ -532,6 +532,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 AktID = AktID
 
             Titel = str(row["Dokumenttitel"])
+            print(Titel)
             BilagTilDok = str(row["Bilag til Dok ID"])
             DokBilag = str(row["Bilag"])
             Dokumentkategori = str(row["Dokumentkategori"])
@@ -566,8 +567,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 DokumentType = Metadata["DokumentType"]
                 VersionUI = Metadata["VersionUI"]
                 Feedback = Metadata["Feedback"]
-                #file_path = Metadata["file_path"]
-                file_path = os.path.join("C:\\Users", os.getlogin(), "Downloads", f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}")
+                file_path = Metadata["file_path"]
                 print(f"Filpath er: {file_path}")
                 FilIsPDF = False 
                 CanDocumentBeConverted = False
