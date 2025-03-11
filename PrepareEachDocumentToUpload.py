@@ -383,21 +383,19 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
         # Identify non-PDF documents
         ListOfNonPDFDocs = dt_AktIndex.loc[dt_AktIndex["IsDocumentPDF"] != True, "Filnavn"].tolist()
-
-        # Apply the split logic
-        if not IsDocumentPDF:
-            parts = Titel.rsplit('.', 1)  # Split only at the last dot
-
-            if len(parts) == 2:  # Ensure there's an extension
-                filename_without_extension, extension = parts
-                print(f"Filename: {filename_without_extension}")
-                print(f"Extension: {extension}")
-            else:
-                print("No file extension found.")
-
-
+        
         base_path = os.path.join("C:\\", "Users", os.getlogin(), "Downloads")
-        for _, row in dt_AktIndex.iterrows():
+
+        for index, row in dt_AktIndex.iterrows():
+            if not IsDocumentPDF:
+                # Apply the split logic
+                parts = row['Filnavn'].rsplit('.', 1)  # Split only at the last dot
+
+                if len(parts) == 2:  # Ensure there's an extension
+                    filename_without_extension, extension = parts
+                    print(f"Updating 'Filnavn': {row['Filnavn']} → {filename_without_extension}")
+                    dt_AktIndex.at[index, 'Filnavn'] = filename_without_extension  # Update DataTable
+
             file_path = os.path.join(base_path, row['Filnavn'])
             try:
                 if os.path.exists(file_path):
