@@ -416,26 +416,27 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
         # Sort and reset index
         dt_AktIndex = dt_AktIndex.sort_values(by="Akt ID", ascending=True).reset_index(drop=True)
-        
-        ListOfNonPDFDocs = dt_AktIndex.loc[dt_AktIndex["IsDocumentPDF"] != True, "Filnavn"].tolist()
-        #  1. Prepare base path for deletion
+
+        # ✅ 1. Prepare base path for deletion
         base_path = os.path.join("C:\\", "Users", os.getlogin(), "Downloads")
 
-        #  3. Loop through all files and process them correctly
+        # ✅ 2. Create a list of non-PDF documents (KEEPING extensions for return)
+        ListOfNonPDFDocs = dt_AktIndex.loc[dt_AktIndex["IsDocumentPDF"] != True, "Filnavn"].tolist()
+
+        # ✅ 3. Loop through all files and process them correctly
         for index, row in dt_AktIndex.iterrows():
-            file_name = row["Filnavn"]  # Original filename
-            #  If it's NOT a PDF, remove the file extension
+            file_name_with_extension = row["Filnavn"]  # Get original filename
+            file_name_for_deletion = file_name_with_extension  # Default: use full name for deletion
+
+            # ✅ If it's NOT a PDF, remove the file extension *just for deletion*
             if not row["IsDocumentPDF"]:
-                parts = file_name.rsplit(".", 1)  # Split at last dot
+                parts = file_name_with_extension.rsplit(".", 1)  # Split at last dot
 
                 if len(parts) == 2:  # If there's an extension
-                    filename_without_extension, extension = parts
-                    
-                    dt_AktIndex.at[index, "Filnavn"] = filename_without_extension  
-                    file_name = filename_without_extension  
+                    file_name_for_deletion, extension = parts  # Use filename without extension
 
-            #  4. Delete ALL files (PDF and non-PDF)
-            file_path = os.path.join(base_path, file_name)
+            # ✅ 4. Delete ALL files (PDF and non-PDF)
+            file_path = os.path.join(base_path, file_name_for_deletion)  # Use modified name for deletion
 
             try:
                 if os.path.exists(file_path):
@@ -448,7 +449,11 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             except Exception as e:
                 raise Exception(f"Error deleting {file_path}: {e}")
 
-        return dt_AktIndex, ListOfNonPDFDocs
+        # ✅ Print final list of non-PDF document names (with extensions)
+        print("Non-PDF Documents (with extensions):", ListOfNonPDFDocs)
+
+    # ✅ Return dt_AktIndex and ListOfNonPDFDocs, both WITH extensions
+    return dt_AktIndex, ListOfNonPDFDocs
 
     def fetch_document_info(DokumentID, session, AktID, Titel):
         url = f"https://ad.go.aarhuskommune.dk/_goapi/Documents/Data/{DokumentID}"
