@@ -535,6 +535,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
             Titel = str(row["Dokumenttitel"])
             print(f"Original Titel: {Titel}")
+            mimetypes.add_type("application/x-msmetafile", ".emz")
             # Split title into name and extension
             parts = Titel.rsplit('.', 1)  # Splits at the last dot
             if len(parts) == 2:
@@ -667,8 +668,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             print("No file was downloaded.")
                         
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)  
-
-                        print(f"Filpath efter download: {file_path}")    
+                        
                         # List of supported file extensions
                         supported_extensions = [
                             "bmp", "csv", "doc", "docm", "dwf", "dwg", "dxf", "emf", "eml",
@@ -708,9 +708,9 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             print("No file was downloaded.")
                         
                         file_path = (f"{file_path}.pdf")
-                    
+                        FilIsPDF = True
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)
-                        print(f"Go-conversion Filpath efter download: {file_path}")    
+    
                         
             
 
@@ -737,6 +737,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 DokumentType = "pdf"
                 
             #Ændre dokumenttitlen:
+            
             Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
 
             # Call function
