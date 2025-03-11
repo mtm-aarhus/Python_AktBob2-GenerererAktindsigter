@@ -567,11 +567,11 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 VersionUI = Metadata["VersionUI"]
                 Feedback = Metadata["Feedback"]
                 file_path = Metadata["file_path"]
+                print(f"Filpath er: {file_path}")
                 FilIsPDF = False 
                 CanDocumentBeConverted = False
                 conversionPossible = False
 
-                print(f"DokumentType er: {DokumentType}")
                 # Tjekker om Goref-fil
                 if ".goref" in file_path:
                     
@@ -604,13 +604,12 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     else:
                         print("No file was downloaded.")
                     
-                    download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)  
-                    print(file_path)
+                    download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword) 
                     #file_path = (f"{file_path}.pdf") 
                     FilIsPDF = True 
-                      
+                                                                                            
                 else: #Dokumentet er ikke en pdf - forsøger at konverterer
-                    
+                                      
                     # Forsøger med GO-conversion
                     url = f"https://ad.go.aarhuskommune.dk/_goapi/Documents/ConvertToPDF/{DokumentID}/{VersionUI}"
 
@@ -653,7 +652,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             print("No file was downloaded.")
                         
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)  
-                            
+
+                        print(f"Filpath efter download: {file_path}")    
                         # List of supported file extensions
                         supported_extensions = [
                             "bmp", "csv", "doc", "docm", "dwf", "dwg", "dxf", "emf", "eml",
@@ -693,7 +693,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             print("No file was downloaded.")
                         
                         #file_path = (f"{file_path}.pdf")  
-                        download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)  
+                        download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)
+                        print(f"Go-conversion Filpath efter download: {file_path}")    
                         
             
 
