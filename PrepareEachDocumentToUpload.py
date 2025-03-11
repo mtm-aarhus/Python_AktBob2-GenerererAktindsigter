@@ -417,13 +417,13 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         # Sort and reset index
         dt_AktIndex = dt_AktIndex.sort_values(by="Akt ID", ascending=True).reset_index(drop=True)
 
-        # ✅ 1. Prepare base path for deletion
+        #  1. Prepare base path for deletion
         base_path = os.path.join("C:\\", "Users", os.getlogin(), "Downloads")
 
-        # ✅ 2. Create a list of non-PDF documents (KEEPING extensions for return)
+        #  2. Create a list of non-PDF documents (KEEPING extensions for return)
         ListOfNonPDFDocs = dt_AktIndex.loc[dt_AktIndex["IsDocumentPDF"] != True, "Filnavn"].tolist()
 
-        # ✅ 3. Loop through all files and process them correctly
+        #  3. Loop through all files and process them correctly
         for index, row in dt_AktIndex.iterrows():
             file_name_with_extension = row["Filnavn"]  # Get original filename
             file_name_for_deletion = file_name_with_extension  # Default: use full name for deletion
@@ -452,8 +452,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         # ✅ Print final list of non-PDF document names (with extensions)
         print("Non-PDF Documents (with extensions):", ListOfNonPDFDocs)
 
-    # ✅ Return dt_AktIndex and ListOfNonPDFDocs, both WITH extensions
-    return dt_AktIndex, ListOfNonPDFDocs
+        # ✅ Return dt_AktIndex and ListOfNonPDFDocs, both WITH extensions
+        return dt_AktIndex, ListOfNonPDFDocs
 
     def fetch_document_info(DokumentID, session, AktID, Titel):
         url = f"https://ad.go.aarhuskommune.dk/_goapi/Documents/Data/{DokumentID}"
