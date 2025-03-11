@@ -375,27 +375,70 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             "IsDocumentPDF": IsDocumentPDF,
         }
 
+        # # Append the row to the DataFrame
+        # dt_AktIndex = pd.concat([dt_AktIndex, pd.DataFrame([row_to_add])], ignore_index=True)
+
+        # # Sort and reset index
+        # dt_AktIndex = dt_AktIndex.sort_values(by="Akt ID", ascending=True).reset_index(drop=True)
+
+        # # Identify non-PDF documents
+        # ListOfNonPDFDocs = dt_AktIndex.loc[dt_AktIndex["IsDocumentPDF"] != True, "Filnavn"].tolist()
+
+
+        # base_path = os.path.join("C:\\", "Users", os.getlogin(), "Downloads")
+
+        # for index, row in dt_AktIndex.iterrows():
+        #     if not row['IsDocumentPDF']:
+        #         # Apply the split logic
+        #         parts = row['Filnavn'].rsplit('.', 1)  # Split only at the last dot
+
+        #         if len(parts) == 2:  # Ensure there's an extension
+        #             filename_without_extension, extension = parts
+        #             print(f"Updating 'Filnavn': {row['Filnavn']} → {filename_without_extension}")
+        #             dt_AktIndex.at[index, "Filnavn"] = filename_without_extension
+            
+            
+        #     file_path = os.path.join(base_path, dt_AktIndex.at[index, "Filnavn"])
+        #     try:
+        #         if os.path.exists(file_path):
+        #             if os.path.isfile(file_path):
+        #                 os.remove(file_path)
+        #                 orchestrator_connection.log_info(f"Deleted file: {file_path}")
+        #             elif os.path.isdir(file_path):
+        #                 shutil.rmtree(file_path, ignore_errors=True)
+        #                 print(f"Deleted directory: {file_path}")
+        #     except Exception as e:
+        #         raise Exception(f"Error deleting {file_path}: {e}")
         # Append the row to the DataFrame
+        
         dt_AktIndex = pd.concat([dt_AktIndex, pd.DataFrame([row_to_add])], ignore_index=True)
 
         # Sort and reset index
         dt_AktIndex = dt_AktIndex.sort_values(by="Akt ID", ascending=True).reset_index(drop=True)
 
-        # Identify non-PDF documents
-        ListOfNonPDFDocs = dt_AktIndex.loc[dt_AktIndex["IsDocumentPDF"] != True, "Filnavn"].tolist()
 
+        non_pdf_df = dt_AktIndex[dt_AktIndex["IsDocumentPDF"] != True].copy()  # Filter safely
+
+        #2. Remove file extensions from "Filnavn"
+        for index, row in non_pdf_df.iterrows():
+            parts = row["Filnavn"].rsplit(".", 1)  # Split at last dot
+
+            if len(parts) == 2:  # If there's an extension
+                filename_without_extension, extension = parts
+                non_pdf_df.at[index, "Filnavn"] = filename_without_extension  # Update name
+
+        #  3. Convert to list (without duplicates)
+        ListOfNonPDFDocs = list(set(non_pdf_df["Filnavn"]))
+
+        #  Print final list of unique non-PDF document names
+        print("Non-PDF Documents:", ListOfNonPDFDocs)
+
+        #  4. Delete the non-PDF files
         base_path = os.path.join("C:\\", "Users", os.getlogin(), "Downloads")
 
-        for index, row in dt_AktIndex.iterrows():
-            if not row['IsDocumentPDF']:
-                # Apply the split logic
-                parts = row['Filnavn'].rsplit('.', 1)  # Split only at the last dot
+        for file_name in ListOfNonPDFDocs:
+            file_path = os.path.join(base_path, file_name)
 
-                if len(parts) == 2:  # Ensure there's an extension
-                    filename_without_extension, extension = parts
-                    print(f"Updating 'Filnavn': {row['Filnavn']} → {filename_without_extension}")
-                    dt_AktIndex.at[index, "Filnavn"] = filename_without_extension
-            file_path = os.path.join(base_path, dt_AktIndex.at[index, "Filnavn"])
             try:
                 if os.path.exists(file_path):
                     if os.path.isfile(file_path):
@@ -406,7 +449,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         print(f"Deleted directory: {file_path}")
             except Exception as e:
                 raise Exception(f"Error deleting {file_path}: {e}")
-
         return dt_AktIndex, ListOfNonPDFDocs
 
     def fetch_document_info(DokumentID, session, AktID, Titel):
