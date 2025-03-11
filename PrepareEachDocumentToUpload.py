@@ -710,15 +710,14 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         file_path = (f"{file_path}.pdf")
                         FilIsPDF = True
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)
-    
-                        
-            
+     
 
                 if FilIsPDF or conversionPossible or CanDocumentBeConverted:
                     upload_to_filarkiv(FilarkivURL,FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID,Titel, file_path)
                     DokumentType = "pdf"
                 
                 else: # Filtypen er ikke understøttet, uploader til Sharepoint
+                    file_path = (f"{file_path}.{DokumentType}")
                     orchestrator_connection.log_info("Could not be converted or uploaded - uploading directly to SharePoint")
                     IsDocumentPDF = False 
                     upload_file_to_sharepoint(
