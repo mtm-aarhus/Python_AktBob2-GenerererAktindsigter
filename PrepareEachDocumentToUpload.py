@@ -596,6 +596,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
                 if DokumentType.lower() == "pdf": # Hvis PDF downloader den byte-filen
                     #Downloader fil fra GO    
+                    print("Allerede PDF - downloader")
                     ByteResult = fetch_document_bytes(session, DokumentID, max_retries=5, retry_interval=30)
 
                     if ByteResult:
@@ -685,14 +686,15 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                                     DokumentType = "pdf"
                                                     
                     else: # Go-conversion lykkedes downloader fil
-
+                        print("Go-conversion lykkedes")
                         if ByteResult:
                             print(f"File size: {len(ByteResult)} bytes")
                         else:
                             print("No file was downloaded.")
                         
-                        download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)  
                         file_path = (f"{file_path}.pdf")  
+                        download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)  
+                        
             
 
                 if FilIsPDF or conversionPossible or CanDocumentBeConverted:
