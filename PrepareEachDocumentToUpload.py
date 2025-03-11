@@ -360,6 +360,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         IsDocumentPDF
     ):
         # Parse and prepare data for the row
+
         row_to_add = {
             "Akt ID": int(AktID),
             "Filnavn": Titel,
@@ -382,6 +383,18 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
         # Identify non-PDF documents
         ListOfNonPDFDocs = dt_AktIndex.loc[dt_AktIndex["IsDocumentPDF"] != True, "Filnavn"].tolist()
+
+        # Apply the split logic
+        if not IsDocumentPDF:
+            parts = Titel.rsplit('.', 1)  # Split only at the last dot
+
+            if len(parts) == 2:  # Ensure there's an extension
+                filename_without_extension, extension = parts
+                print(f"Filename: {filename_without_extension}")
+                print(f"Extension: {extension}")
+            else:
+                print("No file extension found.")
+
 
         base_path = os.path.join("C:\\", "Users", os.getlogin(), "Downloads")
         for _, row in dt_AktIndex.iterrows():
@@ -735,10 +748,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 DokumentType = "pdf"
                 
             #Ændre dokumenttitlen:
-            if IsDocumentPDF:
-                Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
-            else: 
-                Titel = f"{AktID:04} - {DokumentID} - {Titel}"
+            
+            Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
 
             # Call function
             dt_AktIndex,non_pdf_docs= process_documents(
