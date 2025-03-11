@@ -735,7 +735,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 DokumentType = "pdf"
                 
             #Ændre dokumenttitlen:
-            if FilIsPDF or conversionPossible or CanDocumentBeConverted:
+            if IsDocumentPDF:
                 Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
             else: 
                 Titel = f"{AktID:04} - {DokumentID} - {Titel}"
