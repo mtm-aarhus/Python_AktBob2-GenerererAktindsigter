@@ -629,7 +629,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         # Feedback and byte result
                         Feedback = response.text
                         ByteResult = response.content
-                        
                         # Check if ByteResult is empty
                         if len(ByteResult) == 0:
                             print(f"Status Code: {response.status_code}")
@@ -690,6 +689,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         print("Go-conversion lykkedes")
                         if ByteResult:
                             print(f"File size: {len(ByteResult)} bytes")
+                            print(f"ByteResults er: {ByteResult}")
                         else:
                             print("No file was downloaded.")
                         
