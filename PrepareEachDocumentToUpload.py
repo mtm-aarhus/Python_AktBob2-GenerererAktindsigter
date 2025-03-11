@@ -618,7 +618,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         print(f"File size: {len(ByteResult)} bytes")
                     else:
                         print("No file was downloaded.")
-                    
+                    file_path = (f"{file_path}.pdf")
                     download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword) 
                     #file_path = (f"{file_path}.pdf") 
                     FilIsPDF = True 
@@ -707,7 +707,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         else:
                             print("No file was downloaded.")
                         
-                        #file_path = (f"{file_path}.pdf")
+                        file_path = (f"{file_path}.pdf")
                     
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)
                         print(f"Go-conversion Filpath efter download: {file_path}")    
