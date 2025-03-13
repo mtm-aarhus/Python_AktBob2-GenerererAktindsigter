@@ -735,6 +735,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 else: # Filtypen er ikke understøttet, uploader til Sharepoint
                     orchestrator_connection.log_info("Could not be converted or uploaded - uploading directly to SharePoint")
                     IsDocumentPDF = False 
+                    file_path = f"{file_path}.{DokumentType}"
                     upload_file_to_sharepoint(
                         site_url=SharePointURL,
                         Overmappe=Overmappe,
