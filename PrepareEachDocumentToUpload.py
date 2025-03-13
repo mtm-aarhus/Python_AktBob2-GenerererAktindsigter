@@ -600,7 +600,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 FilIsPDF = False 
                 CanDocumentBeConverted = False
                 conversionPossible = False
-
+                print(f"filtype: {file_path}")
+                print(f"DokumentType: {DokumentType}")
                 # Tjekker om Goref-fil
                 if ".goref" in file_path:
                     print("Dokumenter er .GORef")
