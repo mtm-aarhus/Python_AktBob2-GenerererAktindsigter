@@ -603,7 +603,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
                 # Tjekker om Goref-fil
                 if ".goref" in file_path:
-                    
+                    print("Dokumenter er .GORef")
                     ByteResult = fetch_document_bytes(session, DokumentID, file_path, delete_after_use=True)
 
                     if ByteResult:
@@ -613,6 +613,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         refdocument = RefDokument.split("?docid=")[1]
                         DokumentID = refdocument.split('"')[0]
                     
+                    print(f"GorefDokID: {DokumentID}")
                     #Henter dokument data
                     Metadata = fetch_document_info(DokumentID, session, AktID, Titel)
                 
