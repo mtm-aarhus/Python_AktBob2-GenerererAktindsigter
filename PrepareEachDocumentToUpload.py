@@ -389,14 +389,15 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         #  3. Loop through all files and process them correctly
         for index, row in dt_AktIndex.iterrows():
             file_name_with_extension = row["Filnavn"]  # Get original filename
+            
             file_name_for_deletion = file_name_with_extension  # Default: use full name for deletion
+            
+            # #  If it's NOT a PDF, remove the file extension *just for deletion*
+            # if not row["IsDocumentPDF"]:
+            #     parts = file_name_with_extension.rsplit(".", 1)  # Split at last dot
 
-            #  If it's NOT a PDF, remove the file extension *just for deletion*
-            if not row["IsDocumentPDF"]:
-                parts = file_name_with_extension.rsplit(".", 1)  # Split at last dot
-
-                if len(parts) == 2:  # If there's an extension
-                    file_name_for_deletion, extension = parts  # Use filename without extension
+            #     if len(parts) == 2:  # If there's an extension
+            #         file_name_for_deletion, extension = parts  # Use filename without extension
 
             #  4. Delete ALL files (PDF and non-PDF)
             file_path = os.path.join(base_path, file_name_for_deletion)  # Use modified name for deletion
