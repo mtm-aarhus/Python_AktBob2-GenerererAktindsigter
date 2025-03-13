@@ -612,8 +612,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         refdocument = RefDokument.split("?docid=")[1]
                         DokumentID = refdocument.split('"')[0]
                 
-                #os.remove(file_path_with_extension)
-                #print("File deleted after use.")
+                        os.remove(file_path)
+                        print("File deleted after use.")
                     
                     print(f"GorefDokID: {DokumentID}")
                     #Henter dokument data
