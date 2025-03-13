@@ -559,9 +559,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 # Check if it's a known file extension
                 if mimetypes.guess_type(f"file.{ext}")[0]:  
                     Titel = name  # Remove extension
-                    print(f"Updated Titel (without filetype): {Titel}")
-                else:
-                    print("No known filetype detected.")
             else:
                 print("No file extension detected.")
 
