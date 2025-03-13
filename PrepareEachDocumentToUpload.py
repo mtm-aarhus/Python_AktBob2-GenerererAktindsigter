@@ -606,7 +606,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     ByteResult = fetch_document_bytes(session, DokumentID, file_path, delete_after_use=False)
 
                     if ByteResult:
-                        with open("temp_document", "r", encoding="utf-8") as file:
+                        with open(file_path, "r", encoding="utf-8") as file:
                             RefDokument = file.read()
                         
                         refdocument = RefDokument.split("?docid=")[1]
