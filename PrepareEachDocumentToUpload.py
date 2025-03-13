@@ -374,44 +374,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             "Begrundelse hvis Nej/Delvis": Begrundelse,
             "IsDocumentPDF": IsDocumentPDF,
         }
-
-        # # Append the row to the DataFrame
-        # dt_AktIndex = pd.concat([dt_AktIndex, pd.DataFrame([row_to_add])], ignore_index=True)
-
-        # # Sort and reset index
-        # dt_AktIndex = dt_AktIndex.sort_values(by="Akt ID", ascending=True).reset_index(drop=True)
-
-        # # Identify non-PDF documents
-        # ListOfNonPDFDocs = dt_AktIndex.loc[dt_AktIndex["IsDocumentPDF"] != True, "Filnavn"].tolist()
-
-
-        # base_path = os.path.join("C:\\", "Users", os.getlogin(), "Downloads")
-
-        # for index, row in dt_AktIndex.iterrows():
-        #     if not row['IsDocumentPDF']:
-        #         # Apply the split logic
-        #         parts = row['Filnavn'].rsplit('.', 1)  # Split only at the last dot
-
-        #         if len(parts) == 2:  # Ensure there's an extension
-        #             filename_without_extension, extension = parts
-        #             print(f"Updating 'Filnavn': {row['Filnavn']} → {filename_without_extension}")
-        #             dt_AktIndex.at[index, "Filnavn"] = filename_without_extension
-            
-            
-        #     file_path = os.path.join(base_path, dt_AktIndex.at[index, "Filnavn"])
-        #     try:
-        #         if os.path.exists(file_path):
-        #             if os.path.isfile(file_path):
-        #                 os.remove(file_path)
-        #                 orchestrator_connection.log_info(f"Deleted file: {file_path}")
-        #             elif os.path.isdir(file_path):
-        #                 shutil.rmtree(file_path, ignore_errors=True)
-        #                 print(f"Deleted directory: {file_path}")
-        #     except Exception as e:
-        #         raise Exception(f"Error deleting {file_path}: {e}")
-        # Append the row to the DataFrame
         
-        # Append the row to the DataFrame
         dt_AktIndex = pd.concat([dt_AktIndex, pd.DataFrame([row_to_add])], ignore_index=True)
 
         # Sort and reset index
@@ -428,14 +391,14 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             file_name_with_extension = row["Filnavn"]  # Get original filename
             file_name_for_deletion = file_name_with_extension  # Default: use full name for deletion
 
-            # ✅ If it's NOT a PDF, remove the file extension *just for deletion*
+            #  If it's NOT a PDF, remove the file extension *just for deletion*
             if not row["IsDocumentPDF"]:
                 parts = file_name_with_extension.rsplit(".", 1)  # Split at last dot
 
                 if len(parts) == 2:  # If there's an extension
                     file_name_for_deletion, extension = parts  # Use filename without extension
 
-            # ✅ 4. Delete ALL files (PDF and non-PDF)
+            #  4. Delete ALL files (PDF and non-PDF)
             file_path = os.path.join(base_path, file_name_for_deletion)  # Use modified name for deletion
 
             try:
@@ -449,10 +412,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             except Exception as e:
                 raise Exception(f"Error deleting {file_path}: {e}")
 
-        # ✅ Print final list of non-PDF document names (with extensions)
-        print("Non-PDF Documents (with extensions):", ListOfNonPDFDocs)
-
-        # ✅ Return dt_AktIndex and ListOfNonPDFDocs, both WITH extensions
+        # Return dt_AktIndex and ListOfNonPDFDocs, both WITH extensions
         return dt_AktIndex, ListOfNonPDFDocs
 
     def fetch_document_info(DokumentID, session, AktID, Titel):
@@ -590,7 +550,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 AktID = AktID
 
             Titel = str(row["Dokumenttitel"])
-            print(f"Original Titel: {Titel}")
             mimetypes.add_type("application/x-msmetafile", ".emz")
             # Split title into name and extension
             parts = Titel.rsplit('.', 1)  # Splits at the last dot
@@ -775,6 +734,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 else: # Filtypen er ikke understøttet, uploader til Sharepoint
                     orchestrator_connection.log_info("Could not be converted or uploaded - uploading directly to SharePoint")
                     IsDocumentPDF = False 
+                    file_path = f"{file_path}.{DokumentType}"
                     upload_file_to_sharepoint(
                         site_url=SharePointURL,
                         Overmappe=Overmappe,
@@ -1070,3 +1030,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
     return {
     "out_dt_AktIndex": dt_AktIndex,
     }
+
+
+
+
