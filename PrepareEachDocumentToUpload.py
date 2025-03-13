@@ -603,7 +603,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 # Tjekker om Goref-fil
                 if "goref" in DokumentType:
                     print("Dokumenter er .GORef")
-                    ByteResult = fetch_document_bytes(session, DokumentID, file_path, delete_after_use=True)
+                    ByteResult = fetch_document_bytes(session, DokumentID, file_path, delete_after_use=False)
 
                     if ByteResult:
                         with open("temp_document", "r", encoding="utf-8") as file:
