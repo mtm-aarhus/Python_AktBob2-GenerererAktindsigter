@@ -62,7 +62,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
        #---- Henter kø-elementer ----
     queue = json.loads(queue_element.data)
-    orchestrator_connection.log_info("Assigning variables")
 
     Sagsnummer = queue.get("Sagsnummer")
     MailModtager = queue.get("MailModtager")
@@ -106,7 +105,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     # ---- Run "GetDocumentList" ----
     GetDocumentList_Output_arguments = GetDocumentList.invoke(Arguments, go_session,orchestrator_connection)
     Sagstitel = GetDocumentList_Output_arguments.get("sagstitel")
-    orchestrator_connection.log_info(f"Sagstitel: {Sagstitel}")
+    print(f"Sagstitel: {Sagstitel}")
     dt_DocumentList = GetDocumentList_Output_arguments.get("dt_DocumentList")
     DokumentlisteDatoString = GetDocumentList_Output_arguments.get("out_DokumentlisteDatoString")
 
@@ -130,7 +129,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     GenerateCaseFolder_Output_arguments = GenerateCaseFolder.invoke_GenerateCasefolder(Arguments_GenerateCaseFolder,orchestrator_connection)
     FilarkivCaseID = GenerateCaseFolder_Output_arguments.get("out_FilarkivCaseID")
-    orchestrator_connection.log_info(f"FilarkivCaseID: {FilarkivCaseID}")
 
     ####---- Send mail til sagsansvarlig ----####
     if __name__ == "__main__":
@@ -189,7 +187,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     PrepareEachDocumentToUpload_Output_arguments = PrepareEachDocumentToUpload.invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload,orchestrator_connection)
     dt_AktIndex = PrepareEachDocumentToUpload_Output_arguments.get("out_dt_AktIndex")
-    orchestrator_connection.log_info(f"Sagsnummer:{Sagsnummer}")
 
     # ---- Run "Generate&UploadAktlistPDF" ----
 
@@ -211,7 +208,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     GenerateAndUploadAktlistePDF_Output_arguments = GenerateAndUploadAktlistePDF.invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF,orchestrator_connection)
     Test = GenerateAndUploadAktlistePDF_Output_arguments.get("out_Text")
-    orchestrator_connection.log_info(Test)
+    print(Test)
 
 
     # ---- Run "GenererSagsoversigt" ----
@@ -234,8 +231,8 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     GenererSagsoversigt_Output_arguments = GenerererSagsoversigt.invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt,orchestrator_connection)
     Test = GenererSagsoversigt_Output_arguments.get("out_Text")
-    orchestrator_connection.log_info(Test)
-    orchestrator_connection.log_info(f"Sagsnummer:{Sagsnummer}")
+    print(Test)
+
 
 
     if NovaSag == True: 
@@ -249,7 +246,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
         GenerateNovaCase_Output_arguments = GenerateNovaCase.invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection)
         Test = GenerateNovaCase_Output_arguments.get("out_Text")
-        orchestrator_connection.log_info(Test)
+        print(Test)
 
 
     # ---- Run "SendFilarkivCaseId&PodioIDToPodio"
