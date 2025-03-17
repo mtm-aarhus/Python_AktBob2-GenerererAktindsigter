@@ -129,7 +129,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     GenerateCaseFolder_Output_arguments = GenerateCaseFolder.invoke_GenerateCasefolder(Arguments_GenerateCaseFolder,orchestrator_connection)
     FilarkivCaseID = GenerateCaseFolder_Output_arguments.get("out_FilarkivCaseID")
-
+    orchestrator_connection.log_info(f"FilarkivCaseID: {FilarkivCaseID}")
     ####---- Send mail til sagsansvarlig ----####
     if __name__ == "__main__":
         # Define email details

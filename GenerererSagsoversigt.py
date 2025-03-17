@@ -95,7 +95,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
             except Exception as retry_exception:
                 print(f"Retry {attempt + 1} for {Sagsnummer} failed: {retry_exception}")
                 if attempt == max_retries - 1:
-                    orchestrator_connection.log_info(f"Failed to fetch metadata after {max_retries} retries for {Sagsnummer}.")
+                    print(f"Failed to fetch metadata after {max_retries} retries for {Sagsnummer}.")
                     return "Unknown", None  # Return default values if all retries fail
                 time.sleep(5)  # Wait before the next retry
     
@@ -142,11 +142,11 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
                     try:
                         Startdato = datetime.fromisoformat(Startdato)  # Convert from 'YYYY-MM-DDTHH:MM:SS' to datetime
                     except ValueError:
-                        orchestrator_connection.log_info(f"Invalid date format for Startdato: {Startdato}")
+                        print(f"Invalid date format for Startdato: {Startdato}")
                         Startdato = None  # If format is wrong, set to None
 
             else:
-                orchestrator_connection.log_info("Failed to fetch Sagstitel from NOVA. Status Code:", response.status_code)
+                print("Failed to fetch Sagstitel from NOVA. Status Code:", response.status_code)
                 sagstitel, Startdato = None, None
         except Exception as e:
             print("Failed to fetch Sagstitel (Nova):", str(e))
@@ -188,7 +188,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
                 elif re.fullmatch(novasag_pattern, Sagsnummer):
                     Sagstitel, Startdato = GetNovaCaseinfo(Sagsnummer)
                 else:
-                    orchestrator_connection.log_info("Det er hverken et geosagsnummer eller Novasagsnummer")
+                    print("Det er hverken et geosagsnummer eller Novasagsnummer")
 
                 data_table.append({
                     "Sagsnummer": Sagsnummer,  
@@ -348,7 +348,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
         # Build the PDF with the table content
         doc.build([report_table])
 
-        orchestrator_connection.log_info(f"PDF saved to {output_pdf_path}")
+        print(f"PDF saved to {output_pdf_path}")
 
 
 
@@ -376,7 +376,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
 
 
         else:
-            orchestrator_connection.log_info("No data found. PDF generation skipped.")
+            print("No data found. PDF generation skipped.")
 
     except Exception as e:
         raise Exception(f"An error occurred: {e}")

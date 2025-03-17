@@ -100,7 +100,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         DoesFolderExists = False
         Filarkiv_DocumentID = None  # Ensure it is initialized
         FileName = f"{AktID:04} - {DokumentID} - {Titel}"
-        orchestrator_connection.log_info(f"FilarkivCaseID: {FilarkivCaseID}")
         url = f"{FilarkivURL}/Documents/CaseDocumentOverview?caseId={FilarkivCaseID}&pageIndex=1&pageSize=500"
 
         headers = {

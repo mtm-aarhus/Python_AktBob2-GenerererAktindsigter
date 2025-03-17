@@ -222,7 +222,7 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
     )
 
     for entry in data_table:
-        orchestrator_connection.log_info(f" - {entry['FileName']} (Date: {entry['DocumentDate']})")
+        print(f" - {entry['FileName']} (Date: {entry['DocumentDate']})")
 
     # Download the newest file if available
     if data_table:

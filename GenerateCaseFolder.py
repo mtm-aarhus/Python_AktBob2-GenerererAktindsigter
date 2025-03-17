@@ -52,7 +52,7 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder, orchestrator_connect
         
         # Check if the response contains data
         if Respons and isinstance(Respons, list) and len(Respons) > 0:
-            orchestrator_connection.log_info("Sagen findes i Filarkiv")
+            print("Sagen findes i Filarkiv")
             
             for current_item in Respons:
                 # Check if "title" exists and contains the specific string
