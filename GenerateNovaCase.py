@@ -7,8 +7,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     from GetKmdAcessToken import GetKMDToken
     from datetime import datetime
     import base64
-    from docx import Document
-    from io import BytesIO
     
      # henter in_argumenter:
     Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
