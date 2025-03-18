@@ -158,18 +158,13 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     JournalUuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
     # Create text content
+    # Text content to encode
     text_content = f"{link_text}: {AktSagsURL}"
 
-    # Save as a text file
-    file_path = "journal_note.txt"
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(text_content)
+    # Convert directly to base64 without file handling
+    base64_JournalNote = base64.b64encode(text_content.encode("utf-8")).decode()
 
-    # Read and encode file as base64
-    with open(file_path, "rb") as f:
-        base64_JournalNote = base64.b64encode(f.read()).decode()
-
-    print(base64_JournalNote)
+    print(base64_JournalNote) 
 
     url = f"{KMDNovaURL}/Case/Import?api-version=2.0-Case"
 
