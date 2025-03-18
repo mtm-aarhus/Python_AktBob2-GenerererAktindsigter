@@ -231,7 +231,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                             }
                     },
                     "format": "OOXML",
-                    "note":base64_JournalNote
+                    "note":"base64_JournalNote"
 
                 }
             }
