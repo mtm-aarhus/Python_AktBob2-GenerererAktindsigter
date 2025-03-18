@@ -157,6 +157,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     Uuid = str(uuid.uuid4())
     JournalUuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
+    html_content = 'f<a href="{AktSagsURL}">{link_text}</a>'
     # Create text content
     # Text content to encode
     text_content = f"{link_text}: {AktSagsURL}"
@@ -227,7 +228,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "journalNoteAttributes":
                 {
                     "journalNoteDate": CurrentDate,
-                    "title": "GO Aktindsigtssag",
+                    "title": html_content,
                     "editReasonApprovedJournalnote": "Oprettelse",
                     "journalNoteAuthor": "AKTBOB",
                     "author": {
