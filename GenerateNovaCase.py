@@ -177,7 +177,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         "caseAttributes": {
             "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer} - Se beskrivelse",
             "caseDate": CurrentDate,
-            "description": AktSagsURL,
             "caseCategory": "BomByg"
         },
         "caseClassification": {
