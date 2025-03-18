@@ -225,8 +225,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                     "author": {
                         "fkOrgIdentity": {
                             "fkUuid": "15deb66c-1685-49ac-8344-cfbf84fe6d84",
-                            "type": "Bruger",
-                            "fullName": "Aktbob"
+                            "type": "Afdeling",
+                            "fullName": "Digitalisering"
                             }
                     },
                     "format": "OOXML",
