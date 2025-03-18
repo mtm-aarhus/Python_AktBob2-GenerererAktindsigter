@@ -399,7 +399,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
             #  4. Delete ALL files (PDF and non-PDF)
             file_path = os.path.join(base_path, file_name_for_deletion)  # Use modified name for deletion
-            print(f"Filepath to be deleted: {file_path}")
+            #print(f"Filepath to be deleted: {file_path}")
             try:
                 if os.path.exists(file_path):
                     if os.path.isfile(file_path):
