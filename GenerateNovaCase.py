@@ -246,7 +246,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                     },
                     "journalNoteType": "Bruger",
                     "format": "OOXML",
-                    "note":base64_JournalNote
+                    "note":html_content
 
                 }
             }
