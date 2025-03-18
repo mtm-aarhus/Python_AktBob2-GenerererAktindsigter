@@ -218,7 +218,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         "journalNotes": [
             {
                 "uuid": JournalUuid,
-                "approved": True,
+                #"approved": True,
                 "journalNoteAttributes":
                 {
                     "journalNoteDate": CurrentDate,
