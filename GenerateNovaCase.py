@@ -222,6 +222,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 {
                     "journalNoteDate": CurrentDate,
                     "title": "GO Aktindsigtssag",
+                    "editReasonApprovedJournalnote": True,
                     "author": {
                         "fkOrgIdentity": {
                             "fkUuid": "15deb66c-1685-49ac-8344-cfbf84fe6d84",
