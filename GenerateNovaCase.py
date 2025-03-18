@@ -6,6 +6,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     import os
     from GetKmdAcessToken import GetKMDToken
     from datetime import datetime
+    import base64
     
      # henter in_argumenter:
     Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
@@ -154,7 +155,10 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     CurrentDate = datetime.now().strftime("%Y-%m-%dT00:00:00")
     TransactionID = str(uuid.uuid4())
     Uuid = str(uuid.uuid4())
-
+    JournalUuid = str(uuid.uuid4())
+    link_text = "GO Aktindsigtssag"
+    html_content = 'f<a href="{AktSagsURL}">{link_text}</a>'
+    base64_JournalNote = base64.b64encode(html_content.encode()).decode()
     # Define API URL
     url = f"{KMDNovaURL}/Case/Import?api-version=2.0-Case"
 
@@ -171,16 +175,17 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "uuid": Uuid  
         },
         "caseAttributes": {
-            "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer} - Se beskrivelse",#spørg Byggeri om det rigtige anvendes
+            "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer} - Se beskrivelse",
             "caseDate": CurrentDate,
-            "description": AktSagsURL
+            "description": AktSagsURL,
+            "caseCategory": "BomByg"
         },
         "caseClassification": {
-            "kleNumber": {"code": "02.00.00"}, #Fast - men spørg Byggeri om det rigtige anvendes
-            "proceedingFacet": {"code": "A53"}#Fast - men spørg Byggeri om det rigtige anvendes
+            "kleNumber": {"code": "02.00.00"}, 
+            "proceedingFacet": {"code": "A53"}
         },
         "state": "Afgjort", 
-        "sensitivity": "Følsomme",# Fast
+        "sensitivity": "Følsomme",
         "caseworker": { #Fast - men spørg Byggeri om det rigtige anvendes
             "kspIdentity": {
                 "novaUserId": "78897bfc-2a36-496d-bc76-07e7a6b0850e",
@@ -208,6 +213,27 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "partyRoleName": partyRoleName, 
                 "participantRole": participantRole, 
                 "name": name 
+            }
+        ],
+        "journalNotes": [
+            {
+                "uuid": JournalUuid,
+                "approved": True,
+                "journalNoteAttributes":
+                {
+                    "journalNoteDate": CurrentDate,
+                    "title": "GO Aktindsigtssag",
+                    "author": {
+                        "fkOrgIdentity": {
+                            "fkUuid": "15deb66c-1685-49ac-8344-cfbf84fe6d84",
+                            "type": "Bruger",
+                            "fullName": "Aktbob"
+                            }
+                    },
+                    "format": "Text",
+                    "note":base64_JournalNote
+
+                }
             }
         ]
     }
