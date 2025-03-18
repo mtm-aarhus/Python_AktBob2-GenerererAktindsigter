@@ -157,13 +157,19 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     Uuid = str(uuid.uuid4())
     JournalUuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
-    html_content = 'f<a href="{AktSagsURL}">{link_text}</a>'
-    # Create text content
-    # Text content to encode
-    text_content = f"{link_text}: {AktSagsURL}"
+    # Properly structured HTML content
+    html_content = f"""<html>
+    <head>
+        <title>Journal Note</title>
+    </head>
+    <body>
+        <p><a href="{AktSagsURL}">{link_text}</a></p>
+    </body>
+    </html>
+    """
 
-    # Convert directly to base64 without file handling
-    base64_JournalNote = base64.b64encode(text_content.encode("utf-8")).decode()
+    # Convert to base64
+    base64_JournalNote = base64.b64encode(html_content.encode("utf-8")).decode()
 
     print(base64_JournalNote) 
 
@@ -228,7 +234,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "journalNoteAttributes":
                 {
                     "journalNoteDate": CurrentDate,
-                    "title": html_content,
+                    "title": "GO Aktindsigtssag",
                     "editReasonApprovedJournalnote": "Oprettelse",
                     "journalNoteAuthor": "AKTBOB",
                     "author": {
@@ -239,7 +245,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                             }
                     },
                     "journalNoteType": "Bruger",
-                    "format": "Ooxml",
+                    "format": "Html",
                     "note":base64_JournalNote
 
                 }
