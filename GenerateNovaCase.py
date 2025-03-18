@@ -169,7 +169,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     """
 
     # Convert to base64
-    base64_JournalNote = base64.b64encode(html_content.encode("utf-8")).decode()
+    base64_JournalNote = base64.b64encode(html_content.encode("utf-8"))
 
     print(base64_JournalNote) 
 
@@ -245,8 +245,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                             }
                     },
                     "journalNoteType": "Bruger",
-                    "format": "OOXML",
-                    "note":html_content
+                    "format": "Html",
+                    "note":base64_JournalNote
 
                 }
             }
