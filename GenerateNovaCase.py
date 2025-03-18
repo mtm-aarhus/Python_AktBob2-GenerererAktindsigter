@@ -163,13 +163,13 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         <title>Journal Note</title>
     </head>
     <body>
-        <p><a href="{AktSagsURL}">{link_text}</a></p>
+        <p><a href="https://go.aarhuskommune.dk/cases/AKT30/AKT-2025-000182">GO Aktindsigtssag</a></p>
     </body>
     </html>
     """
 
     # Convert to base64
-    base64_JournalNote = base64.b64encode(html_content.encode("utf-8"))
+    base64_JournalNote = base64.b64encode(html_content.encode("utf-8")).decode()
 
     print(base64_JournalNote) 
 
