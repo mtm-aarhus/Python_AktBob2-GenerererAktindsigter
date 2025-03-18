@@ -160,6 +160,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     html_content = 'f<a href="{AktSagsURL}">{link_text}</a>'
     print(html_content)
     base64_JournalNote = base64.b64encode(html_content.encode("utf-8")).decode()
+    print(base64_JournalNote)
     url = f"{KMDNovaURL}/Case/Import?api-version=2.0-Case"
 
     # Define headers
