@@ -159,22 +159,19 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     Uuid = str(uuid.uuid4())
     JournalUuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
-    # Create a Word document
-    doc = Document()
-    p = doc.add_paragraph("Click here: ")  # Normal text
-    hyperlink = p.add_run(link_text)  # Hyperlink text
-    hyperlink.underline = True
-    hyperlink.font.color.rgb = (0, 0, 255)  # Make it blue like a link
+    # Create text content
+    text_content = f"{link_text}: {AktSagsURL}"
 
-    # Save document to a memory buffer
-    buffer = BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
+    # Save as a text file
+    file_path = "journal_note.txt"
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(text_content)
 
-    # Encode file to base64
-    base64_JournalNote = base64.b64encode(buffer.getvalue()).decode()
+    # Read and encode file as base64
+    with open(file_path, "rb") as f:
+        base64_JournalNote = base64.b64encode(f.read()).decode()
 
-    print(base64_JournalNote)  # Send this in the API request
+    print(base64_JournalNote)
 
     url = f"{KMDNovaURL}/Case/Import?api-version=2.0-Case"
 
