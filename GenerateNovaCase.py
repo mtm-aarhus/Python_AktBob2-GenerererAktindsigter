@@ -158,8 +158,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     JournalUuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
     html_content = 'f<a href="{AktSagsURL}">{link_text}</a>'
-    base64_JournalNote = base64.b64encode(html_content.encode()).decode()
-    # Define API URL
+    print(html_content)
+    base64_JournalNote = base64.b64encode(html_content.encode("utf-8")).decode()
     url = f"{KMDNovaURL}/Case/Import?api-version=2.0-Case"
 
     # Define headers
@@ -232,7 +232,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                             }
                     },
                     "journalNoteType": "Bruger",
-                    "format": "OOXML",
+                    "format": "Html",
                     "note":base64_JournalNote
 
                 }
