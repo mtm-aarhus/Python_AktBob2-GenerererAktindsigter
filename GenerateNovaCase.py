@@ -7,6 +7,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     from GetKmdAcessToken import GetKMDToken
     from datetime import datetime
     import base64
+    from docx import Document
+    from io import BytesIO
     
      # henter in_argumenter:
     Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
@@ -157,22 +159,23 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     Uuid = str(uuid.uuid4())
     JournalUuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
-    #html_content = f'<a href="{AktSagsURL}">{link_text}</a>'
-    html_content = f"""<!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Journal Note</title>
-    </head>
-    <body>
-        <a href="{AktSagsURL}">{link_text}</a>
-    </body>
-    </html>
-    """
+    # Create a Word document
+    doc = Document()
+    p = doc.add_paragraph("Click here: ")  # Normal text
+    hyperlink = p.add_run(link_text)  # Hyperlink text
+    hyperlink.underline = True
+    hyperlink.font.color.rgb = (0, 0, 255)  # Make it blue like a link
 
-    print(html_content)
-    base64_JournalNote = base64.b64encode(html_content.encode("utf-8")).decode()
-    print(base64_JournalNote)
+    # Save document to a memory buffer
+    buffer = BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+
+    # Encode file to base64
+    base64_JournalNote = base64.b64encode(buffer.getvalue()).decode()
+
+    print(base64_JournalNote)  # Send this in the API request
+
     url = f"{KMDNovaURL}/Case/Import?api-version=2.0-Case"
 
     # Define headers
