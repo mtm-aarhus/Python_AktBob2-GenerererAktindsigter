@@ -230,11 +230,11 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         "journalNotes": [
             {
                 "uuid": JournalUuid,
-                "approved": False,
+                "approved": True,
                 "journalNoteAttributes":
                 {
                     "journalNoteDate": CurrentDate,
-                    "title": "GO Aktindsigtssag",
+                    "title": AktSagsURL,
                     "editReasonApprovedJournalnote": "Oprettelse",
                     "journalNoteAuthor": "AKTBOB",
                     "author": {
