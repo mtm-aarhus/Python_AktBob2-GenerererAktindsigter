@@ -7,6 +7,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     from GetKmdAcessToken import GetKMDToken
     from datetime import datetime
     import base64
+    from docx import Document
+    import io
     
      # henter in_argumenter:
     Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
@@ -158,10 +160,25 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     JournalUuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
     # Properly structured HTML content
-    html_content = f'<a href="{AktSagsURL}">{link_text}</a>'
+    #html_content = f'<a href="{AktSagsURL}">{link_text}</a>'
+
+    # Step 1: Create a new Word document
+    doc = Document()
+    doc.add_paragraph("Aktindsigtssag Link: " + AktSagsURL)  # Add content to the document
+
+    # Step 2: Save document to a BytesIO stream
+    doc_stream = io.BytesIO()
+    doc.save(doc_stream)
+    doc_stream.seek(0)  # Reset stream position
+
+    # Step 3: Convert document to base64
+    base64_JournalNote = base64.b64encode(doc_stream.read()).decode("utf-8")
+
+
+
 
     # Convert to base64
-    base64_JournalNote = base64.b64encode(html_content.encode("utf-8")).decode()
+    #base64_JournalNote = base64.b64encode(html_content.encode("utf-8")).decode()
 
     print(base64_JournalNote) 
 
