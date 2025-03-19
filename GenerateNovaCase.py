@@ -9,9 +9,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     import base64
     from docx import Document
     import io
-    from docx.oxml import OxmlElement
-    from docx.oxml.ns import qn
-
+    
      # henter in_argumenter:
     Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
     KMDNovaURL = Arguments_GenerateNovaCase.get("in_KMDNovaURL")
@@ -161,36 +159,12 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     Uuid = str(uuid.uuid4())
     JournalUuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
-    # Properly structured HTML content
-    def add_hyperlink(paragraph, url, text):
-        hyperlink = OxmlElement("w:hyperlink")
-        hyperlink.set(qn("r:id"), "rId1")
 
-        new_run = OxmlElement("w:r")
-        rPr = OxmlElement("w:rPr")
-
-        color = OxmlElement("w:color")
-        color.set("w:val", "0000FF")
-        underline = OxmlElement("w:u")
-        underline.set("w:val", "single")
-
-        rPr.append(color)
-        rPr.append(underline)
-        new_run.append(rPr)
-
-        text_element = OxmlElement("w:t")
-        text_element.text = text
-        new_run.append(text_element)
-
-        hyperlink.append(new_run)
-        paragraph._element.append(hyperlink)
-
-
+    # Step 1: Create a new Word document
     doc = Document()
-    p = doc.add_paragraph("Aktindsigtssag Link: ")
-    add_hyperlink(p, AktSagsURL, AktSagsURL)
-    
-    #doc.add_paragraph("Aktindsigtssag Link: " + AktSagsURL)  # Add content to the document
+    doc.add_paragraph(AktSagsURL)  # Add content to the document
+
+
     # Step 2: Save document to a BytesIO stream
     doc_stream = io.BytesIO()
     doc.save(doc_stream)
@@ -198,14 +172,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
     # Step 3: Convert document to base64
     base64_JournalNote = base64.b64encode(doc_stream.read()).decode("utf-8")
-
-
-
-
-    # Convert to base64
-    #base64_JournalNote = base64.b64encode(html_content.encode("utf-8")).decode()
-
-    print(base64_JournalNote) 
 
     url = f"{KMDNovaURL}/Case/Import?api-version=2.0-Case"
 
@@ -268,7 +234,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "journalNoteAttributes":
                 {
                     "journalNoteDate": CurrentDate,
-                    "title": AktSagsURL,
+                    "title": link_text,
                     "editReasonApprovedJournalnote": "Oprettelse",
                     "journalNoteAuthor": "AKTBOB",
                     "author": {
