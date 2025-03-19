@@ -9,7 +9,9 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     import base64
     from docx import Document
     import io
-    
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
      # henter in_argumenter:
     Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
     KMDNovaURL = Arguments_GenerateNovaCase.get("in_KMDNovaURL")
@@ -160,12 +162,35 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     JournalUuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
     # Properly structured HTML content
-    #html_content = f'<a href="{AktSagsURL}">{link_text}</a>'
+    def add_hyperlink(paragraph, url, text):
+        hyperlink = OxmlElement("w:hyperlink")
+        hyperlink.set(qn("r:id"), "rId1")
 
-    # Step 1: Create a new Word document
+        new_run = OxmlElement("w:r")
+        rPr = OxmlElement("w:rPr")
+
+        color = OxmlElement("w:color")
+        color.set("w:val", "0000FF")
+        underline = OxmlElement("w:u")
+        underline.set("w:val", "single")
+
+        rPr.append(color)
+        rPr.append(underline)
+        new_run.append(rPr)
+
+        text_element = OxmlElement("w:t")
+        text_element.text = text
+        new_run.append(text_element)
+
+        hyperlink.append(new_run)
+        paragraph._element.append(hyperlink)
+
+
     doc = Document()
-    doc.add_paragraph("Aktindsigtssag Link: " + AktSagsURL)  # Add content to the document
-
+    p = doc.add_paragraph("Aktindsigtssag Link: ")
+    add_hyperlink(p, AktSagsURL, AktSagsURL)
+    
+    #doc.add_paragraph("Aktindsigtssag Link: " + AktSagsURL)  # Add content to the document
     # Step 2: Save document to a BytesIO stream
     doc_stream = io.BytesIO()
     doc.save(doc_stream)
