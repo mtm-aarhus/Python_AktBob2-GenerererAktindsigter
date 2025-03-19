@@ -158,15 +158,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     JournalUuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
     # Properly structured HTML content
-    html_content = f"""<html>
-    <head>
-        <title>Journal Note</title>
-    </head>
-    <body>
-        <p><a href="https://go.aarhuskommune.dk/cases/AKT30/AKT-2025-000182">GO Aktindsigtssag</a></p>
-    </body>
-    </html>
-    """
+    html_content = f'<a href="{AktSagsURL}">{link_text}</a>'
 
     # Convert to base64
     base64_JournalNote = base64.b64encode(html_content.encode("utf-8")).decode()
