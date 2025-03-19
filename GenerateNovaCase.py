@@ -162,7 +162,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
     # Step 1: Create a new Word document
     doc = Document()
-    doc.add_paragraph(AktSagsURL)  # Add content to the document
+    doc.add_paragraph("Aktindsigtssag Link: " + AktSagsURL)  # Add content to the document
 
 
     # Step 2: Save document to a BytesIO stream
