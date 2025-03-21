@@ -158,6 +158,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     TransactionID = str(uuid.uuid4())
     Uuid = str(uuid.uuid4())
     JournalUuid = str(uuid.uuid4())
+    Index_Uuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
 
     # Step 1: Create a new Word document
@@ -225,6 +226,16 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "partyRoleName": partyRoleName, 
                 "participantRole": participantRole, 
                 "name": name 
+            },
+            {
+                "index": Index_Uuid,
+                "identificationType": "Frit",
+                "identification": "Test Testersen",
+                "partyRole": "IND",
+                "partyRoleName": "Indsender",
+                "participantRole": "Sekundær",
+                "name": "Test Testersen",
+                "participantContactInformation": "Test@aarhus.dk"
             }
         ],
         "journalNotes": [
