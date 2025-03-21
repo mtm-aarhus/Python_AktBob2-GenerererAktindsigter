@@ -159,6 +159,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     Uuid = str(uuid.uuid4())
     JournalUuid = str(uuid.uuid4())
     Index_Uuid = str(uuid.uuid4())
+    print(Index_Uuid)
     link_text = "GO Aktindsigtssag"
 
     # Step 1: Create a new Word document
