@@ -185,7 +185,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         index = str(uuid.uuid4())  # fallback to a new UUID
     if not Index_Uuid:
         Index_Uuid = str(uuid.uuid4())  # fallback to a new UUID
-        
+
     # Define JSON payload
     payload = {
         "common": {
@@ -230,17 +230,17 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "partyRoleName": partyRoleName, 
                 "participantRole": participantRole, 
                 "name": name 
-            },
-            {
-                "index": Index_Uuid,
-                "identificationType": "Frit",
-                "identification": "Test Testersen",
-                "partyRole": "IND",
-                "partyRoleName": "Indsender",
-                "participantRole": "Sekundær",
-                "name": "Test Testersen",
-                "participantContactInformation": "Test@aarhus.dk"
             }
+            # {
+            #     "index": Index_Uuid,
+            #     "identificationType": "Frit",
+            #     "identification": "Test Testersen",
+            #     "partyRole": "IND",
+            #     "partyRoleName": "Indsender",
+            #     "participantRole": "Sekundær",
+            #     "name": "Test Testersen",
+            #     "participantContactInformation": "Test@aarhus.dk"
+            # }
         ],
         "journalNotes": [
             {
