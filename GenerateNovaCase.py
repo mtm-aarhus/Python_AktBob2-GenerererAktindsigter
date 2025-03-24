@@ -160,7 +160,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     JournalUuid = str(uuid.uuid4())
     Index_Uuid = str(uuid.uuid4())
     link_text = "GO Aktindsigtssag"
-
+    BuildingClassUuid = str(uuid.uuid4())
     # Step 1: Create a new Word document
     doc = Document()
     doc.add_paragraph("Aktindsigtssag Link: " + AktSagsURL)  # Add content to the document
@@ -261,18 +261,18 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
                 }
             }
-        ]
-        # "buildingCase":{
-        #     "buildingCaseAttributes":{
-        #         "buildingCaseClassId": "2a33734b-c596-4edf-93eb-23daae4bfc3e"
-        #     },
-        #     "userdefindefields": [
-        #         {
-        #             "type": "1. Politisk kategori",
-        #             "value": "Aktindsigt"
-        #         }
-        #     ]
-        # }
+        ],
+        "buildingCase":{
+            "buildingCaseAttributes":{
+                "buildingCaseClassId": BuildingClassUuid
+            },
+            "userdefindefields": [
+                {
+                    "type": "1. Politisk kategori",
+                    "value": "Aktindsigt"
+                }
+            ]
+        }
     }
     # Make the API request
     try:
