@@ -220,15 +220,15 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             }
         },
         "caseParties": [
-            # {
-            #     "index": index,
-            #     "identificationType": identificationType,
-            #     "identification": identification, 
-            #     "partyRole": partyRole,
-            #     "partyRoleName": partyRoleName, 
-            #     "participantRole": participantRole, 
-            #     "name": name 
-            # },
+            {
+                "index": index,
+                "identificationType": identificationType,
+                "identification": identification, 
+                "partyRole": partyRole,
+                "partyRoleName": partyRoleName, 
+                "participantRole": participantRole, 
+                "name": name 
+            },
             {
                 "index": Index_Uuid,
                 "identificationType": "Frit",
