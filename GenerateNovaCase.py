@@ -216,7 +216,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "type": "Afdeling",
                 "fullName": "Digitalisering"
             }
-        }
+        },
         # "caseParties": [
         #     {
         #         "index": index,
