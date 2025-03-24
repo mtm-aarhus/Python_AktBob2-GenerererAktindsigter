@@ -217,27 +217,27 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "fullName": "Digitalisering"
             }
         },
-        # "caseParties": [
-        #     {
-        #         "index": index,
-        #         "identificationType": identificationType,
-        #         "identification": identification, 
-        #         "partyRole": partyRole,
-        #         "partyRoleName": partyRoleName, 
-        #         "participantRole": participantRole, 
-        #         "name": name 
-        #     }
-        #     # {
-        #     #     "index": Index_Uuid,
-        #     #     "identificationType": "Frit",
-        #     #     "identification": "Test Testersen",
-        #     #     "partyRole": "IND",
-        #     #     "partyRoleName": "Indsender",
-        #     #     "participantRole": "Sekundær",
-        #     #     "name": "Test Testersen",
-        #     #     "participantContactInformation": "Test@aarhus.dk"
-        #     # }
-        # ],
+        "caseParties": [
+            {
+                "index": index,
+                "identificationType": identificationType,
+                "identification": identification, 
+                "partyRole": partyRole,
+                "partyRoleName": partyRoleName, 
+                "participantRole": participantRole, 
+                "name": name 
+            },
+            {
+                "index": Index_Uuid,
+                "identificationType": "Frit",
+                "identification": "Test Testersen",
+                "partyRole": "IND",
+                "partyRoleName": "Indsender",
+                "participantRole": "Sekundær",
+                "name": "Test Testersen",
+                "participantContactInformation": "Test@aarhus.dk"
+            }
+        ],
         "journalNotes": [
             {
                 "uuid": JournalUuid,
@@ -261,18 +261,18 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
                 }
             }
-        ],
-        "buildingCase":{
-            "buildingCaseAttributes":{
-                "buildingCaseClassId": "2a33734b-c596-4edf-93eb-23daae4bfc3e"
-            },
-            "userdefindefields": [
-                {
-                    "type": "1. Politisk kategori",
-                    "value": "Aktindsigt"
-                }
-            ]
-        }
+        ]
+        # "buildingCase":{
+        #     "buildingCaseAttributes":{
+        #         "buildingCaseClassId": "2a33734b-c596-4edf-93eb-23daae4bfc3e"
+        #     },
+        #     "userdefindefields": [
+        #         {
+        #             "type": "1. Politisk kategori",
+        #             "value": "Aktindsigt"
+        #         }
+        #     ]
+        # }
     }
     # Make the API request
     try:
