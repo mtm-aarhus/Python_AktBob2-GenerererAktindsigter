@@ -262,17 +262,18 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 }
             }
         ],
-        "buildingCase":{
-            # "buildingCaseAttributes":{
-            #     "buildingCaseClassId": "2a33734b-c596-4edf-93eb-23daae4bfc3e"
-            # },
-            "userdefindefields": [
-                {
-                    "type": "1. Politisk kategori",
-                    "value": "Aktindsigt"
-                }
+        "buildingCase": {
+            "buildingCaseAttributes": {
+                "buildingCaseClassId": "2a33734b-c596-4edf-93eb-23daae4bfc3e",
+                "buildingCaseClassName": "Aktindsigt"
+            },
+        "userdefindefields": [
+            {
+            "type": "1. Politisk kategori",
+            "value": "Aktindsigt"
+            }
             ]
-        }
+        }  
     }
     # Make the API request
     try:
