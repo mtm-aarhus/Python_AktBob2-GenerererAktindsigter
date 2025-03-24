@@ -181,10 +181,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         "Authorization": f"Bearer {KMD_access_token}",
         "Content-Type": "application/json"
     }
-    if not index:
-        index = str(uuid.uuid4())  # fallback to a new UUID
-    if not Index_Uuid:
-        Index_Uuid = str(uuid.uuid4())  # fallback to a new UUID
 
     # Define JSON payload
     payload = {
@@ -220,28 +216,28 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "type": "Afdeling",
                 "fullName": "Digitalisering"
             }
-        },
-        "caseParties": [
-            {
-                "index": index,
-                "identificationType": identificationType,
-                "identification": identification, 
-                "partyRole": partyRole,
-                "partyRoleName": partyRoleName, 
-                "participantRole": participantRole, 
-                "name": name 
-            }
-            # {
-            #     "index": Index_Uuid,
-            #     "identificationType": "Frit",
-            #     "identification": "Test Testersen",
-            #     "partyRole": "IND",
-            #     "partyRoleName": "Indsender",
-            #     "participantRole": "Sekundær",
-            #     "name": "Test Testersen",
-            #     "participantContactInformation": "Test@aarhus.dk"
-            # }
-        ],
+        }
+        # "caseParties": [
+        #     {
+        #         "index": index,
+        #         "identificationType": identificationType,
+        #         "identification": identification, 
+        #         "partyRole": partyRole,
+        #         "partyRoleName": partyRoleName, 
+        #         "participantRole": participantRole, 
+        #         "name": name 
+        #     }
+        #     # {
+        #     #     "index": Index_Uuid,
+        #     #     "identificationType": "Frit",
+        #     #     "identification": "Test Testersen",
+        #     #     "partyRole": "IND",
+        #     #     "partyRoleName": "Indsender",
+        #     #     "participantRole": "Sekundær",
+        #     #     "name": "Test Testersen",
+        #     #     "participantContactInformation": "Test@aarhus.dk"
+        #     # }
+        # ],
         "journalNotes": [
             {
                 "uuid": JournalUuid,
