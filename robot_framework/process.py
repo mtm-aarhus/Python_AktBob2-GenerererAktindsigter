@@ -73,17 +73,23 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     GeoSag = queue.get("GeoSag")
     NovaSag = queue.get("NovaSag")
     AktSagsURL = queue.get("AktSagsURL")
+    IndsenderNavn =  queue.get("IndsenderNavn")
+    IndsenderMail = queue.get("IndsenderMail ")
+    AktindsigtsDato = queue.get("AktindsigtsDato")
 
 
     orchestrator_connection.log_info(f"Sagsnummer: {Sagsnummer}")
     orchestrator_connection.log_info(f"DeskProID: {DeskProID}")
     orchestrator_connection.log_info(f"DeskProTitel: {DeskProTitel}")
-    orchestrator_connection.log_info(f"PodioID{PodioID}")
-    orchestrator_connection.log_info(f"Overmappe{Overmappe}")
-    orchestrator_connection.log_info(f"Undermappe{Undermappe}")
-    orchestrator_connection.log_info(f"GeoSag{GeoSag}")
-    orchestrator_connection.log_info(f"NovaSag{NovaSag}")
-    orchestrator_connection.log_info(f"AktSagsURL{AktSagsURL}")
+    orchestrator_connection.log_info(f"PodioID: {PodioID}")
+    orchestrator_connection.log_info(f"Overmappe: {Overmappe}")
+    orchestrator_connection.log_info(f"Undermappe: {Undermappe}")
+    orchestrator_connection.log_info(f"GeoSag: {GeoSag}")
+    orchestrator_connection.log_info(f"NovaSag: {NovaSag}")
+    orchestrator_connection.log_info(f"AktSagsURL: {AktSagsURL}")
+    orchestrator_connection.log_info(f"IndsenderNavn: {IndsenderNavn}")
+    orchestrator_connection.log_info(f"IndsenderMail : {IndsenderMail }")
+    orchestrator_connection.log_info(f"AktindsigtsDato: {AktindsigtsDato}")
 
     # ---- Run "GetDokumentlist" ----
     Arguments = {
@@ -241,7 +247,10 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         "in_Sagsnummer": Sagsnummer,
         "in_NovaToken": KMD_access_token,
         "in_KMDNovaURL": KMDNovaURL,
-        "in_AktSagsURL": AktSagsURL
+        "in_AktSagsURL": AktSagsURL,
+        "in_IndsenderNavn": IndsenderNavn,
+        "in_IndsenderMail" : IndsenderMail,
+        "in_AktindsigtsDato": AktindsigtsDato
         }
 
         GenerateNovaCase_Output_arguments = GenerateNovaCase.invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection)

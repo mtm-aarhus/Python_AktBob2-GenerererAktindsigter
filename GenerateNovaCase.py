@@ -15,7 +15,10 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     KMDNovaURL = Arguments_GenerateNovaCase.get("in_KMDNovaURL")
     KMD_access_token = Arguments_GenerateNovaCase.get("in_NovaToken")
     AktSagsURL = Arguments_GenerateNovaCase.get("in_AktSagsURL")
- 
+    IndsenderNavn = Arguments_GenerateNovaCase.get("in_IndsenderNavn")
+    IndsenderMail = Arguments_GenerateNovaCase.get("in_IndsenderMail")  
+    AktindsigtsDato = Arguments_GenerateNovaCase.get("in_AktindsigtsDato")
+
      ### --- Henter caseinfo --- ###
     TransactionID = str(uuid.uuid4())
 
@@ -89,6 +92,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "bfeNumber": True
          }
         }
+    }
     }
     try:
         response = requests.put(Caseurl, headers=headers, json=data)
@@ -165,6 +169,9 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
     # ### ---  Opretter sagen --- ####   
     CurrentDate = datetime.now().strftime("%Y-%m-%dT00:00:00")
+    AktindsigtsDate = AktindsigtsDato.rstrip('Z')
+    print(CurrentDate)
+    print(AktindsigtsDate)
     TransactionID = str(uuid.uuid4())
     Uuid = str(uuid.uuid4())
     JournalUuid = str(uuid.uuid4())
@@ -200,7 +207,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         },
         "caseAttributes": {
             "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer} - Se beskrivelse",
-            "caseDate": CurrentDate,
+            "caseDate": AktindsigtsDate,
             "caseCategory": "BomByg"
         },
         "caseClassification": {
@@ -240,12 +247,12 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             {
                 "index": Index_Uuid,
                 "identificationType": "Frit",
-                "identification": "Test Testersen",
+                "identification": IndsenderNavn,
                 "partyRole": "IND",
                 "partyRoleName": "Indsender",
                 "participantRole": "Sekundær",
-                "name": "Test Testersen",
-                "participantContactInformation": "Test@aarhus.dk"
+                "name": IndsenderNavn,
+                "participantContactInformation": IndsenderMail
             }
         ],
         "journalNotes": [
