@@ -74,7 +74,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     NovaSag = queue.get("NovaSag")
     AktSagsURL = queue.get("AktSagsURL")
     IndsenderNavn =  queue.get("IndsenderNavn")
-    IndsenderMail = queue.get("IndsenderMail ")
+    IndsenderMail = queue.get("IndsenderMail")
     AktindsigtsDato = queue.get("AktindsigtsDato")
 
 

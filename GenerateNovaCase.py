@@ -168,10 +168,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
 
     # ### ---  Opretter sagen --- ####   
-    CurrentDate = datetime.now().strftime("%Y-%m-%dT00:00:00")
+    JournalDate = datetime.now().strftime("%Y-%m-%dT00:00:00")
     AktindsigtsDate = AktindsigtsDato.rstrip('Z')
-    print(CurrentDate)
-    print(AktindsigtsDate)
     TransactionID = str(uuid.uuid4())
     Uuid = str(uuid.uuid4())
     JournalUuid = str(uuid.uuid4())
@@ -206,7 +204,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "uuid": Uuid  
         },
         "caseAttributes": {
-            "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer} - Se beskrivelse",
+            "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer}",
             "caseDate": AktindsigtsDate,
             "caseCategory": "BomByg"
         },
@@ -242,7 +240,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "partyRole": partyRole,
                 "partyRoleName": partyRoleName, 
                 "participantRole": participantRole, 
-                "name": name 
+                #"name": name 
             },
             {
                 "index": Index_Uuid,
@@ -261,7 +259,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "approved": True,
                 "journalNoteAttributes":
                 {
-                    "journalNoteDate": CurrentDate,
+                    "journalNoteDate": JournalDate, 
                     "title": link_text,
                     "editReasonApprovedJournalnote": "Oprettelse",
                     "journalNoteAuthor": "AKTBOB",
