@@ -81,7 +81,13 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                     "racfId": True,
                     "fullName": True
                 }
-            }
+            },
+            "buildingCase": {
+            "propertyInformation":{
+                "caseAddress":True,
+                "esrPropertyNumber": True,
+                "bfeNumber": True
+         }
         }
     }
     try:
@@ -100,6 +106,10 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             SecurityUnitCtrlBy = case["securityUnit"]["departmentCtrlBy"]
             ResponsibleDepartmentCtrlBy = case["responsibleDepartment"]["departmentCtrlBy"]
             availabilityCtrBy = case["availability"]["availabilityCtrBy"]
+            
+            # Extract bfeNumber from buildingCase -> propertyInformation
+            bfeNumber = case["buildingCase"]["propertyInformation"]["bfeNumber"]
+            print("BFE Number:", bfeNumber)
 
             primary_case_parties = [
                 {
@@ -199,7 +209,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         },
         "state": "Afgjort", 
         "sensitivity": "Følsomme",
-        "caseworker": { #Fast - men spørg Byggeri om det rigtige anvendes
+        "caseworker": { 
             "kspIdentity": {
                 "novaUserId": "78897bfc-2a36-496d-bc76-07e7a6b0850e",
                 "racfId": "AZX0075",
@@ -210,7 +220,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         "AvailabilityCtrlBy": availabilityCtrBy,
         "SecurityUnitCtrlBy": SecurityUnitCtrlBy,
         "ResponsibleDepartmentCtrlBy": ResponsibleDepartmentCtrlBy,
-        "responsibleDepartment": {#Fast - men spørg Byggeri om det rigtige anvendes
+        "responsibleDepartment": {
             "fkOrgIdentity": {
                 "fkUuid": "15deb66c-1685-49ac-8344-cfbf84fe6d84",
                 "type": "Afdeling",
@@ -266,6 +276,9 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "buildingCaseAttributes": {
                 "buildingCaseClassId": "2a33734b-c596-4edf-93eb-23daae4bfc3e",
                 "buildingCaseClassName": "Aktindsigt"
+            },
+            "propertyInformation":{
+                "bfeNumber": bfeNumber
             },
             "UserdefinedFields": [
                     {
