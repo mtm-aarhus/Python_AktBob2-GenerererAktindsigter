@@ -89,7 +89,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "propertyInformation":{
                 "caseAddress":True,
                 "esrPropertyNumber": True,
-                "bfeNumber": True
+                "bfeNumber": True,
+                "cadastralId": True
          }
         }
     }
@@ -113,7 +114,9 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             
             # Extract bfeNumber from buildingCase -> propertyInformation
             bfeNumber = case["buildingCase"]["propertyInformation"]["bfeNumber"]
-            print("BFE Number:", bfeNumber)
+            CadastralId = case["buildingCase"]["propertyInformation"]["cadastralId"]
+            print(bfeNumber)
+            print(CadastralId)
 
             primary_case_parties = [
                 {
@@ -239,8 +242,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "identification": identification, 
                 "partyRole": partyRole,
                 "partyRoleName": partyRoleName, 
-                "participantRole": participantRole 
-                #"name": name 
+                "participantRole": participantRole, 
+                "name": name 
             },
             {
                 "index": Index_Uuid,
@@ -283,7 +286,9 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "buildingCaseClassName": "Aktindsigt"
             },
             "propertyInformation":{
+                "cadastralId": CadastralId,
                 "bfeNumber": bfeNumber
+
             },
             "UserdefinedFields": [
                     {
