@@ -256,6 +256,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
                         if str(OldbfeNumber) == str(bfeNumber):
                             print(f"Match found: Old BFE ({OldbfeNumber}) == Current BFE ({bfeNumber})")
+                            old_case_number = case_number
                             BFEMatch = True
                             break  # Exit loop after first match
                         else:
@@ -272,153 +273,198 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             print("No matching BFE number found in any case.")
         else:
             print("BFE match confirmed!")
+             ## finder først den existerende sag i Nova ved at søge på titlen og checke at datoen er aktindsigtsdatoen:"
+            TransactionID = str(uuid.uuid4())
+            # Parse the string into a datetime object
+            date_obj = datetime.strptime(AktindsigtsDate, "%Y-%m-%dT%H:%M:%S")
+
+            # Add one day
+            new_date_obj = date_obj + timedelta(days=1)
+
+            # Convert back to string if needed (same format)
+            new_date_str = new_date_obj.strftime("%Y-%m-%dT%H:%M:%S")
+
+            print("Original:", AktindsigtsDate)
+            print("Plus one day:", new_date_str)
+            
+            {
+            "common": {
+                "transactionId": TransactionID
+            },
+            "paging": {
+                "startRow": 1,
+                "numberOfRows": 100
+            },
+            "caseAttributes": {
+                "title": f"Test gustav - Anmodning om aktindsigt i {old_case_number}",
+                "fromCaseDate": AktindsigtsDate,
+                "toCaseDate":"2025-02-21T00:00:00"
+
+            },
+            "states":{
+                "states":[{
+                    "progressState":"Afgjort"
+            }]
+            },
+            "caseGetOutput": { 
+                "caseAttributes":{
+                "userFriendlyCaseNumber": True # giver det sagsnummer som skal opdateres
+                }
+            }
+            }
+            
+
 
     except Exception as e:
         print(f"An error occurred during ticket processing: {e}")
 
 
+    if BFEMatch == True
+        print("BFE matcher opdaterer sagen")
+       
+    else:
+        print("No matching BFE number found opretter sagen på ny.")
+        # ### ---  Opretter sagen --- ####   
+        JournalDate = datetime.now().strftime("%Y-%m-%dT00:00:00")
+        AktindsigtsDate = AktindsigtsDato.rstrip('Z')
+        TransactionID = str(uuid.uuid4())
+        Uuid = str(uuid.uuid4())
+        JournalUuid = str(uuid.uuid4())
+        Index_Uuid = str(uuid.uuid4())
+        link_text = "GO Aktindsigtssag"
+        BuildingClassUuid = str(uuid.uuid4())
+        # Step 1: Create a new Word document
+        doc = Document()
+        doc.add_paragraph("Aktindsigtssag Link: " + AktSagsURL)  # Add content to the document
 
-    # ### ---  Opretter sagen --- ####   
-    JournalDate = datetime.now().strftime("%Y-%m-%dT00:00:00")
-    AktindsigtsDate = AktindsigtsDato.rstrip('Z')
-    TransactionID = str(uuid.uuid4())
-    Uuid = str(uuid.uuid4())
-    JournalUuid = str(uuid.uuid4())
-    Index_Uuid = str(uuid.uuid4())
-    link_text = "GO Aktindsigtssag"
-    BuildingClassUuid = str(uuid.uuid4())
-    # Step 1: Create a new Word document
-    doc = Document()
-    doc.add_paragraph("Aktindsigtssag Link: " + AktSagsURL)  # Add content to the document
 
+        # Step 2: Save document to a BytesIO stream
+        doc_stream = io.BytesIO()
+        doc.save(doc_stream)
+        doc_stream.seek(0)  # Reset stream position
 
-    # Step 2: Save document to a BytesIO stream
-    doc_stream = io.BytesIO()
-    doc.save(doc_stream)
-    doc_stream.seek(0)  # Reset stream position
+        # Step 3: Convert document to base64
+        base64_JournalNote = base64.b64encode(doc_stream.read()).decode("utf-8")
 
-    # Step 3: Convert document to base64
-    base64_JournalNote = base64.b64encode(doc_stream.read()).decode("utf-8")
+        url = f"{KMDNovaURL}/Case/Import?api-version=2.0-Case"
 
-    url = f"{KMDNovaURL}/Case/Import?api-version=2.0-Case"
+        # Define headers
+        headers = {
+            "Authorization": f"Bearer {KMD_access_token}",
+            "Content-Type": "application/json"
+        }
 
-    # Define headers
-    headers = {
-        "Authorization": f"Bearer {KMD_access_token}",
-        "Content-Type": "application/json"
-    }
-
-    # Define JSON payload
-    payload = {
-        "common": {
-            "transactionId": TransactionID,
-            "uuid": Uuid  
-        },
-        "caseAttributes": {
-            "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer}",
-            "caseDate": AktindsigtsDate,
-            "caseCategory": "BomByg"
-        },
-        "caseClassification": {
-            "kleNumber": {"code": "02.00.00"}, 
-            "proceedingFacet": {"code": "A53"}
-        },
-        "state": "Afgjort", 
-        "sensitivity": "Følsomme",
-        "caseworker": { 
-            "kspIdentity": {
-                "novaUserId": "78897bfc-2a36-496d-bc76-07e7a6b0850e",
-                "racfId": "AZX0075",
-                "fullName": "Aktindsigter Novabyg"
-            }
-        },
-        "SensitivityCtrlBy": sensitivityCtrBy,
-        "AvailabilityCtrlBy": availabilityCtrBy,
-        "SecurityUnitCtrlBy": SecurityUnitCtrlBy,
-        "ResponsibleDepartmentCtrlBy": ResponsibleDepartmentCtrlBy,
-        "responsibleDepartment": {
-            "fkOrgIdentity": {
-                "fkUuid": "15deb66c-1685-49ac-8344-cfbf84fe6d84",
-                "type": "Afdeling",
-                "fullName": "Digitalisering"
-            }
-        },
-        "caseParties": [
-            {
-                "index": index,
-                "identificationType": identificationType,
-                "identification": identification, 
-                "partyRole": partyRole,
-                "partyRoleName": partyRoleName, 
-                "participantRole": participantRole, 
-                "name": name 
+        # Define JSON payload
+        payload = {
+            "common": {
+                "transactionId": TransactionID,
+                "uuid": Uuid  
             },
-            {
-                "index": Index_Uuid,
-                "identificationType": "Frit",
-                "identification": IndsenderNavn,
-                "partyRole": "IND",
-                "partyRoleName": "Indsender",
-                "participantRole": "Sekundær",
-                "name": IndsenderNavn,
-                "participantContactInformation": IndsenderMail
-            }
-        ],
-        "journalNotes": [
-            {
-                "uuid": JournalUuid,
-                "approved": True,
-                "journalNoteAttributes":
-                {
-                    "journalNoteDate": JournalDate, 
-                    "title": link_text,
-                    "editReasonApprovedJournalnote": "Oprettelse",
-                    "journalNoteAuthor": "AKTBOB",
-                    "author": {
-                        "fkOrgIdentity": {
-                            "fkUuid": "15deb66c-1685-49ac-8344-cfbf84fe6d84",
-                            "type": "Afdeling",
-                            "fullName": "Digitalisering"
-                            }
-                    },
-                    "journalNoteType": "Bruger",
-                    "format": "Ooxml",
-                    "note":base64_JournalNote
-
+            "caseAttributes": {
+                "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer}",
+                "caseDate": AktindsigtsDate,
+                "caseCategory": "BomByg"
+            },
+            "caseClassification": {
+                "kleNumber": {"code": "02.00.00"}, 
+                "proceedingFacet": {"code": "A53"}
+            },
+            "state": "Afgjort", 
+            "sensitivity": "Følsomme",
+            "caseworker": { 
+                "kspIdentity": {
+                    "novaUserId": "78897bfc-2a36-496d-bc76-07e7a6b0850e",
+                    "racfId": "AZX0075",
+                    "fullName": "Aktindsigter Novabyg"
                 }
-            }
-        ],
-        "buildingCase": {
-            "buildingCaseAttributes": {
-                "buildingCaseClassId": "2a33734b-c596-4edf-93eb-23daae4bfc3e",
-                "buildingCaseClassName": "Aktindsigt"
             },
-            "propertyInformation":{
-                "cadastralId": CadastralId,
-                "bfeNumber": bfeNumber
-
+            "SensitivityCtrlBy": sensitivityCtrBy,
+            "AvailabilityCtrlBy": availabilityCtrBy,
+            "SecurityUnitCtrlBy": SecurityUnitCtrlBy,
+            "ResponsibleDepartmentCtrlBy": ResponsibleDepartmentCtrlBy,
+            "responsibleDepartment": {
+                "fkOrgIdentity": {
+                    "fkUuid": "15deb66c-1685-49ac-8344-cfbf84fe6d84",
+                    "type": "Afdeling",
+                    "fullName": "Digitalisering"
+                }
             },
-            "UserdefinedFields": [
+            "caseParties": [
+                {
+                    "index": index,
+                    "identificationType": identificationType,
+                    "identification": identification, 
+                    "partyRole": partyRole,
+                    "partyRoleName": partyRoleName, 
+                    "participantRole": participantRole, 
+                    "name": name 
+                },
+                {
+                    "index": Index_Uuid,
+                    "identificationType": "Frit",
+                    "identification": IndsenderNavn,
+                    "partyRole": "IND",
+                    "partyRoleName": "Indsender",
+                    "participantRole": "Sekundær",
+                    "name": IndsenderNavn,
+                    "participantContactInformation": IndsenderMail
+                }
+            ],
+            "journalNotes": [
+                {
+                    "uuid": JournalUuid,
+                    "approved": True,
+                    "journalNoteAttributes":
                     {
-                        "type": "1. Politisk kategori",
-                        "value": "Aktindsigt"
+                        "journalNoteDate": JournalDate, 
+                        "title": link_text,
+                        "editReasonApprovedJournalnote": "Oprettelse",
+                        "journalNoteAuthor": "AKTBOB",
+                        "author": {
+                            "fkOrgIdentity": {
+                                "fkUuid": "15deb66c-1685-49ac-8344-cfbf84fe6d84",
+                                "type": "Afdeling",
+                                "fullName": "Digitalisering"
+                                }
+                        },
+                        "journalNoteType": "Bruger",
+                        "format": "Ooxml",
+                        "note":base64_JournalNote
+
                     }
-                ]
-        }  
-    }
-    # Make the API request
-    try:
-        response = requests.post(url, headers=headers, json=payload)
-        
-        # Handle response
-        if response.status_code == 200:
-            print(response.text)
-            orchestrator_connection.log_info(f"Request Successful. Status Code:{response.status_code}")
-        else:
-            print("Failed to send request. Status Code:", response.status_code)
-            print("Response Data:", response.text)  # Print error response
-    except Exception as e:
-        raise Exception("Failed to fetch Sagstitel (Nova):", str(e))
+                }
+            ],
+            "buildingCase": {
+                "buildingCaseAttributes": {
+                    "buildingCaseClassId": "2a33734b-c596-4edf-93eb-23daae4bfc3e",
+                    "buildingCaseClassName": "Aktindsigt"
+                },
+                "propertyInformation":{
+                    "cadastralId": CadastralId,
+                    "bfeNumber": bfeNumber
+
+                },
+                "UserdefinedFields": [
+                        {
+                            "type": "1. Politisk kategori",
+                            "value": "Aktindsigt"
+                        }
+                    ]
+            }  
+        }
+        # Make the API request
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            
+            # Handle response
+            if response.status_code == 200:
+                print(response.text)
+                orchestrator_connection.log_info(f"Request Successful. Status Code:{response.status_code}")
+            else:
+                print("Failed to send request. Status Code:", response.status_code)
+                print("Response Data:", response.text)  # Print error response
+        except Exception as e:
+            raise Exception("Failed to fetch Sagstitel (Nova):", str(e))
 
     return {
     "out_Text": "Aktindsigtssagen er oprettet i Nova"
