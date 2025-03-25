@@ -9,6 +9,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     import base64
     from docx import Document
     import io
+    import re
     
      # henter in_argumenter:
     Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
@@ -18,6 +19,10 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     IndsenderNavn = Arguments_GenerateNovaCase.get("in_IndsenderNavn")
     IndsenderMail = Arguments_GenerateNovaCase.get("in_IndsenderMail")  
     AktindsigtsDato = Arguments_GenerateNovaCase.get("in_AktindsigtsDato")
+    DeskProID = Arguments_GenerateNovaCase.get("in_DeskProID")
+    DeskProAPI = orchestrator_connection.get_credential("DeskProAPI")
+    DeskProAPIKey = DeskProAPI.password
+
 
      ### --- Henter caseinfo --- ###
     TransactionID = str(uuid.uuid4())
@@ -170,6 +175,109 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
 
 
+    ### ---- Henter deskpro info: --- ####
+
+    Deskprourl = f"https://mtmsager.aarhuskommune.dk/api/v2/tickets/{DeskProID}"
+
+    headers = {
+    'Authorization': DeskProAPIKey,
+    'Cookie': 'dp_last_lang=da'
+    }
+    # Regex pattern for old case numbers
+    case_number_pattern = re.compile(r"^[A-Za-z]\d{4}-\d{1,10}$")
+    old_case_numbers = []
+    BFEMatch = False
+
+    try:
+        response = requests.get(Deskprourl, headers=headers)
+        
+        if response.status_code != 200:
+            raise Exception(f"Request failed with status code {response.status_code}: {response.text}")
+        
+        data = response.json()
+        fields = data.get("data", {}).get("fields", {})
+
+        for field_data in fields.values():
+            value = field_data.get("value")
+
+            # Check if value is a string
+            if isinstance(value, str):
+                if case_number_pattern.match(value):
+                    old_case_numbers.append(value)
+
+            # Check if value is a list (could contain strings or numbers)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, str) and case_number_pattern.match(item):
+                        old_case_numbers.append(item)
+
+        # Now loop through the found case numbers
+        for case_number in old_case_numbers:
+            print("Found old case number:", case_number)
+             ### --- Henter caseinfo --- ###
+            TransactionID = str(uuid.uuid4())
+
+            # Define API URL
+            Caseurl = f"{KMDNovaURL}/Case/GetList?api-version=2.0-Case"
+
+            # Define headers
+            headers = {
+                "Authorization": f"Bearer {KMD_access_token}",
+                "Content-Type": "application/json"
+            }
+
+            data = {
+                "common": {
+                    "transactionId": TransactionID
+                },
+                "paging": {
+                    "startRow": 1,
+                    "numberOfRows": 100
+                },
+                "caseAttributes": {
+                    "userFriendlyCaseNumber": case_number
+                },
+                "caseGetOutput": { 
+                    "buildingCase": {
+                        "propertyInformation":{
+                            "bfeNumber": True
+                            }
+                        }
+                    }
+                }
+            try:
+                response = requests.put(Caseurl, headers=headers, json=data)
+
+                if response.status_code == 200:
+                    response_data = response.json()
+                    if response_data.get("cases"):
+                        case = response_data["cases"][0]
+                        OldbfeNumber = case["buildingCase"]["propertyInformation"]["bfeNumber"]
+
+                        if str(OldbfeNumber) == str(bfeNumber):
+                            print(f"Match found: Old BFE ({OldbfeNumber}) == Current BFE ({bfeNumber})")
+                            BFEMatch = True
+                            break  # Exit loop after first match
+                        else:
+                            print(f"No match: Old BFE ({OldbfeNumber}) != Current BFE ({bfeNumber})")
+                    else:
+                        print(f"No cases found for {case_number}")
+                else:
+                    print(f"KMD API call failed for {case_number}, status: {response.status_code}, message: {response.text}")
+
+            except Exception as e:
+                print(f"An error occurred while calling KMD API for {case_number}: {e}")
+
+        if not BFEMatch:
+            print("No matching BFE number found in any case.")
+        else:
+            print("BFE match confirmed!")
+
+    except Exception as e:
+        print(f"An error occurred during ticket processing: {e}")
+
+
+
     # ### ---  Opretter sagen --- ####   
     JournalDate = datetime.now().strftime("%Y-%m-%dT00:00:00")
     AktindsigtsDate = AktindsigtsDato.rstrip('Z')
@@ -236,15 +344,15 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             }
         },
         "caseParties": [
-            # {
-            #     "index": index,
-            #     "identificationType": identificationType,
-            #     "identification": identification, 
-            #     "partyRole": partyRole,
-            #     "partyRoleName": partyRoleName, 
-            #     "participantRole": participantRole, 
-            #     "name": name 
-            # },
+            {
+                "index": index,
+                "identificationType": identificationType,
+                "identification": identification, 
+                "partyRole": partyRole,
+                "partyRoleName": partyRoleName, 
+                "participantRole": participantRole, 
+                "name": name 
+            },
             {
                 "index": Index_Uuid,
                 "identificationType": "Frit",

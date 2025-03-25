@@ -250,7 +250,8 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         "in_AktSagsURL": AktSagsURL,
         "in_IndsenderNavn": IndsenderNavn,
         "in_IndsenderMail" : IndsenderMail,
-        "in_AktindsigtsDato": AktindsigtsDato
+        "in_AktindsigtsDato": AktindsigtsDato,
+        "in_DeskProID": DeskProID
         }
 
         GenerateNovaCase_Output_arguments = GenerateNovaCase.invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection)
