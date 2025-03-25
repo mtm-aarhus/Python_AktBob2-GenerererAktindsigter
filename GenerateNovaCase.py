@@ -239,7 +239,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "identification": identification, 
                 "partyRole": partyRole,
                 "partyRoleName": partyRoleName, 
-                "participantRole": participantRole, 
+                "participantRole": participantRole 
                 #"name": name 
             },
             {
