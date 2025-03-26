@@ -22,7 +22,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     DeskProID = Arguments_GenerateNovaCase.get("in_DeskProID")
     DeskProAPI = orchestrator_connection.get_credential("DeskProAPI")
     DeskProAPIKey = DeskProAPI.password
-
+    AktindsigtsDato = AktindsigtsDato.rstrip('Z')
 
      ### --- Henter caseinfo --- ###
     TransactionID = str(uuid.uuid4())
@@ -276,18 +276,25 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
              ## finder først den existerende sag i Nova ved at søge på titlen og checke at datoen er aktindsigtsdatoen:"
             TransactionID = str(uuid.uuid4())
             # Parse the string into a datetime object
-            date_obj = datetime.strptime(AktindsigtsDate, "%Y-%m-%dT%H:%M:%S")
 
             # Add one day
-            new_date_obj = date_obj + timedelta(days=1)
+            new_date_obj = AktindsigtsDato + timedelta(days=1)
 
-            # Convert back to string if needed (same format)
-            new_date_str = new_date_obj.strftime("%Y-%m-%dT%H:%M:%S")
-
-            print("Original:", AktindsigtsDate)
-            print("Plus one day:", new_date_str)
+            print("Original:", AktindsigtsDato)
+            print("Plus one day:", new_date_obj)
             
-            {
+
+            # Define API URL
+            Caseurl = f"{KMDNovaURL}/Case/GetList?api-version=2.0-Case"
+
+            # Define headers
+            headers = {
+                "Authorization": f"Bearer {KMD_access_token}",
+                "Content-Type": "application/json"
+            }
+
+
+            data = {
             "common": {
                 "transactionId": TransactionID
             },
@@ -297,8 +304,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             },
             "caseAttributes": {
                 "title": f"Test gustav - Anmodning om aktindsigt i {old_case_number}",
-                "fromCaseDate": AktindsigtsDate,
-                "toCaseDate":"2025-02-21T00:00:00"
+                "fromCaseDate": AktindsigtsDato,
+                "toCaseDate": new_date_obj
 
             },
             "states":{
@@ -312,7 +319,17 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 }
             }
             }
-            
+            # Make the request
+            response = requests.post(Caseurl, headers=headers, json=data)
+
+            # Check status and handle response
+            if response.status_code == 200:
+                case = response_data["cases"][0]
+                OldAktindsigtscase = case["caseAttributes"]["userFriendlyCaseNumber"]
+                print(OldAktindsigtscase)
+            else:
+                raise Exception(f"API request failed with status {response.status_code}: {response.text}")
+                        
 
 
     except Exception as e:
@@ -326,7 +343,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         print("No matching BFE number found opretter sagen på ny.")
         # ### ---  Opretter sagen --- ####   
         JournalDate = datetime.now().strftime("%Y-%m-%dT00:00:00")
-        AktindsigtsDate = AktindsigtsDato.rstrip('Z')
         TransactionID = str(uuid.uuid4())
         Uuid = str(uuid.uuid4())
         JournalUuid = str(uuid.uuid4())
