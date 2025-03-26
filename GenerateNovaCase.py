@@ -310,7 +310,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "numberOfRows": 100
             },
             "caseAttributes": {
-                "title": f"Test gustav - Anmodning om aktindsigt i {old_case_number}",
+                "title": "Test gustav - Anmodning om aktindsigt i S2021-456011",
+                #"title": f"Test gustav - Anmodning om aktindsigt i {old_case_number}",
                 "fromCaseDate": AktindsigtsDato,
                 "toCaseDate": new_date_str
 
