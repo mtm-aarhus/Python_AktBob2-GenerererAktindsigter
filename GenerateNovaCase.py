@@ -336,7 +336,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         print(f"An error occurred during ticket processing: {e}")
 
 
-    if BFEMatch == True
+    if BFEMatch == True:
         print("BFE matcher opdaterer sagen")
        
     else:
