@@ -5,12 +5,11 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     import json
     import os
     from GetKmdAcessToken import GetKMDToken
-    from datetime import datetime
+    from datetime import datetime,timedelta
     import base64
     from docx import Document
     import io
     import re
-    from datetime import timedelta
     
      # henter in_argumenter:
     Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
@@ -278,11 +277,18 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             TransactionID = str(uuid.uuid4())
             # Parse the string into a datetime object
 
+
+            # Parse the string into a datetime object
+            date_obj = datetime.strptime(AktindsigtsDate, "%Y-%m-%dT%H:%M:%S")
+
             # Add one day
-            new_date_obj = AktindsigtsDato + timedelta(days=1)
+            new_date_obj = date_obj + timedelta(days=1)
+
+            # Convert back to string if needed (same format)
+            new_date_str = new_date_obj.strftime("%Y-%m-%dT%H:%M:%S")
 
             print("Original:", AktindsigtsDato)
-            print("Plus one day:", new_date_obj)
+            print("Plus one day:", new_date_str)
             
 
             # Define API URL
@@ -306,7 +312,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "caseAttributes": {
                 "title": f"Test gustav - Anmodning om aktindsigt i {old_case_number}",
                 "fromCaseDate": AktindsigtsDato,
-                "toCaseDate": new_date_obj
+                "toCaseDate": new_date_str
 
             },
             "states":{
