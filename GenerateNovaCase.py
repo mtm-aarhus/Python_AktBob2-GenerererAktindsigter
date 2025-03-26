@@ -327,7 +327,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             }
             }
             # Make the request
-            response = requests.post(Caseurl, headers=headers, json=data)
+            response = requests.put(Caseurl, headers=headers, json=data)
 
             # Check status and handle response
             if response.status_code == 200:
