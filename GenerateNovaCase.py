@@ -280,16 +280,16 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
             # Parse the string into a datetime object
             date_obj = datetime.strptime(AktindsigtsDato, "%Y-%m-%dT%H:%M:%S")
-
+            date_obj_midnight = date_obj.replace(hour=0, minute=0, second=0, microsecond=0)
+            AktindsigtsDato_midnight = date_obj_midnight.strftime("%Y-%m-%dT%H:%M:%S")
             # Add one day
-            new_date_obj = date_obj + timedelta(days=1)
+            new_date_obj = date_obj_midnight + timedelta(days=1)
 
-            # Convert back to string if needed (same format)
+            # Convert new_date_obj back to string
             new_date_str = new_date_obj.strftime("%Y-%m-%dT%H:%M:%S")
 
             print("Original:", AktindsigtsDato)
             print("Plus one day:", new_date_str)
-            print(old_case_number)
 
             # Define API URL
             Caseurl = f"{KMDNovaURL}/Case/GetList?api-version=2.0-Case"
@@ -310,9 +310,9 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "numberOfRows": 100
             },
             "caseAttributes": {
-                "title": f"Test gustav - Anmodning om aktindsigt i {old_case_number}"
-                #"fromCaseDate": AktindsigtsDato,
-                #"toCaseDate": new_date_str
+                "title": f"Test gustav - Anmodning om aktindsigt i {old_case_number}",
+                "fromCaseDate": AktindsigtsDato_midnight,
+                "toCaseDate": new_date_str
 
             },
             "states":{
