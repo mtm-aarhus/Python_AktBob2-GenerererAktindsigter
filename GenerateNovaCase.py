@@ -289,7 +289,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
             print("Original:", AktindsigtsDato)
             print("Plus one day:", new_date_str)
-            
+            print(old_case_number)
 
             # Define API URL
             Caseurl = f"{KMDNovaURL}/Case/GetList?api-version=2.0-Case"
@@ -322,7 +322,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             },
             "caseGetOutput": { 
                 "caseAttributes":{
-                "userFriendlyCaseNumber": True # giver det sagsnummer som skal opdateres
+                "userFriendlyCaseNumber": True
                 }
             }
             }
@@ -331,14 +331,14 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
             # Check status and handle response
             if response.status_code == 200:
+                print(response.text)
+                response_data = response.json()
                 case = response_data["cases"][0]
                 OldAktindsigtscase = case["caseAttributes"]["userFriendlyCaseNumber"]
                 print(OldAktindsigtscase)
             else:
                 raise Exception(f"API request failed with status {response.status_code}: {response.text}")
                         
-
-
     except Exception as e:
         print(f"An error occurred during ticket processing: {e}")
 
