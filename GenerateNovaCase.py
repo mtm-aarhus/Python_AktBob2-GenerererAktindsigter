@@ -310,10 +310,9 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "numberOfRows": 100
             },
             "caseAttributes": {
-                "title": "Test gustav - Anmodning om aktindsigt i S2021-456011",
-                #"title": f"Test gustav - Anmodning om aktindsigt i {old_case_number}",
-                "fromCaseDate": AktindsigtsDato,
-                "toCaseDate": new_date_str
+                "title": f"Test gustav - Anmodning om aktindsigt i {old_case_number}"
+                #"fromCaseDate": AktindsigtsDato,
+                #"toCaseDate": new_date_str
 
             },
             "states":{
@@ -337,6 +336,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 case = response_data["cases"][0]
                 OldAktindsigtscase = case["caseAttributes"]["userFriendlyCaseNumber"]
                 print(OldAktindsigtscase)
+            
             else:
                 raise Exception(f"API request failed with status {response.status_code}: {response.text}")
                         
