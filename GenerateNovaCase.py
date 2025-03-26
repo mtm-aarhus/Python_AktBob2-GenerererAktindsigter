@@ -10,6 +10,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     from docx import Document
     import io
     import re
+    from datetime import timedelta
     
      # henter in_argumenter:
     Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
