@@ -288,9 +288,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             # Convert new_date_obj back to string
             new_date_str = new_date_obj.strftime("%Y-%m-%dT%H:%M:%S")
 
-            print("Original:", AktindsigtsDato)
-            print("Plus one day:", new_date_str)
-
             # Define API URL
             Caseurl = f"{KMDNovaURL}/Case/GetList?api-version=2.0-Case"
 
@@ -323,7 +320,12 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "caseGetOutput": { 
                 "caseAttributes":{
                 "userFriendlyCaseNumber": True
-                }
+                },
+            "buildingCase": {
+                "propertyInformation":{
+                    "caseAddress":True
+                            }
+                        }   
             }
             }
             # Make the request
@@ -335,7 +337,9 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 response_data = response.json()
                 case = response_data["cases"][0]
                 OldAktindsigtscase = case["caseAttributes"]["userFriendlyCaseNumber"]
+                OldCaseAdress = case["buildingCase"]["propertyInformation"]["caseAddress"]
                 print(OldAktindsigtscase)
+                print(OldCaseAdress)
             
             else:
                 raise Exception(f"API request failed with status {response.status_code}: {response.text}")
