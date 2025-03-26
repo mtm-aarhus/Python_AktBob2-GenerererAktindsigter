@@ -279,7 +279,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
 
             # Parse the string into a datetime object
-            date_obj = datetime.strptime(AktindsigtsDate, "%Y-%m-%dT%H:%M:%S")
+            date_obj = datetime.strptime(AktindsigtsDato, "%Y-%m-%dT%H:%M:%S")
 
             # Add one day
             new_date_obj = date_obj + timedelta(days=1)
@@ -385,7 +385,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             },
             "caseAttributes": {
                 "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer}",
-                "caseDate": AktindsigtsDate,
+                "caseDate": AktindsigtsDato,
                 "caseCategory": "BomByg"
             },
             "caseClassification": {
