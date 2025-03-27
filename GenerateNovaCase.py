@@ -259,10 +259,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             print("No matching BFE number found in any case.")
         else:
             print("BFE match confirmed!")
-             ## finder først den existerende sag i Nova ved at søge på titlen og checke at datoen er aktindsigtsdatoen:"
             TransactionID = str(uuid.uuid4())
-            # Parse the string into a datetime object
-
 
             # Parse the string into a datetime object
             date_obj = datetime.strptime(AktindsigtsDato, "%Y-%m-%dT%H:%M:%S")
@@ -282,7 +279,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "Authorization": f"Bearer {KMD_access_token}",
                 "Content-Type": "application/json"
             }
-
 
             data = {
             "common": {
@@ -423,7 +419,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         JournalUuid = str(uuid.uuid4())
         Index_Uuid = str(uuid.uuid4())
         link_text = "GO Aktindsigtssag"
-        BuildingClassUuid = str(uuid.uuid4())
         # Step 1: Create a new Word document
         doc = Document()
         doc.add_paragraph("Aktindsigtssag Link: " + AktSagsURL)  # Add content to the document
@@ -521,7 +516,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                         "journalNoteType": "Bruger",
                         "format": "Ooxml",
                         "note":base64_JournalNote
-
                     }
                 }
             ],
