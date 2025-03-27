@@ -419,6 +419,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         JournalUuid = str(uuid.uuid4())
         Index_Uuid = str(uuid.uuid4())
         link_text = "GO Aktindsigtssag"
+
         # Step 1: Create a new Word document
         doc = Document()
         doc.add_paragraph("Aktindsigtssag Link: " + AktSagsURL)  # Add content to the document
@@ -516,6 +517,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                         "journalNoteType": "Bruger",
                         "format": "Ooxml",
                         "note":base64_JournalNote
+
                     }
                 }
             ],
@@ -529,7 +531,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                     "bfeNumber": bfeNumber
 
                 },
-                "userdefindefields": [
+                "UserdefinedFields": [
                         {
                             "type": "1. Politisk kategori",
                             "value": "Aktindsigt"
