@@ -164,10 +164,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             # print("Responsible Department Controlled By:", ResponsibleDepartmentCtrlBy)
             # print("Availability Controlled By:", availabilityCtrBy)
         
-
         else:
-            print("Failed to send request. Status Code:", response.status_code)
-            print("Response Data:", response.text)  # Print error response
+            raise Exception("Failed to send request. Status Code:", response.status_code,response.text)
     except Exception as e:
         raise Exception("Failed to fetch case data:", str(e))
 
@@ -181,9 +179,15 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     'Authorization': DeskProAPIKey,
     'Cookie': 'dp_last_lang=da'
     }
+    
+    # Target field numbers as strings
+    target_fields = {"61", "62", "63", "74", "75", "78", "81", "85", "87", "90", "93", "96", "99", "102", "105"}
+
+    
     # Regex pattern for old case numbers
     case_number_pattern = re.compile(r"^[A-Za-z]\d{4}-\d{1,10}$")
     old_case_numbers = []
+    target_values = {}
     BFEMatch = False
 
     try:
@@ -195,20 +199,21 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         data = response.json()
         fields = data.get("data", {}).get("fields", {})
 
-        for field_data in fields.values():
-            value = field_data.get("value")
+        for field_key, field_data in fields.items():
+            if field_key in target_fields:
+                value = field_data.get("value")
+                target_values[field_key] = value  # Save value
 
-            # Check if value is a string
-            if isinstance(value, str):
-                if case_number_pattern.match(value):
-                    old_case_numbers.append(value)
+                # Check for case number pattern
+                if isinstance(value, str):
+                    if case_number_pattern.match(value):
+                        old_case_numbers.append(value)
 
-            # Check if value is a list (could contain strings or numbers)
-            elif isinstance(value, list):
-                for item in value:
-                    if isinstance(item, str) and case_number_pattern.match(item):
-                        old_case_numbers.append(item)
-
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, str) and case_number_pattern.match(item):
+                            old_case_numbers.append(item)
+        
         # Now loop through the found case numbers
         for case_number in old_case_numbers:
             print("Found old case number:", case_number)
@@ -248,21 +253,20 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
                 if response.status_code == 200:
                     response_data = response.json()
-                    if response_data.get("cases"):
-                        case = response_data["cases"][0]
-                        OldbfeNumber = case["buildingCase"]["propertyInformation"]["bfeNumber"]
+                    response_data.get("cases")
+                    case = response_data["cases"][0]
+                    OldbfeNumber = case["buildingCase"]["propertyInformation"]["bfeNumber"]
 
-                        if str(OldbfeNumber) == str(bfeNumber):
-                            print(f"Match found: Old BFE ({OldbfeNumber}) == Current BFE ({bfeNumber})")
-                            old_case_number = case_number
-                            BFEMatch = True
-                            break  # Exit loop after first match
-                        else:
-                            print(f"No match: Old BFE ({OldbfeNumber}) != Current BFE ({bfeNumber})")
+                    if str(OldbfeNumber) == str(bfeNumber):
+                        print(f"Match found: Old BFE ({OldbfeNumber}) == Current BFE ({bfeNumber})")
+                        old_case_number = case_number
+                        BFEMatch = True
+                        break  # Exit loop after first match
                     else:
-                        print(f"No cases found for {case_number}")
+                        print(f"No match: Old BFE ({OldbfeNumber}) != Current BFE ({bfeNumber})")
+
                 else:
-                    print(f"KMD API call failed for {case_number}, status: {response.status_code}, message: {response.text}")
+                    raise Exception (f"KMD API call failed for {case_number}, status: {response.status_code}, message: {response.text}")
 
             except Exception as e:
                 print(f"An error occurred while calling KMD API for {case_number}: {e}")
