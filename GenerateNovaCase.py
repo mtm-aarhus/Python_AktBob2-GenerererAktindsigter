@@ -296,7 +296,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             },
             "states":{
                 "states":[{
-                    "progressState":"Afgjort"
+                    "progressState":"Opstaaet"
             }]
             },
             "caseGetOutput": { 
@@ -339,7 +339,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                     },
                     "states":{
                         "states":[{
-                            "progressState":"Afgjort"
+                            "progressState":"Opstaaet"
                     }]
                     },
                     "caseGetOutput": { 
@@ -456,7 +456,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "kleNumber": {"code": "02.00.00"}, 
                 "proceedingFacet": {"code": "A53"}
             },
-            "state": "Afgjort", 
+            "state": "Opstaaet", 
             "sensitivity": "Følsomme",
             "caseworker": { 
                 "kspIdentity": {
