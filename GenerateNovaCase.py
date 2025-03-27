@@ -165,7 +165,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             # print("Availability Controlled By:", availabilityCtrBy)
         
 
-        e5tlse:
+        else:
             print("Failed to send request. Status Code:", response.status_code)
             print("Response Data:", response.text)  # Print error response
     except Exception as e:
