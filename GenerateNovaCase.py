@@ -180,8 +180,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     'Cookie': 'dp_last_lang=da'
     }
     
-    # Target field numbers as strings - anvender ikke "61" da det er sagsnummer 1#
-    target_fields = {"62", "63", "74", "75", "78", "81", "85", "87", "90", "93", "96", "99", "102", "105"}
+    # Target field numbers as strings
+    target_fields = {"61","62", "63", "74", "75", "78", "81", "85", "87", "90", "93", "96", "99", "102", "105"}
 
     
     # Regex pattern for old case numbers
