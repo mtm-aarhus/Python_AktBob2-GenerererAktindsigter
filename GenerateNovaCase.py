@@ -143,27 +143,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 partyRoleName = primary_case_parties[0]["partyRoleName"]
                 participantRole = primary_case_parties[0]["participantRole"]
                 name = primary_case_parties[0]["name"]
-
-                # # Print to verify
-                # print("Index:", index)
-                # print("Identification Type:", identificationType)
-                # print("Identification:", identification)
-                # print("Party Role:", partyRole)
-                # print("Party Role Name:", partyRoleName)
-                # print("Participant Role:", participantRole)
-                # print("Name:", name)
             else:
-                raise Exception("No primary case parties found.")
-
-            # # Print extracted case attributes
-            # print("title:", title)
-            # print("Case Date:", caseDate)
-            # print("Progress State:", progressState)
-            # print("Sensitivity Controlled By:", sensitivityCtrBy)
-            # print("Security Unit Controlled By:", SecurityUnitCtrlBy)
-            # print("Responsible Department Controlled By:", ResponsibleDepartmentCtrlBy)
-            # print("Availability Controlled By:", availabilityCtrBy)
-        
+                raise Exception("No primary case parties found.")      
         else:
             raise Exception("Failed to send request. Status Code:", response.status_code,response.text)
     except Exception as e:
@@ -189,6 +170,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     old_case_numbers = []
     target_values = {}
     BFEMatch = False
+    NovaCaseExists = False
 
     try:
         response = requests.get(Deskprourl, headers=headers)
@@ -243,7 +225,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "caseGetOutput": { 
                     "buildingCase": {
                         "propertyInformation":{
-                            "bfeNumber": True
+                            "bfeNumber": True,
+                            "caseAddress":True
                             }
                         }
                     }
@@ -256,6 +239,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                     response_data.get("cases")
                     case = response_data["cases"][0]
                     OldbfeNumber = case["buildingCase"]["propertyInformation"]["bfeNumber"]
+                    OldCaseAdress = case["buildingCase"]["propertyInformation"]["caseAddress"]
 
                     if str(OldbfeNumber) == str(bfeNumber):
                         print(f"Match found: Old BFE ({OldbfeNumber}) == Current BFE ({bfeNumber})")
@@ -336,18 +320,64 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             # Check status and handle response
             if response.status_code == 200:
                 response_data = response.json()
-                case = response_data["cases"][0]
-                OldAktindsigtscase = case["caseAttributes"]["userFriendlyCaseNumber"]
-                OldCaseUuid = case["common"]["uuid"]
-                OldCaseAdress = case["buildingCase"]["propertyInformation"]["caseAddress"]
+                if response_data.get("pagingInformation", {}).get("numberOfRows", 0) > 0:
+                    case = response_data["cases"][0]
+                    OldCaseUuid = case["common"]["uuid"]
+                    OldCaseAdress = case["buildingCase"]["propertyInformation"]["caseAddress"]
+                    NovaCaseExists = True
+                else:
+                    print("Tjekker om sagen er opdateret i forvejen")
+                    data = {
+                    "common": {
+                        "transactionId": TransactionID
+                    },
+                    "paging": {
+                        "startRow": 1,
+                        "numberOfRows": 100
+                    },
+                    "caseAttributes": {
+                        "title": f"Test gustav - Anmodning om aktindsigt i {OldCaseAdress}",
+                        "fromCaseDate": AktindsigtsDato_midnight,
+                        "toCaseDate": new_date_str
+
+                    },
+                    "states":{
+                        "states":[{
+                            "progressState":"Afgjort"
+                    }]
+                    },
+                    "caseGetOutput": { 
+                        "caseAttributes":{
+                        "userFriendlyCaseNumber": True
+                        },
+                    "buildingCase": {
+                        "propertyInformation":{
+                            "caseAddress":True
+                                    }
+                                }   
+                    }
+                    }
+                    # Make the request
+                    response = requests.put(Caseurl, headers=headers, json=data)
+
+                    if response.status_code == 200:
+                        response_data = response.json()
+                        if response_data.get("pagingInformation", {}).get("numberOfRows", 0) > 0:
+                            case = response_data["cases"][0]
+                            OldCaseUuid = case["common"]["uuid"]
+                            OldCaseAdress = case["buildingCase"]["propertyInformation"]["caseAddress"]
+                            NovaCaseExists = True
+                        else:
+                            NovaCaseExists = False
             else:
                 raise Exception(f"API request failed with status {response.status_code}: {response.text}")
                         
     except Exception as e:
+        NovaCaseExists = False
         print(f"An error occurred during ticket processing: {e}")
 
 
-    if BFEMatch == True:
+    if BFEMatch and NovaCaseExists:
         print("BFE matcher opdaterer sagen")
         # Define API URL
         Caseurl = f"{KMDNovaURL}/Case/Update?api-version=2.0-Case"
@@ -383,9 +413,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     
         else:
             raise Exception(f"API request failed with status {response.status_code}: {response.text}")
-
-
-       
+     
     else:
         print("No matching BFE number found opretter sagen på ny.")
         # ### ---  Opretter sagen --- ####   
