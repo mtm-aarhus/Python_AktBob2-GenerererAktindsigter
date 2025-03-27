@@ -337,6 +337,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 response_data = response.json()
                 case = response_data["cases"][0]
                 OldAktindsigtscase = case["caseAttributes"]["userFriendlyCaseNumber"]
+                OldCaseUuid = case["common"]["uuid"]
                 OldCaseAdress = case["buildingCase"]["propertyInformation"]["caseAddress"]
                 print(OldAktindsigtscase)
                 print(OldCaseAdress)
@@ -350,6 +351,42 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
     if BFEMatch == True:
         print("BFE matcher opdaterer sagen")
+        # Define API URL
+        Caseurl = f"{KMDNovaURL}/Case/Update?api-version=2.0-Case"
+        TransactionID = str(uuid.uuid4())
+        # Define headers
+        headers = {
+            "Authorization": f"Bearer {KMD_access_token}",
+            "Content-Type": "application/json"
+        }
+        
+        data = {
+        "common": {
+            "transactionId": TransactionID,
+            "uuid": OldCaseUuid
+        },
+        "paging": {
+            "startRow": 1,
+            "numberOfRows": 100
+        },
+        "caseAttributes": {
+            "title": f"Test gustav - Anmodning om aktindsigt i {OldCaseAdress}",
+            "caseDate": "2025-02-20T00:00:00", 
+            "caseCategory": "BomByg"
+        }
+        }
+
+        # Make the request
+        response = requests.patch(Caseurl, headers=headers, json=data)
+
+        # Check status and handle response
+        if response.status_code == 200:
+            print(f"Sagen er opdateret: {response.status_code}")
+    
+        else:
+            raise Exception(f"API request failed with status {response.status_code}: {response.text}")
+
+
        
     else:
         print("No matching BFE number found opretter sagen på ny.")
