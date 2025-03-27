@@ -120,8 +120,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             # Extract bfeNumber from buildingCase -> propertyInformation
             bfeNumber = case["buildingCase"]["propertyInformation"]["bfeNumber"]
             CadastralId = case["buildingCase"]["propertyInformation"]["cadastralId"]
-            print(bfeNumber)
-            print(CadastralId)
 
             primary_case_parties = [
                 {
@@ -146,28 +144,28 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 participantRole = primary_case_parties[0]["participantRole"]
                 name = primary_case_parties[0]["name"]
 
-                # Print to verify
-                print("Index:", index)
-                print("Identification Type:", identificationType)
-                print("Identification:", identification)
-                print("Party Role:", partyRole)
-                print("Party Role Name:", partyRoleName)
-                print("Participant Role:", participantRole)
-                print("Name:", name)
+                # # Print to verify
+                # print("Index:", index)
+                # print("Identification Type:", identificationType)
+                # print("Identification:", identification)
+                # print("Party Role:", partyRole)
+                # print("Party Role Name:", partyRoleName)
+                # print("Participant Role:", participantRole)
+                # print("Name:", name)
             else:
-                print("No primary case parties found.")
+                raise Exception("No primary case parties found.")
 
-            # Print extracted case attributes
-            print("title:", title)
-            print("Case Date:", caseDate)
-            print("Progress State:", progressState)
-            print("Sensitivity Controlled By:", sensitivityCtrBy)
-            print("Security Unit Controlled By:", SecurityUnitCtrlBy)
-            print("Responsible Department Controlled By:", ResponsibleDepartmentCtrlBy)
-            print("Availability Controlled By:", availabilityCtrBy)
+            # # Print extracted case attributes
+            # print("title:", title)
+            # print("Case Date:", caseDate)
+            # print("Progress State:", progressState)
+            # print("Sensitivity Controlled By:", sensitivityCtrBy)
+            # print("Security Unit Controlled By:", SecurityUnitCtrlBy)
+            # print("Responsible Department Controlled By:", ResponsibleDepartmentCtrlBy)
+            # print("Availability Controlled By:", availabilityCtrBy)
         
 
-        else:
+        e5tlse:
             print("Failed to send request. Status Code:", response.status_code)
             print("Response Data:", response.text)  # Print error response
     except Exception as e:
@@ -333,15 +331,11 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
             # Check status and handle response
             if response.status_code == 200:
-                print(response.text)
                 response_data = response.json()
                 case = response_data["cases"][0]
                 OldAktindsigtscase = case["caseAttributes"]["userFriendlyCaseNumber"]
                 OldCaseUuid = case["common"]["uuid"]
                 OldCaseAdress = case["buildingCase"]["propertyInformation"]["caseAddress"]
-                print(OldAktindsigtscase)
-                print(OldCaseAdress)
-            
             else:
                 raise Exception(f"API request failed with status {response.status_code}: {response.text}")
                         
