@@ -374,7 +374,9 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
 
     if BFEMatch and NovaCaseExists:
-        print("BFE matcher opdaterer sagen")
+        print("BFE matcher opdaterer sagen ")
+        orchestrator_connection.log_info(f"Sagen er oprettet, det gamle CaseUuid ligger allerede i databasen: {OldCaseUuid}")
+
         # Define API URL
         Caseurl = f"{KMDNovaURL}/Case/Update?api-version=2.0-Case"
         TransactionID = str(uuid.uuid4())
@@ -415,7 +417,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         # ### ---  Opretter sagen --- ####   
         JournalDate = datetime.now().strftime("%Y-%m-%dT00:00:00")
         TransactionID = str(uuid.uuid4())
-        Uuid = str(uuid.uuid4())
+        CaseUuid = str(uuid.uuid4())
         JournalUuid = str(uuid.uuid4())
         Index_Uuid = str(uuid.uuid4())
         link_text = "GO Aktindsigtssag"
@@ -445,7 +447,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         payload = {
             "common": {
                 "transactionId": TransactionID,
-                "uuid": Uuid  
+                "uuid": CaseUuid  
             },
             "caseAttributes": {
                 "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer}",
@@ -546,12 +548,14 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             # Handle response
             if response.status_code == 200:
                 print(response.text)
-                orchestrator_connection.log_info(f"Request Successful. Status Code:{response.status_code}")
             else:
                 print("Failed to send request. Status Code:", response.status_code)
                 print("Response Data:", response.text)  # Print error response
         except Exception as e:
             raise Exception("Failed to fetch Sagstitel (Nova):", str(e))
+        
+
+        orchestrator_connection.log_info(f"Sender følgende CaseUuid videre: {CaseUuid}")
 
     return {
     "out_Text": "Aktindsigtssagen er oprettet i Nova"
