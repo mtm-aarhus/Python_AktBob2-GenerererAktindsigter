@@ -10,6 +10,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     from docx import Document
     import io
     import re
+    import pyodbc
     
      # henter in_argumenter:
     Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
@@ -24,6 +25,24 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     DeskProAPIKey = DeskProAPI.password
     AktindsigtsDato = AktindsigtsDato.rstrip('Z')
 
+
+
+
+
+    def store_case_uuid(deskpro_id, case_uuid):
+        conn = pyodbc.connect("DRIVER={ODBC Driver 17 for SQL Server};SERVER=srvsql29;DATABASE=PyOrchestrator;Trusted_Connection=yes")
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO dbo.AktBobNovaCases (DeskProID, CaseUuid)
+            VALUES (?, ?)
+            """,
+            deskpro_id,
+            str(case_uuid)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
      ### --- Henter caseinfo --- ###
     TransactionID = str(uuid.uuid4())
 
@@ -556,6 +575,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         
 
         orchestrator_connection.log_info(f"Sender følgende CaseUuid videre: {CaseUuid}")
+        store_case_uuid(DeskProID, CaseUuid)
 
     return {
     "out_Text": "Aktindsigtssagen er oprettet i Nova"
