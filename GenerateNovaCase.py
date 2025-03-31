@@ -34,11 +34,12 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO dbo.AktBobNovaCases (DeskProID, CaseUuid)
-            VALUES (?, ?)
+            INSERT INTO dbo.AktBobNovaCases (DeskProID, CaseUuid, [Open/Closed])
+            VALUES (?, ?, ?)
             """,
             deskpro_id,
-            str(case_uuid)
+            str(case_uuid),
+            "Open"
         )
         conn.commit()
         cursor.close()
