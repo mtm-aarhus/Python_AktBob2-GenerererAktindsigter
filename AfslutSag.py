@@ -140,7 +140,7 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
             raise Exception("Failed to fetch case data:", str(e))
 
 
-
+        print(f"CaseUuid {CaseUuid}")
         # --- Henter Task listen --- #
         Caseurl = f"{KMDNovaURL}/Task/GetList?api-version=2.0-Case"
         TransactionID = str(uuid.uuid4())
