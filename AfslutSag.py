@@ -173,14 +173,14 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
                 # Go through the task list and assign based on title
                 for task in response.json().get("taskList", []):
                     title = task.get("taskTitle")
-                    uuid = task.get("taskUuid")
+                    task_uuid = task.get("taskUuid")
                     
                     if title == "05. Klar til sagsbehandling":
-                        klar_til_sagsbehandling_uuid = uuid
+                        klar_til_sagsbehandling_uuid = task_uuid
                     elif title == "25. Afslut/henlæg sagen":
-                        afslut_sagen_uuid = uuid
+                        afslut_sagen_uuid = task_uuid
                     elif title == "11. Tidsreg: Sagsbehandling":
-                        tidsreg_sagsbehandling_uuid = uuid
+                        tidsreg_sagsbehandling_uuid = task_uuid
 
                 # Now each UUID is in its own variable
                 print("Klar til sagsbehandling UUID:", klar_til_sagsbehandling_uuid)
