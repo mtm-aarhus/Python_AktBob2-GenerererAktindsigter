@@ -162,7 +162,7 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
         "taskDescription": True
         }
         try:
-            response = requests.patch(Caseurl, headers=headers, json=data)
+            response = requests.put(Caseurl, headers=headers, json=data)
             
             # Handle response
             if response.status_code == 200:
