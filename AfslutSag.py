@@ -237,7 +237,7 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
                 }
             },
             "closeDate": task_date,
-            "statusCode": ["F"]
+            "statusCode": "F"
             #"deadline": "2023-08-05T00:00:00+00:00", # skal denne bruges?
             #"startDate": "2022-01-07T00:00:00+00:00", # skal denne bruges?
             #"taskType": "Aktivitet" # skal denne bruges?
