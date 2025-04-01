@@ -164,43 +164,49 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
         }
         try:
             response = requests.put(Caseurl, headers=headers, json=data)
-            
-            # Handle response
+
             if response.status_code == 200:
+                print("API call successful. Parsing task list...")
+                
                 klar_til_sagsbehandling_uuid = None
                 afslut_sagen_uuid = None
                 tidsreg_sagsbehandling_uuid = None
 
-                # Go through the task list and assign based on title
-                for task in response.json().get("taskList", []):
+                task_list = response.json().get("taskList", [])
+                print(f"Found {len(task_list)} tasks")
+
+                for task in task_list:
                     title = task.get("taskTitle")
                     task_uuid = task.get("taskUuid")
-                    
-                if title == "05. Klar til sagsbehandling":
-                    klar_til_sagsbehandling_uuid = task_uuid
-                elif title == "25. Afslut/henlæg sagen":
-                    afslut_sagen_uuid = task_uuid
-                elif title == "11. Tidsreg: Sagsbehandling":
-                    tidsreg_sagsbehandling_uuid = task_uuid
+                    print(f"Found task: '{title}' with UUID: {task_uuid}")
+
+                    if title == "05. Klar til sagsbehandling":
+                        klar_til_sagsbehandling_uuid = task_uuid
+                    elif title == "25. Afslut/henlæg sagen":
+                        afslut_sagen_uuid = task_uuid
+                    elif title == "11. Tidsreg: Sagsbehandling":
+                        tidsreg_sagsbehandling_uuid = task_uuid
 
                 # Create a list of tuples with task names and their UUIDs
                 task_uuids = [
-                ("05. Klar til sagsbehandling", klar_til_sagsbehandling_uuid),
-                ("25. Afslut/henlæg sagen", afslut_sagen_uuid),
-                ("11. Tidsreg: Sagsbehandling", tidsreg_sagsbehandling_uuid),
+                    ("05. Klar til sagsbehandling", klar_til_sagsbehandling_uuid),
+                    ("25. Afslut/henlæg sagen", afslut_sagen_uuid),
+                    ("11. Tidsreg: Sagsbehandling", tidsreg_sagsbehandling_uuid),
                 ]
 
-                # Loop through and print each UUID, handling missing ones
+                print("\nFinal result:")
                 for task_name, task_uuid in task_uuids:
                     if task_uuid:
                         print(f"UUID for '{task_name}': {task_uuid}")
                     else:
                         print(f"Missing UUID for task: '{task_name}'")
-            else: 
-                raise Exception("failed to fetch task data")
-        except Exception as e:
-            raise Exception("Failed to fetch case data:", str(e))
+            else:
+                print(f"Failed to fetch task data. Status code: {response.status_code}")
+                print(response.text)
+                raise Exception("Failed to fetch task data.")
 
+        except Exception as e:
+            print("Exception occurred:", str(e))
 
 
 
