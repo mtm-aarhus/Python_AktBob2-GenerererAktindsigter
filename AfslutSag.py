@@ -212,46 +212,45 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
 
         # -- Opdaterer Task listen --- #
         
-        # for task_name,task_uuid in task_uuids:
-        #     Caseurl = f"{KMDNovaURL}/Task/Update?api-version=2.0-Case"
-        #     TransactionID = str(uuid.uuid4())
-        #     # Define headers
-        #     headers = {
-        #     "Authorization": f"Bearer {KMD_access_token}",
-        #     "Content-Type": "application/json"
-        #     }
+        for task_name,task_uuid in task_uuids:
+            Caseurl = f"{KMDNovaURL}/Task/Update?api-version=2.0-Case"
+            TransactionID = str(uuid.uuid4())
+            # Define headers
+            headers = {
+            "Authorization": f"Bearer {KMD_access_token}",
+            "Content-Type": "application/json"
+            }
 
-        #     task_data= {
-        #     "common": {
-        #         "transactionId": TransactionID
-        #     },
-        #     "uuid": task_uuid, 
-        #     "caseUuid": case_uuid,
-        #     "title": task_name, 
-        #     #"description": "Rykkerskrivelse udført af robot", # skal denne bruges?
-        #     "caseworker": { 
-        #         "kspIdentity": {
-        #             "novaUserId": "78897bfc-2a36-496d-bc76-07e7a6b0850e",
-        #             "racfId": "AZX0075",
-        #             "fullName": "Aktindsigter Novabyg"
-        #         }
-        #     },
-        #     "closeDate": task_date,
-        #     "statusCode": "F",
-        #     "deadline": task_date, 
-        #     "startDate": task_date, 
-        #     "taskType": "Aktivitet" 
-        #     }
+            task_data= {
+            "common": {
+                "transactionId": TransactionID
+            },
+            "uuid": task_uuid, 
+            "caseUuid": case_uuid,
+            "title": task_name, 
+            "caseworker": { 
+                "kspIdentity": {
+                    "novaUserId": "78897bfc-2a36-496d-bc76-07e7a6b0850e",
+                    "racfId": "AZX0075",
+                    "fullName": "Aktindsigter Novabyg"
+                }
+            },
+            "closeDate": task_date,
+            "statusCode": "F",
+            "deadline": task_date, 
+            "startDate": task_date, 
+            "taskType": "Aktivitet" 
+            }
             
-        #     try:
-        #         response = requests.put(Caseurl, headers=headers, json=task_data)
-        #         if response.status_code == 200:
-        #             print(f"{task_name} er blevet færdiggjort")
-        #         else: 
-        #             print(response.status_code)
-        #             print(response.text)
-        #     except Exception as e:
-        #         raise Exception("Failed to update task:", str(e))
+            try:
+                response = requests.put(Caseurl, headers=headers, json=task_data)
+                if response.status_code == 200:
+                    print(f"{task_name} er blevet færdiggjort")
+                else: 
+                    print(response.status_code)
+                    print(response.text)
+            except Exception as e:
+                raise Exception("Failed to update task:", str(e))
 
     return {
     "out_Text": "Sagen er afsluttet"
