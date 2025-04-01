@@ -247,7 +247,9 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
                 response = requests.put(Caseurl, headers=headers, json=task_data)
                 if response.status_code == 200:
                     print(f"{task_name} er blevet færdiggjort")
-
+                else: 
+                    print(response.status_code)
+                    print(response.text)
             except Exception as e:
                 raise Exception("Failed to update task:", str(e))
 
