@@ -441,7 +441,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         JournalUuid = str(uuid.uuid4())
         Index_Uuid = str(uuid.uuid4())
         link_text = "GO Aktindsigtssag"
-
+        print(f"Aktsagsurl: {AktSagsURL}")
         # Step 1: Create a new Word document
         doc = Document()
         doc.add_paragraph("Aktindsigtssag Link: " + AktSagsURL)  # Add content to the document
