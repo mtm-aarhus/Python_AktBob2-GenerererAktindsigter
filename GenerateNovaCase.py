@@ -417,7 +417,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         },
         "caseAttributes": {
             "title": f"Test gustav - Anmodning om aktindsigt i {OldCaseAdress}",
-            "caseDate": "2025-02-20T00:00:00", 
+            "caseDate": AktindsigtsDato, 
             "caseCategory": "BomByg"
         }
         }

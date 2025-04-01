@@ -5,13 +5,14 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
     import json
     import os
     import pyodbc
-    
+    from datetime import datetime
     # henter in_argumenter:
     Sagsnummer = Arguments_AfslutSag.get("in_Sagsnummer")
     KMDNovaURL = Arguments_AfslutSag.get("in_KMDNovaURL")
     KMD_access_token = Arguments_AfslutSag.get("in_NovaToken")
     DeskProID = Arguments_AfslutSag.get("in_DeskProID")
 
+    task_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
     # --- Henter CaseUuid fra Databasen --- # 
     def fetch_case_uuids_by_deskpro(deskpro_id):
@@ -175,24 +176,74 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
                     title = task.get("taskTitle")
                     task_uuid = task.get("taskUuid")
                     
-                    if title == "05. Klar til sagsbehandling":
-                        klar_til_sagsbehandling_uuid = task_uuid
-                    elif title == "25. Afslut/henlæg sagen":
-                        afslut_sagen_uuid = task_uuid
-                    elif title == "11. Tidsreg: Sagsbehandling":
-                        tidsreg_sagsbehandling_uuid = task_uuid
+                if title == "05. Klar til sagsbehandling":
+                    klar_til_sagsbehandling_uuid = task_uuid
+                elif title == "25. Afslut/henlæg sagen":
+                    afslut_sagen_uuid = task_uuid
+                elif title == "11. Tidsreg: Sagsbehandling":
+                    tidsreg_sagsbehandling_uuid = task_uuid
 
-                # Now each UUID is in its own variable
-                print("Klar til sagsbehandling UUID:", klar_til_sagsbehandling_uuid)
-                print("Afslut/henlæg sagen UUID:", afslut_sagen_uuid)
-                print("Tidsreg: Sagsbehandling UUID:", tidsreg_sagsbehandling_uuid)
+                # Create a list of tuples with task names and their UUIDs
+                task_uuids = [
+                ("05. Klar til sagsbehandling", klar_til_sagsbehandling_uuid),
+                ("25. Afslut/henlæg sagen", afslut_sagen_uuid),
+                ("11. Tidsreg: Sagsbehandling", tidsreg_sagsbehandling_uuid),
+                ]
+
+                # Loop through and print each UUID, handling missing ones
+                for task_name, task_uuid in task_uuids:
+                    if task_uuid:
+                        print(f"UUID for '{task_name}': {task_uuid}")
+                    else:
+                        print(f"Missing UUID for task: '{task_name}'")
             else: 
                 raise Exception("failed to fetch task data")
         except Exception as e:
             raise Exception("Failed to fetch case data:", str(e))
 
-        # -- Opdaterer Task listen --- #
 
+
+
+        # -- Opdaterer Task listen --- #
+        
+        for task_name,task_uuid in task_uuids:
+            Caseurl = f"{KMDNovaURL}/Task/Update?api-version=2.0-Case"
+            TransactionID = str(uuid.uuid4())
+            # Define headers
+            headers = {
+            "Authorization": f"Bearer {KMD_access_token}",
+            "Content-Type": "application/json"
+            }
+
+            task_data= {
+            "common": {
+                "transactionId": TransactionID
+            },
+            "uuid": task_uuid, 
+            "caseUuid": case_uuid,
+            "title": task_name, 
+            #"description": "Rykkerskrivelse udført af robot", # skal denne bruges?
+            "caseworker": { 
+                "kspIdentity": {
+                    "novaUserId": "78897bfc-2a36-496d-bc76-07e7a6b0850e",
+                    "racfId": "AZX0075",
+                    "fullName": "Aktindsigter Novabyg"
+                }
+            },
+            "closeDate": task_date,
+            "statusCode": ["F"]
+            #"deadline": "2023-08-05T00:00:00+00:00", # skal denne bruges?
+            #"startDate": "2022-01-07T00:00:00+00:00", # skal denne bruges?
+            #"taskType": "Aktivitet" # skal denne bruges?
+            }
+            
+            try:
+                response = requests.put(Caseurl, headers=headers, json=task_data)
+                if response.status_code == 200:
+                    print(f"{task_name} er blevet færdiggjort")
+
+            except Exception as e:
+                raise Exception("Failed to update task:", str(e))
 
     return {
     "out_Text": "Sagen er afsluttet"
