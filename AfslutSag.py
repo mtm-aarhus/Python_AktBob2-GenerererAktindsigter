@@ -237,8 +237,8 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
             },
             "closeDate": task_date,
             "statusCode": "F",
-            "deadline": task_date, 
-            "startDate": task_date, 
+            #"deadline": task_date, 
+            #"startDate": task_date, 
             "taskType": "Aktivitet" 
             }
             
