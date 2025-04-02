@@ -44,6 +44,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         conn.commit()
         cursor.close()
         conn.close()
+    
      ### --- Henter caseinfo --- ###
     TransactionID = str(uuid.uuid4())
 
@@ -62,16 +63,12 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         },
         "paging": {
             "startRow": 1,
-            "numberOfRows": 100
+            "numberOfRows": 500
         },
         "caseAttributes": {
             "userFriendlyCaseNumber": Sagsnummer
         },
         "caseGetOutput": { 
-            "state": {
-                "progressState": True,
-                "activeCode": True
-            },
             "sensitivity": {
                 "sensitivityCtrBy": True
             },
@@ -89,11 +86,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "availability": {
                 "availabilityCtrBy": True
             },   
-            "caseAttributes": {
-                "title": True,
-                "userFriendlyCaseNumber": True,
-                "caseDate": True
-            },
             "caseParty": {
                 "index": True,
                 "identificationType": True,
@@ -112,8 +104,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             },
             "buildingCase": {
             "propertyInformation":{
-                "caseAddress":True,
-                "esrPropertyNumber": True,
                 "bfeNumber": True,
                 "cadastralId": True
          }
@@ -129,9 +119,6 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             case = response_data["cases"][0]  # Assuming there's at least one case
 
             # Extract required case attributes
-            title = case["caseAttributes"]["title"]
-            caseDate = case["caseAttributes"]["caseDate"]
-            progressState = case["state"]["progressState"]
             sensitivityCtrBy = case["sensitivity"]["sensitivityCtrBy"]
             SecurityUnitCtrlBy = case["securityUnit"]["departmentCtrlBy"]
             ResponsibleDepartmentCtrlBy = case["responsibleDepartment"]["departmentCtrlBy"]
@@ -283,9 +270,10 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
             # Parse the string into a datetime object
             date_obj = datetime.strptime(AktindsigtsDato, "%Y-%m-%dT%H:%M:%S")
+            #Skal ændres til 00:00:00 ellers kan vi risikere at tidspunktet er udløbet
             date_obj_midnight = date_obj.replace(hour=0, minute=0, second=0, microsecond=0)
             AktindsigtsDato_midnight = date_obj_midnight.strftime("%Y-%m-%dT%H:%M:%S")
-            # Add one day
+            # tilføjer én dag for at tjekke om der er oprettet nogen sager i det tidsinterval
             new_date_obj = date_obj_midnight + timedelta(days=1)
 
             # Convert new_date_obj back to string
@@ -309,7 +297,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "numberOfRows": 100
             },
             "caseAttributes": {
-                "title": f"Test gustav - Anmodning om aktindsigt i {old_case_number}",
+                "title": f"Test gustav - Anmodning om aktindsigt i {old_case_number}", # skal ændres til "Anmodning om aktindsigt i...."
                 "fromCaseDate": AktindsigtsDato_midnight,
                 "toCaseDate": new_date_str
 
@@ -352,7 +340,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                         "numberOfRows": 100
                     },
                     "caseAttributes": {
-                        "title": f"Test gustav - Anmodning om aktindsigt i {OldCaseAdress}",
+                        "title": f"Test gustav - Anmodning om aktindsigt i {OldCaseAdress}", # skal ændres til "Anmodning om aktindsigt i...."
                         "fromCaseDate": AktindsigtsDato_midnight,
                         "toCaseDate": new_date_str
 
@@ -416,7 +404,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "numberOfRows": 100
         },
         "caseAttributes": {
-            "title": f"Test gustav - Anmodning om aktindsigt i {OldCaseAdress}",
+            "title": f"Test gustav - Anmodning om aktindsigt i {OldCaseAdress}", # skal ændres til "Anmodning om aktindsigt i...."
             "caseDate": AktindsigtsDato, 
             "caseCategory": "BomByg"
         }
@@ -470,7 +458,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 "uuid": CaseUuid  
             },
             "caseAttributes": {
-                "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer}",
+                "title": f"Test gustav - Anmodning om aktindsigt i {Sagsnummer}", # skal ændres til "Anmodning om aktindsigt i...."
                 "caseDate": AktindsigtsDato,
                 "caseCategory": "BomByg"
             },
