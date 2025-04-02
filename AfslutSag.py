@@ -82,7 +82,7 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
             # Handle response
             if response.status_code == 200:
                 response_data = response.json()
-                case = response_data["cases"][0]  # Assuming there's at least one case
+                case = response_data["cases"][0]
 
                 # Extract required case attributes
                 title = case["caseAttributes"]["title"]
@@ -123,8 +123,8 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
         "state":"Afsluttet",
         "buildingCase":{
         "applicationStatusDates":{
-        "decisionDate": "2025-02-20T00:00:00", # hentes fra deskpro
-        "closeDate": "2025-02-20T00:00:00", # hentes fra deskpro
+        "decisionDate": datetime.now().strftime("%Y-%m-%dT00:00:00"), # Sættes til den dato hvor afgørelses processen kører
+        "closeDate": datetime.now().strftime("%Y-%m-%dT00:00:00"), # Sættes til den dato hvor afgørelses processen kører
         "closingReason": "Anden afgørelse"
         }
         }
@@ -159,7 +159,7 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
         "startRow": 1,
         "numberOfRows": 3000
         },
-        "caseUuid": case_uuid, # hentes tidligere
+        "caseUuid": case_uuid, 
         "taskDescription": True
         }
         try:
@@ -237,8 +237,6 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
             },
             "closeDate": task_date,
             "statusCode": "F",
-            #"deadline": task_date, 
-            #"startDate": task_date, 
             "taskType": "Aktivitet" 
             }
             
