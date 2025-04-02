@@ -144,34 +144,35 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     GenerateCaseFolder_Output_arguments = GenerateCaseFolder.invoke_GenerateCasefolder(Arguments_GenerateCaseFolder,orchestrator_connection)
     FilarkivCaseID = GenerateCaseFolder_Output_arguments.get("out_FilarkivCaseID")
     orchestrator_connection.log_info(f"FilarkivCaseID: {FilarkivCaseID}")
+    
     ####---- Send mail til sagsansvarlig ----####
-    if __name__ == "__main__":
-        # Define email details
-        sender = "Aktbob<rpamtm001@aarhus.dk>" # Replace with actual sender
-        subject = f"Robotten er gået i gang med aktindsigt for {Sagsnummer}"
-        body = """Robotten er nu gået i gang med din aktindsigt, og du vil modtage en mail, når den er færdig.<br><br>
-        Processen tager typisk et par minutter, men den kan nogle gange være undervejs i flere timer alt efter antallet af dokumenter, 
-        der gives aktindsigt til i dokumentlisten og hastigheden på GetOrganized's API.<br><br>
-        Det anbefales at følge <a href="https://aarhuskommune.sharepoint.com/:w:/t/tea-teamsite10506/EVjuZhmtsHRGi6H7-COs26AB6afOXvReKSnWJ1XK1mKxZw?e=n03h0t/">vejledningen</a>, 
-        hvor du også finder svar på de fleste spørgsmål og fejltyper.<br><br>
-        Med venlig hilsen<br><br>
-        Teknik & Miljø<br><br>
-        Digitalisering<br><br>
-        Aarhus Kommune
-        """
-        smtp_server = "smtp.adm.aarhuskommune.dk"   # Replace with your SMTP server
-        smtp_port = 25                    # Replace with your SMTP port
 
-        # Call the send_email function
-        send_email(
-            receiver=UdviklerMailAktbob,
-            sender=sender,
-            subject=subject,
-            body=body,
-            smtp_server=smtp_server,
-            smtp_port=smtp_port,
-            html_body=True
-        )
+    # Define email details
+    sender = "Aktbob<rpamtm001@aarhus.dk>" 
+    subject = f"Robotten er gået i gang med aktindsigt for {Sagsnummer}"
+    body = """Robotten er nu gået i gang med din aktindsigt, og du vil modtage en mail, når den er færdig.<br><br>
+    Processen tager typisk et par minutter, men den kan nogle gange være undervejs i flere timer alt efter antallet af dokumenter, 
+    der gives aktindsigt til i dokumentlisten og hastigheden på GetOrganized's API.<br><br>
+    Det anbefales at følge <a href="https://aarhuskommune.sharepoint.com/:w:/t/tea-teamsite10506/EVjuZhmtsHRGi6H7-COs26AB6afOXvReKSnWJ1XK1mKxZw?e=n03h0t/">vejledningen</a>, 
+    hvor du også finder svar på de fleste spørgsmål og fejltyper.<br><br>
+    Med venlig hilsen<br><br>
+    Teknik & Miljø<br><br>
+    Digitalisering<br><br>
+    Aarhus Kommune
+    """
+    smtp_server = "smtp.adm.aarhuskommune.dk"   # Replace with your SMTP server
+    smtp_port = 25                    # Replace with your SMTP port
+
+    # Call the send_email function
+    send_email(
+        receiver=UdviklerMailAktbob,
+        sender=sender,
+        subject=subject,
+        body=body,
+        smtp_server=smtp_server,
+        smtp_port=smtp_port,
+        html_body=True
+    )
 
 
     # ---- Run "PrepareEachDocumentToUpload" ----
