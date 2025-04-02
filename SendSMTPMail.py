@@ -19,9 +19,9 @@ def send_email(receiver: str | list[str], sender: str, subject: str, body: str, 
                html_body: bool = False, attachments: Sequence[EmailAttachment] | None = None) -> None:
 
     msg = EmailMessage()
-    msg['to'] = receiver
-    msg['from'] = sender
-    msg['subject'] = subject
+    msg['To'] = receiver
+    msg['From'] = sender
+    msg['Subject'] = subject
 
     # Set body
     if html_body:
@@ -40,5 +40,5 @@ def send_email(receiver: str | list[str], sender: str, subject: str, body: str, 
 
     # Send message
     with smtplib.SMTP(smtp_server, smtp_port) as smtp:
-        smtp.starttls()
+        #smtp.starttls()
         smtp.send_message(msg)

@@ -160,8 +160,8 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     Digitalisering<br><br>
     Aarhus Kommune
     """
-    smtp_server = "smtp.adm.aarhuskommune.dk"   # Replace with your SMTP server
-    smtp_port = 25                    # Replace with your SMTP port
+    smtp_server = "smtp.adm.aarhuskommune.dk"   
+    smtp_port = 25               
 
     # Call the send_email function
     send_email(
