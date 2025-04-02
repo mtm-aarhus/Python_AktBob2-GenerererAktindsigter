@@ -15,6 +15,7 @@ import GenerateNovaCase
 import AfslutSag
 import json
 from SendSMTPMail import send_email # Import the function and dataclass
+import pandas as pd
 
 
 # pylint: disable-next=unused-argument
@@ -116,6 +117,12 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     dt_DocumentList = GetDocumentList_Output_arguments.get("dt_DocumentList")
     DokumentlisteDatoString = GetDocumentList_Output_arguments.get("out_DokumentlisteDatoString")
 
+    if dt_DocumentList.empty:
+        print("Number of rows:",len(dt_DocumentList))
+        orchestrator_connection.log_info("Dokumentlisten inderholder ikke nogen data - Processen fejler")
+        raise ValueError("Dokumentlisten inderholder ikke nogen data - Processen fejler")
+    else:
+        print("Number of rows:",len(dt_DocumentList))
 
     # ---- Run "GenerateCaseFolder" ----
     Arguments_GenerateCaseFolder = {
