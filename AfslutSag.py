@@ -7,10 +7,10 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
     import pyodbc
     from datetime import datetime
     # henter in_argumenter:
-    Sagsnummer = Arguments_AfslutSag.get("in_Sagsnummer")
-    KMDNovaURL = Arguments_AfslutSag.get("in_KMDNovaURL")
-    KMD_access_token = Arguments_AfslutSag.get("in_NovaToken")
-    DeskProID = Arguments_AfslutSag.get("in_DeskProID")
+    Sagsnummer = Arguments_AfslutSag.get("in_Sagsnummer") #Kø-element
+    KMDNovaURL = Arguments_AfslutSag.get("in_KMDNovaURL") #Kø-element
+    KMD_access_token = Arguments_AfslutSag.get("in_NovaToken") # process 
+    DeskProID = Arguments_AfslutSag.get("in_DeskProID") #Kø-element
 
     task_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
@@ -141,7 +141,6 @@ def invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection: OrchestratorCo
             raise Exception("Failed to fetch case data:", str(e))
 
 
-        print(f"CaseUuid {case_uuid}")
         # --- Henter Task listen --- #
         Caseurl = f"{KMDNovaURL}/Task/GetList?api-version=2.0-Case"
         TransactionID = str(uuid.uuid4())

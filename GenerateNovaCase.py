@@ -12,20 +12,18 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     import re
     import pyodbc
     
-     # henter in_argumenter:
-    Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer")
-    KMDNovaURL = Arguments_GenerateNovaCase.get("in_KMDNovaURL")
-    KMD_access_token = Arguments_GenerateNovaCase.get("in_NovaToken")
-    AktSagsURL = Arguments_GenerateNovaCase.get("in_AktSagsURL")
-    IndsenderNavn = Arguments_GenerateNovaCase.get("in_IndsenderNavn")
-    IndsenderMail = Arguments_GenerateNovaCase.get("in_IndsenderMail")  
-    AktindsigtsDato = Arguments_GenerateNovaCase.get("in_AktindsigtsDato")
-    DeskProID = Arguments_GenerateNovaCase.get("in_DeskProID")
-    DeskProAPI = orchestrator_connection.get_credential("DeskProAPI")
-    DeskProAPIKey = DeskProAPI.password
-    AktindsigtsDato = AktindsigtsDato.rstrip('Z')
-
-
+    # henter in_argumenter:
+    Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer") # kø-element
+    KMDNovaURL = Arguments_GenerateNovaCase.get("in_KMDNovaURL") - #credential/constant
+    KMD_access_token = Arguments_GenerateNovaCase.get("in_NovaToken") # GetKMDAcessToken
+    AktSagsURL = Arguments_GenerateNovaCase.get("in_AktSagsURL") #Kø-element
+    IndsenderNavn = Arguments_GenerateNovaCase.get("in_IndsenderNavn") #Kø-element
+    IndsenderMail = Arguments_GenerateNovaCase.get("in_IndsenderMail")  #Kø-element
+    AktindsigtsDato = Arguments_GenerateNovaCase.get("in_AktindsigtsDato") #Kø-element
+    DeskProID = Arguments_GenerateNovaCase.get("in_DeskProID") #Kø-element
+    DeskProAPI = orchestrator_connection.get_credential("DeskProAPI") #Credential
+    DeskProAPIKey = DeskProAPI.password  
+    AktindsigtsDato = AktindsigtsDato.rstrip('Z') # sletter bare Z  
 
 
 
@@ -564,6 +562,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
         
 
         orchestrator_connection.log_info(f"Sender følgende CaseUuid videre: {CaseUuid}")
+        #Logger til database:
         store_case_uuid(DeskProID, CaseUuid)
 
     return {
