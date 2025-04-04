@@ -52,6 +52,7 @@ def main():
                             print(f"Attempt {attempt} failed: {e}")
                             if attempt < max_retries:
                                 time.sleep(1)  # Optional: delay before retrying
+                                reset.reset(orchestrator_connection)
                                 print("Retrying...")
                             else:
                                 print("Operation failed after 2 attempts.")
