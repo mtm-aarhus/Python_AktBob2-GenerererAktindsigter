@@ -27,7 +27,7 @@ def main():
     queue_element = None
     error_count = 0
     task_count = 0
-    max_retries = 1  # Number of retries
+    max_retries = 2  # Number of retries
     # Retry loop
     for _ in range(config.MAX_RETRY_COUNT):
         try:
