@@ -280,11 +280,6 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         print(Test)
 
 
-
-
-
-
-
     # ---- Run "SendFilarkivCaseId&PodioIDToPodio"
     # Define the API endpoint
     try:
