@@ -14,7 +14,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
     
     # henter in_argumenter:
     Sagsnummer = Arguments_GenerateNovaCase.get("in_Sagsnummer") # kø-element
-    KMDNovaURL = Arguments_GenerateNovaCase.get("in_KMDNovaURL")  - #credential/constant
+    KMDNovaURL = Arguments_GenerateNovaCase.get("in_KMDNovaURL")   #credential/constant
     KMD_access_token = Arguments_GenerateNovaCase.get("in_NovaToken") # GetKMDAcessToken
     AktSagsURL = Arguments_GenerateNovaCase.get("in_AktSagsURL") #Kø-element
     IndsenderNavn = Arguments_GenerateNovaCase.get("in_IndsenderNavn") #Kø-element
