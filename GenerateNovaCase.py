@@ -539,7 +539,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                     "bfeNumber": bfeNumber
 
                 },
-                "UserdefinedFields": [
+                "userdefindefields": [
                         {
                             "type": "1. Politisk kategori",
                             "value": "Aktindsigt"
