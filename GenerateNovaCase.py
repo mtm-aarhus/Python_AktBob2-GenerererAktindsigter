@@ -540,7 +540,7 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
 
                 },
                 "userdefindefields": [
-                        {
+                        {   "typeName":"1. Politisk kategori",
                             "type": "1. Politisk kategori",
                             "value": "Aktindsigt"
                         }
