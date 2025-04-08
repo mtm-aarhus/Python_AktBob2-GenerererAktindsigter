@@ -12,7 +12,6 @@ import PrepareEachDocumentToUpload
 import GenerateAndUploadAktlistePDF
 import GenerererSagsoversigt
 import GenerateNovaCase
-import AfslutSag
 import json
 from SendSMTPMail import send_email # Import the function and dataclass
 import pandas as pd
@@ -250,34 +249,22 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
 
 
-    if NovaSag == True: 
-        # ---- Run "GenerateNovaCase" ----
-        Arguments_GenerateNovaCase = {
-        "in_Sagsnummer": Sagsnummer,
-        "in_NovaToken": KMD_access_token,
-        "in_KMDNovaURL": KMDNovaURL,
-        "in_AktSagsURL": AktSagsURL,
-        "in_IndsenderNavn": IndsenderNavn,
-        "in_IndsenderMail" : IndsenderMail,
-        "in_AktindsigtsDato": AktindsigtsDato,
-        "in_DeskProID": DeskProID
-        }
+    # if NovaSag == True: 
+    #     # ---- Run "GenerateNovaCase" ----
+    #     Arguments_GenerateNovaCase = {
+    #     "in_Sagsnummer": Sagsnummer,
+    #     "in_NovaToken": KMD_access_token,
+    #     "in_KMDNovaURL": KMDNovaURL,
+    #     "in_AktSagsURL": AktSagsURL,
+    #     "in_IndsenderNavn": IndsenderNavn,
+    #     "in_IndsenderMail" : IndsenderMail,
+    #     "in_AktindsigtsDato": AktindsigtsDato,
+    #     "in_DeskProID": DeskProID
+    #     }
 
-        GenerateNovaCase_Output_arguments = GenerateNovaCase.invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection)
-        Test = GenerateNovaCase_Output_arguments.get("out_Text")
-        print(Test)
-
-                # ---- Run "AfslutSag" ----
-        # Arguments_AfslutSag = {
-        # "in_Sagsnummer": Sagsnummer,
-        # "in_NovaToken": KMD_access_token,
-        # "in_KMDNovaURL": KMDNovaURL,
-        # "in_DeskProID": DeskProID
-        # }
-
-        # AfslutSag_Output_arguments = AfslutSag.invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection)
-        # Test = AfslutSag_Output_arguments.get("out_Text")
-        # print(Test)
+    #     GenerateNovaCase_Output_arguments = GenerateNovaCase.invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection)
+    #     Test = GenerateNovaCase_Output_arguments.get("out_Text")
+    #     print(Test)
 
 
     # ---- Run "SendFilarkivCaseId&PodioIDToPodio"
