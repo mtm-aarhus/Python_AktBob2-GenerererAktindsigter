@@ -268,16 +268,16 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         print(Test)
 
                 # ---- Run "AfslutSag" ----
-        Arguments_AfslutSag = {
-        "in_Sagsnummer": Sagsnummer,
-        "in_NovaToken": KMD_access_token,
-        "in_KMDNovaURL": KMDNovaURL,
-        "in_DeskProID": DeskProID
-        }
+        # Arguments_AfslutSag = {
+        # "in_Sagsnummer": Sagsnummer,
+        # "in_NovaToken": KMD_access_token,
+        # "in_KMDNovaURL": KMDNovaURL,
+        # "in_DeskProID": DeskProID
+        # }
 
-        AfslutSag_Output_arguments = AfslutSag.invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection)
-        Test = AfslutSag_Output_arguments.get("out_Text")
-        print(Test)
+        # AfslutSag_Output_arguments = AfslutSag.invoke_AfslutSag(Arguments_AfslutSag,orchestrator_connection)
+        # Test = AfslutSag_Output_arguments.get("out_Text")
+        # print(Test)
 
 
     # ---- Run "SendFilarkivCaseId&PodioIDToPodio"
