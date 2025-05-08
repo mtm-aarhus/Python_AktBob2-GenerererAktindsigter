@@ -148,16 +148,12 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     # Define email details
     sender = "Aktbob<rpamtm001@aarhus.dk>" 
-    subject = f"Robotten er gået i gang med aktindsigt for {Sagsnummer}"
-    body = """Robotten er nu gået i gang med din aktindsigt, og du vil modtage en mail, når den er færdig.<br><br>
-    Processen tager typisk et par minutter, men den kan nogle gange være undervejs i flere timer alt efter antallet af dokumenter, 
-    der gives aktindsigt til i dokumentlisten og hastigheden på GetOrganized's API.<br><br>
+    subject = f"{Sagsnummer}: Screening igangsat"
+    body = f"""Sag:{DeskProID} - {DeskProTitel}<br><br>
+    Robotten er nu gået i gang med screening af dokumenterne.<br><br>
+    Procestiden varierer afhængigt af antallet af dokumenter. Du vil modtage en mail når dokumenterne er klar.<br><br>
     Det anbefales at følge <a href="https://aarhuskommune.sharepoint.com/:w:/t/tea-teamsite10506/EVjuZhmtsHRGi6H7-COs26AB6afOXvReKSnWJ1XK1mKxZw?e=n03h0t/">vejledningen</a>, 
-    hvor du også finder svar på de fleste spørgsmål og fejltyper.<br><br>
-    Med venlig hilsen<br><br>
-    Teknik & Miljø<br><br>
-    Digitalisering<br><br>
-    Aarhus Kommune
+    hvor du også finder svar på de fleste spørgsmål og fejltyper.
     """
     smtp_server = "smtp.adm.aarhuskommune.dk"   
     smtp_port = 25               
