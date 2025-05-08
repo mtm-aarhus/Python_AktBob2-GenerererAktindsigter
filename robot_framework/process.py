@@ -147,27 +147,27 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     ####---- Send mail til sagsansvarlig ----####
 
     # Define email details
-    # sender = "Aktbob<rpamtm001@aarhus.dk>" 
-    # subject = f"{Sagsnummer}: Screening igangsat"
-    # body = f"""Sag: {DeskProID} - {DeskProTitel}<br><br>
-    # Robotten er nu gået i gang med screening af dokumenterne.<br><br>
-    # Procestiden varierer afhængigt af antallet af dokumenter. Du vil modtage en mail når dokumenterne er klar.<br><br>
-    # Det anbefales at følge <a href="https://aarhuskommune.sharepoint.com/:w:/t/tea-teamsite10506/EVjuZhmtsHRGi6H7-COs26AB6afOXvReKSnWJ1XK1mKxZw?e=n03h0t/">vejledningen</a>, 
-    # hvor du også finder svar på de fleste spørgsmål og fejltyper.
-    # """
-    # smtp_server = "smtp.adm.aarhuskommune.dk"   
-    # smtp_port = 25               
+    sender = "Aktbob<rpamtm001@aarhus.dk>" 
+    subject = f"{Sagsnummer}: Screening igangsat"
+    body = f"""Sag: {DeskProID} - {DeskProTitel}<br><br>
+    Robotten er nu gået i gang med screening af dokumenterne.<br><br>
+    Procestiden varierer afhængigt af antallet af dokumenter. Du vil modtage en mail når dokumenterne er klar.<br><br>
+    Det anbefales at følge <a href="https://aarhuskommune.sharepoint.com/:w:/t/tea-teamsite10506/EVjuZhmtsHRGi6H7-COs26AB6afOXvReKSnWJ1XK1mKxZw?e=n03h0t/">vejledningen</a>, 
+    hvor du også finder svar på de fleste spørgsmål og fejltyper.
+    """
+    smtp_server = "smtp.adm.aarhuskommune.dk"   
+    smtp_port = 25               
 
-    # # Call the send_email function
-    # send_email(
-    #     receiver=UdviklerMailAktbob,
-    #     sender=sender,
-    #     subject=subject,
-    #     body=body,
-    #     smtp_server=smtp_server,
-    #     smtp_port=smtp_port,
-    #     html_body=True
-    # )
+    # Call the send_email function
+    send_email(
+        receiver=UdviklerMailAktbob,
+        sender=sender,
+        subject=subject,
+        body=body,
+        smtp_server=smtp_server,
+        smtp_port=smtp_port,
+        html_body=True
+    )
 
 
     # ---- Run "PrepareEachDocumentToUpload" ----
