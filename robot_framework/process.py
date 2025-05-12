@@ -144,7 +144,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     FilarkivCaseID = GenerateCaseFolder_Output_arguments.get("out_FilarkivCaseID")
     orchestrator_connection.log_info(f"FilarkivCaseID: {FilarkivCaseID}")
     
-    ####---- Send mail til sagsansvarlig ----####
+    ###---- Send mail til sagsansvarlig ----####
 
     # Define email details
     sender = "Aktbob<rpamtm001@aarhus.dk>" 
@@ -192,7 +192,9 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         "in_NovaToken": KMD_access_token,
         "in_KMDNovaURL": KMDNovaURL,
         "in_GoUsername": GoUsername,
-        "in_GoPassword":  GoPassword
+        "in_GoPassword":  GoPassword,
+        "in_DeskProTitel": DeskProTitel,
+        "in_DeskProID": DeskProID,
     }
 
     PrepareEachDocumentToUpload_Output_arguments = PrepareEachDocumentToUpload.invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload,orchestrator_connection)

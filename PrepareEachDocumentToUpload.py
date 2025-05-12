@@ -44,6 +44,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
     KMD_access_token = Arguments_PrepareEachDocumentToUpload.get("in_NovaToken")
     GoUsername = Arguments_PrepareEachDocumentToUpload.get("in_GoUsername")
     GoPassword = Arguments_PrepareEachDocumentToUpload.get("in_GoPassword")
+    DeskProID = Arguments_PrepareEachDocumentToUpload.get("in_DeskProID")
+    DeskProTitel = Arguments_PrepareEachDocumentToUpload.get("in_DeskProTitel")
 
     # Define the structure of the data table
     dt_AktIndex = {
@@ -986,18 +988,15 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
             # Prepare email
             sender = "Aktbob<rpamtm001@aarhus.dk>"
-            subject = f"Fil kan ikke konverteres til PDF - {Sagsnummer}"
+            subject = f"{Sagsnummer} - Filer kan ikke konverteres til PDF"
             body = (
+                f"Sag: {DeskProID} - {DeskProTitel}<br><br>"
                 "Kære Sagsbehandler,<br><br>"
                 "Følgende dokumenter kunne ikke konverteres til PDF:<br><br>"
                 f"{FinalString}<br><br>"
                 "Dokumenterne er blevet uploaded til SharePoint-mappen: "
                 f'<a href="{link_url}">SharePoint</a><br><br>'
                 "Kontroller venligst manuelt dokumenterne.<br><br>"
-                "Med venlig hilsen<br><br>"
-                "Teknik & Miljø<br><br>"
-                "Digitalisering<br><br>"
-                "Aarhus Kommune"
             )
 
             smtp_server = "smtp.adm.aarhuskommune.dk"
