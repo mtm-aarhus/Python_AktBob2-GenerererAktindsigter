@@ -1004,7 +1004,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
 
             send_email(
-                receiver=UdviklerMailAktbob,
+                receiver=MailModtager,
                 sender=sender,
                 subject=subject,
                 body=body,
