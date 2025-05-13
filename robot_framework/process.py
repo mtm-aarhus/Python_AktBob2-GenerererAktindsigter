@@ -160,7 +160,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     # Call the send_email function
     send_email(
-        receiver=UdviklerMailAktbob,
+        receiver=MailModtager,
         sender=sender,
         subject=subject,
         body=body,
