@@ -152,7 +152,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     body = f"""Sag: {DeskProID} - {DeskProTitel}<br><br>
     Robotten er nu gået i gang med screening af dokumenterne.<br><br>
     Procestiden varierer afhængigt af antallet af dokumenter. Du vil modtage en mail når dokumenterne er klar.<br><br>
-    Det anbefales at følge <a href="https://aarhuskommune.sharepoint.com/:w:/t/tea-teamsite10506/EVjuZhmtsHRGi6H7-COs26AB6afOXvReKSnWJ1XK1mKxZw?e=n03h0t/">vejledningen</a>, 
+    Det anbefales at følge <a href="https://aarhuskommune.atlassian.net/wiki/spaces/AB/pages/64979049/AKTBOB+--+Vejledning">vejledningen</a>, 
     hvor du også finder svar på de fleste spørgsmål og fejltyper.
     """
     smtp_server = "smtp.adm.aarhuskommune.dk"   
