@@ -987,7 +987,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             link_url = result.value.sharingLinkInfo.Url
 
             # Prepare email
-            sender = "Aktbob<rpamtm001@aarhus.dk>"
+            sender = "aktbob@aarhus.dk"
             subject = f"{Sagsnummer} - Filer kan ikke konverteres til PDF"
             body = (
                 f"Sag: {DeskProID} - {DeskProTitel}<br><br>"

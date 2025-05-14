@@ -147,7 +147,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     ###---- Send mail til sagsansvarlig ----####
 
     # Define email details
-    sender = "aktbob@noreply.dk" 
+    sender = "aktbob@aarhus.dk" 
     subject = f"{Sagsnummer}: Screening igangsat"
     body = f"""Sag: {DeskProID} - {DeskProTitel}<br><br>
     Robotten er nu gået i gang med screening af dokumenterne.<br><br>
