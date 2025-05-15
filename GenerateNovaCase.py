@@ -103,7 +103,13 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "buildingCase": {
             "propertyInformation":{
                 "bfeNumber": True,
-                "cadastralId": True
+                "cadastralId": True,
+                "cadastralNumbers":{ # tilføjet
+                    "cadastralLetters": True, # tilføjet
+                    "cadastralNumber":True, # tilføjet
+                    "nationwideCadastralDistrictCode": True, # tilføjet
+                    "nationwideCadastralDistrictName":True # tilføjet
+         } # tilføjet
          }
         }
     }
@@ -123,8 +129,20 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             availabilityCtrBy = case["availability"]["availabilityCtrBy"]
             
             # Extract bfeNumber from buildingCase -> propertyInformation
+            property_info = case.get("buildingCase", {}).get("propertyInformation", {})
             bfeNumber = case["buildingCase"]["propertyInformation"]["bfeNumber"]
             CadastralId = case["buildingCase"]["propertyInformation"]["cadastralId"]
+                    # Initialize cadastral variables
+            cadastralLetters = cadastralNumber = cadastralDistrictCode = cadastralDistrictName = None
+
+            # Extract cadastralNumbers if available 
+            cadastral_numbers = property_info.get("cadastralNumbers")
+            if cadastral_numbers and isinstance(cadastral_numbers, list) and len(cadastral_numbers) > 0:
+                first_cadastral = cadastral_numbers[0]
+                cadastralLetters = first_cadastral.get("cadastralLetters")
+                cadastralNumber = first_cadastral.get("cadastralNumber")
+                cadastralDistrictCode = first_cadastral.get("nationwideCadastralDistrictCode")
+                cadastralDistrictName = first_cadastral.get("nationwideCadastralDistrictName")
 
             primary_case_parties = [
                 {
@@ -535,10 +553,18 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                     "buildingCaseClassName": "Aktindsigt"
                 },
                 "propertyInformation":{
-                    "cadastralId": CadastralId,
+                    #"cadastralId": CadastralId, #Tjek om skal tilføjes.
                     "bfeNumber": bfeNumber
 
                 },
+                "cadastralNumbers":[{
+                    "cadastralId": CadastralId,
+                    "cadastralLetters": cadastralLetters,
+                    "cadastralNumber": cadastralNumber,
+                    "cadastralDistrictCode": cadastralDistrictName,
+                    "cadastralDistrictName": cadastralDistrictName
+
+        }],
                 "userdefindefields": [
                         {   "typeName":"1. Politisk kategori",
                             "type": "1. Politisk kategori",
