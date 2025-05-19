@@ -168,23 +168,24 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
 
     # Main logic
     # Authenticate to SharePoint
-    client = sharepoint_client(RobotUserName, RobotPassword, SharePointUrl)
+    try:    
+        client = sharepoint_client(RobotUserName, RobotPassword, SharePointUrl)
 
-    # Construct paths for Overmappe and Undermappe without over-encoding
-    overmappe_url = f"{site_relative_path}/Dokumentlister/{Overmappe}"
-    print(f"Overmappe URL: {overmappe_url}")
-    overmappe_folder = client.web.get_folder_by_server_relative_url(overmappe_url)
-    client.load(overmappe_folder)
-    client.execute_query()
+        # Construct paths for Overmappe and Undermappe without over-encoding
+        overmappe_url = f"{site_relative_path}/Dokumentlister/{Overmappe}"
+        print(f"Overmappe URL: {overmappe_url}")
+        overmappe_folder = client.web.get_folder_by_server_relative_url(overmappe_url)
+        client.load(overmappe_folder)
+        client.execute_query()
 
 
-    undermappe_url = f"{overmappe_url}/{Undermappe}"
-    undermappe_folder = client.web.get_folder_by_server_relative_url(undermappe_url)
-    client.load(undermappe_folder)
-    client.execute_query()
+        undermappe_url = f"{overmappe_url}/{Undermappe}"
+        undermappe_folder = client.web.get_folder_by_server_relative_url(undermappe_url)
+        client.load(undermappe_folder)
+        client.execute_query()
 
-    # Fetch files in the Undermappe folder
-    try:
+        # Fetch files in the Undermappe folder
+        
         print("Fetching files from the folder...")
         files = undermappe_folder.files
         client.load(files)
