@@ -141,9 +141,10 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
                 first_cadastral = cadastral_numbers[0]
                 cadastralLetters = first_cadastral.get("cadastralLetters")
                 cadastralNumber = first_cadastral.get("cadastralNumber")
-                cadastralDistrictCode = first_cadastral.get("nationwideCadastralDistrictCode")
-                cadastralDistrictName = first_cadastral.get("nationwideCadastralDistrictName")
+                cadastralDistrictCode = first_cadastral.get("cadastralDistrictCode")
+                cadastralDistrictName = first_cadastral.get("cadastralDistrictName")
                 # Print cadastral-related values
+                print("CadastralID: ", CadastralId)
                 print("Cadastral Letters:", cadastralLetters)
                 print("Cadastral Number:", cadastralNumber)
                 print("Cadastral District Code:", cadastralDistrictCode)
@@ -154,7 +155,8 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             CadastralId,
             cadastralLetters,
             cadastralNumber,
-            cadastralDistrictName
+            cadastralDistrictName,
+            cadastralDistrictCode
             ])
 
             # Optional: Print the result
