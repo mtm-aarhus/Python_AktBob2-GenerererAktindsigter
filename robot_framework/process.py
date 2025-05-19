@@ -106,6 +106,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         "GoPassword":  GoPassword,
         "KMD_access_token": KMD_access_token,
         "KMDNovaURL": KMDNovaURL
+        "in_MailModtager": MailModtager
     }
 
 

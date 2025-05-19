@@ -18,6 +18,7 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
     from office365.runtime.auth.user_credential import UserCredential
     from urllib.parse import quote
     import re
+    from SendSMTPMail import send_email
 
     # Helper function for sanitizing sagstitel
     def sanitize_sagstitel(sagstitel):
@@ -50,7 +51,7 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
     sagstitel = ""  # Default value if no title is retrieved
     Overmappe = Arguments.get("in_Overmappe")
     Undermappe = Arguments.get("in_Undermappe")
-
+    MailModtager= Arguments.get("in_MailModtager")
 
     # --- Check if it's a Geo-sag ---
     if GeoSag:
@@ -183,63 +184,92 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
     client.execute_query()
 
     # Fetch files in the Undermappe folder
-    print("Fetching files from the folder...")
-    files = undermappe_folder.files
-    client.load(files)
-    client.execute_query()
+    try:
+        print("Fetching files from the folder...")
+        files = undermappe_folder.files
+        client.load(files)
+        client.execute_query()
 
-    # Print and process file names
-    data_table = []  # To store file information with dates
+        # Print and process file names
+        data_table = []  # To store file information with dates
 
-    for file in files:
-        file_name = file.properties["Name"]
+        for file in files:
+            file_name = file.properties["Name"]
 
-        dokument_date = None  # Initialize dokument_date
+            dokument_date = None  # Initialize dokument_date
 
-        if "_" in file_name:
-            try:
-                # Extract the part after the first underscore
-                date_part = file_name.split("_")[1]
-                date_str = date_part.split(".")[0]  # Part before the first dot
-                dokument_date = datetime.strptime(date_str, "%d-%m-%Y")
-            except (IndexError, ValueError):
-                print(f"  -> Error parsing date from: {file_name}. Defaulting to 01-01-2023")
+            if "_" in file_name:
+                try:
+                    # Extract the part after the first underscore
+                    date_part = file_name.split("_")[1]
+                    date_str = date_part.split(".")[0]  # Part before the first dot
+                    dokument_date = datetime.strptime(date_str, "%d-%m-%Y")
+                except (IndexError, ValueError):
+                    print(f"  -> Error parsing date from: {file_name}. Defaulting to 01-01-2023")
+                    dokument_date = datetime.strptime("01-01-2023", "%d-%m-%Y")
+            else:
+                print(f"  -> No underscore found in: {file_name}. Defaulting to 01-01-2023")
                 dokument_date = datetime.strptime("01-01-2023", "%d-%m-%Y")
+
+            data_table.append({
+                "FileName": file_name,
+                "DocumentDate": dokument_date.strftime('%d-%m-%Y')
+            })
+
+        # Sort files by date in descending order
+        data_table = sorted(
+            data_table, 
+            key=lambda x: datetime.strptime(x["DocumentDate"], "%d-%m-%Y"), 
+            reverse=True
+        )
+
+        for entry in data_table:
+            print(f" - {entry['FileName']} (Date: {entry['DocumentDate']})")
+
+        # Download the newest file if available
+        if data_table:
+            newest_file = data_table[0]
+            newest_file_name = newest_file["FileName"]
+            DokumentlisteDatoString = newest_file["DocumentDate"] 
+            sharepoint_file_url = f"{undermappe_url}/{newest_file_name}"
+
+            local_file_path = download_file_from_sharepoint(client, sharepoint_file_url)
+        if local_file_path.endswith('.xlsx'):
+            # Read Excel file into a Pandas DataFrame
+            dt_DocumentList = pd.read_excel(local_file_path)
+            os.remove(local_file_path)
+            # Return the DataFrame to be used later
         else:
-            print(f"  -> No underscore found in: {file_name}. Defaulting to 01-01-2023")
-            dokument_date = datetime.strptime("01-01-2023", "%d-%m-%Y")
+            raise Exception(f"Downloaded file is not an Excel file: {local_file_path}")
+    except Exception as e:
+        # --- HANDLE ERROR HERE ---
+        print("Failed - sender mail til sagsbehandler")  # Replace with email logic if needed
+    
+        # Define email details
+        sender = "aktbob@aarhus.dk" 
+        subject = f"{Sagsnummer} mangler dokumentliste"
+        body = f"""Kære sagsbehandler,<br><br>
+        Sagen: {Sagsnummer} mangler at få oprettet dokumentlisten. <br><br>
+        Få oprettet denne først, inden du forsøger steppet 'Overfør dokumenter til screeningsmappen'.<br><br>
+        Det anbefales at følge <a href="https://aarhuskommune.atlassian.net/wiki/spaces/AB/pages/64979049/AKTBOB+--+Vejledning">vejledningen</a>, 
+        hvor du også finder svar på de fleste spørgsmål og fejltyper.
+        """
+        smtp_server = "smtp.adm.aarhuskommune.dk"   
+        smtp_port = 25               
 
-        data_table.append({
-            "FileName": file_name,
-            "DocumentDate": dokument_date.strftime('%d-%m-%Y')
-        })
+        # Call the send_email function
+        send_email(
+            receiver=MailModtager,
+            sender=sender,
+            subject=subject,
+            body=body,
+            smtp_server=smtp_server,
+            smtp_port=smtp_port,
+            html_body=True
+        )
 
-    # Sort files by date in descending order
-    data_table = sorted(
-        data_table, 
-        key=lambda x: datetime.strptime(x["DocumentDate"], "%d-%m-%Y"), 
-        reverse=True
-    )
-
-    for entry in data_table:
-        print(f" - {entry['FileName']} (Date: {entry['DocumentDate']})")
-
-    # Download the newest file if available
-    if data_table:
-        newest_file = data_table[0]
-        newest_file_name = newest_file["FileName"]
-        DokumentlisteDatoString = newest_file["DocumentDate"] 
-        sharepoint_file_url = f"{undermappe_url}/{newest_file_name}"
-
-        local_file_path = download_file_from_sharepoint(client, sharepoint_file_url)
-    if local_file_path.endswith('.xlsx'):
-        # Read Excel file into a Pandas DataFrame
-        dt_DocumentList = pd.read_excel(local_file_path)
-        os.remove(local_file_path)
-        # Return the DataFrame to be used later
-    else:
-        raise Exception(f"Downloaded file is not an Excel file: {local_file_path}")
-
+        return None
+        
     return {
     "sagstitel": sagstitel,
     "dt_DocumentList": dt_DocumentList,
