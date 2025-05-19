@@ -118,7 +118,28 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     if dt_DocumentList.empty:
         print("Number of rows:",len(dt_DocumentList))
-        orchestrator_connection.log_info("Dokumentlisten inderholder ikke nogen data - Processen fejler")
+            ###---- Send mail til sagsansvarlig ----####
+
+        # Define email details
+        sender = "aktbob@aarhus.dk" 
+        subject = f"{Sagsnummer} er en tom sag"
+        body = f"""Sagen: {Sagsnummer} er en tom sag. Vær opmærksom på, at processen ikke kan behandle tomme sager.<br><br>
+        Det anbefales at følge <a href="https://aarhuskommune.atlassian.net/wiki/spaces/AB/pages/64979049/AKTBOB+--+Vejledning">vejledningen</a>, 
+        hvor du også finder svar på de fleste spørgsmål og fejltyper.
+        """
+        smtp_server = "smtp.adm.aarhuskommune.dk"   
+        smtp_port = 25               
+
+        # Call the send_email function
+        send_email(
+            receiver=MailModtager,
+            sender=sender,
+            subject=subject,
+            body=body,
+            smtp_server=smtp_server,
+            smtp_port=smtp_port,
+            html_body=True
+        )
         raise ValueError("Dokumentlisten inderholder ikke nogen data - Processen fejler")
     else:
         print("Number of rows:",len(dt_DocumentList))
