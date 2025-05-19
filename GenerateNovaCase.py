@@ -104,12 +104,12 @@ def invoke_GenerateNovaCase(Arguments_GenerateNovaCase,orchestrator_connection: 
             "propertyInformation":{
                 "bfeNumber": True,
                 "cadastralId": True,
-                "cadastralNumbers":{ # tilføjet
-                    "cadastralLetters": True, # tilføjet
-                    "cadastralNumber":True, # tilføjet
-                    "nationwideCadastralDistrictCode": True, # tilføjet
-                    "nationwideCadastralDistrictName":True # tilføjet
-         } # tilføjet
+                "cadastralNumbers":{ 
+                    "cadastralLetters": True, 
+                    "cadastralNumber":True, 
+                    "nationwideCadastralDistrictCode": True, 
+                    "nationwideCadastralDistrictName":True 
+         } 
          }
         }
     }
