@@ -1001,7 +1001,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 "<li>Hvis det er en mediefil (lyd/video):</b> Brug redigeringssoftware til at fjerne dele, som modtageren ikke må se/høre. "
                 "Har du ikke værktøjer eller viden, kan du kontakte Aktbob-teamet for hjælp.</li>"
                 "<li>Hvis filen ikke skal udleveres:</b> Vælg 'Nej' i dokumentlisten, angiv en gyldig begrundelse, og slet filen fra SharePoint.</li>"
-                "<br><br>"
+                "<br>"
                 "Øvrige dokumenter overføres til FilArkiv og gennemgås der. Når du overfører fra FilArkiv til udleveringsmappen, opdateres aktlisten automatisk.<br>"
             )
 
