@@ -990,7 +990,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             sender = "aktbob@aarhus.dk"
             subject = f"{Sagsnummer} - Filer kan ikke konverteres til PDF"
             body = (
-                f"Sag: {DeskProID} - {DeskProTitel}<br><br>"
+                f'Sag: <a href="https://mtmsager.aarhuskommune.dk/app#/t/ticket/{DeskProID}">{DeskProID} - {DeskProTitel}</a><br><br>'
                 "Kære Sagsbehandler,<br><br>"
                 "Følgende dokumenter kunne ikke konverteres til PDF:<br><br>"
                 f"{FinalString}<br><br>"

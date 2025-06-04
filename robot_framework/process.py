@@ -171,12 +171,14 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     # Define email details
     sender = "aktbob@aarhus.dk" 
     subject = f"{Sagsnummer}: Screening igangsat"
-    body = f"""Sag: {DeskProID} - {DeskProTitel}<br><br>
+    body = f"""Sag: <a href="https://mtmsager.aarhuskommune.dk/app#/t/ticket/{DeskProID}">{DeskProID} - {DeskProTitel}</a><br><br>
     Robotten er nu gået i gang med screening af dokumenterne.<br><br>
     Procestiden varierer afhængigt af antallet af dokumenter. Du vil modtage en mail når dokumenterne er klar.<br><br>
     Det anbefales at følge <a href="https://aarhuskommune.atlassian.net/wiki/spaces/AB/pages/64979049/AKTBOB+--+Vejledning">vejledningen</a>, 
     hvor du også finder svar på de fleste spørgsmål og fejltyper.
     """
+    
+    
     smtp_server = "smtp.adm.aarhuskommune.dk"   
     smtp_port = 25               
 

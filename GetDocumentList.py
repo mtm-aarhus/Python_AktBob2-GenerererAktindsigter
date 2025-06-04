@@ -239,7 +239,7 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
             # Read Excel file into a Pandas DataFrame
             dt_DocumentList = pd.read_excel(local_file_path)
             os.remove(local_file_path)
-            # Return the DataFrame to be used later
+
         else:
             raise Exception(f"Downloaded file is not an Excel file: {local_file_path}")
     except Exception as e:
