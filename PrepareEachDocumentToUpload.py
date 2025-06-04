@@ -996,7 +996,14 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 f"{FinalString}<br><br>"
                 "Dokumenterne er blevet uploaded til SharePoint-mappen: "
                 f'<a href="{link_url}">SharePoint</a><br><br>'
-                "Kontroller venligst manuelt dokumenterne.<br><br>"
+                "<b>Bemærk:</b> Du kan ikke bruge FilArkiv til at screene, gennemgå eller redigere denne fil.<br><br>"
+                "<ul>"
+                "<li><b>Hvis filen kan udleveres som den er:</b> Gå videre med aktindsigten som normalt.</li>"
+                "<li><b>Hvis det er en mediefil (lyd/video):</b> Brug redigeringssoftware til at fjerne dele, som modtageren ikke må se/høre. "
+                "Har du ikke værktøjer eller viden, kan du kontakte Aktbob-teamet for hjælp.</li>"
+                "<li><b>Hvis filen ikke skal udleveres:</b> Vælg 'Nej' i dokumentlisten, angiv en gyldig begrundelse, og slet filen fra SharePoint.</li>"
+                "</ul><br>"
+                "Øvrige dokumenter overføres til FilArkiv og gennemgås der. Når du overfører fra FilArkiv til udleveringsmappen, opdateres aktlisten automatisk.<br>"
             )
 
             smtp_server = "smtp.adm.aarhuskommune.dk"
