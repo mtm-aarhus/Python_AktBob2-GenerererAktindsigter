@@ -1,61 +1,90 @@
-# Robot-Framework V3
 
-This repo is meant to be used as a template for robots made for [OpenOrchestrator](https://github.com/itk-dev-rpa/OpenOrchestrator).
+# 📄 README
 
-## Quick start
+## Aktindsigt Automation Robot
 
-1. To use this template simply use this repo as a template (see [Creating a repository from a template](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template)).
-__Don't__ include all branches.
+**Aktindsigt Automation** is a comprehensive robot for **Teknik og Miljø, Aarhus Kommune**. It processes access-to-records requests (aktindsigt) by retrieving case documents, generating overviews and indexes, storing files in SharePoint and FilArkiv, and notifying stakeholders automatically.
 
-2. Go to `robot_framework/__main__.py` and choose between the linear framework or queue based framework.
+---
 
-3. Implement all functions in the files:
-    * `robot_framework/initialize.py`
-    * `robot_framework/reset.py`
-    * `robot_framework/process.py`
+## 🚀 Features
 
-4. Change `config.py` to your needs.
+✅ **Case Data Retrieval**  
+- Integrates with KMD Nova and Geo to fetch metadata and document lists  
+- Retrieves deskpro ticket information to enrich context
 
-5. Fill out the dependencies in the `pyproject.toml` file with all packages needed by the robot.
+📤 **Document Preparation and Conversion**  
+- Downloads files from SharePoint and KMD  
+- Converts documents to PDF using CloudConvert if needed  
+- Generates Excel indexes (Aktliste) and case overviews (Sagsoversigt)
 
-6. Feel free to add more files as needed. Remember that any additional python files must
-be located in the folder `robot_framework` or a subfolder of it.
+🗂️ **Structured Folder Management**  
+- Creates case folders in FilArkiv and SharePoint  
+- Ensures consistent naming conventions and folder hierarchy  
 
-When the robot is run from OpenOrchestrator the `main.py` file is run which results
-in the following:
-1. The working directory is changed to where `main.py` is located.
-2. A virtual environment is automatically setup with the required packages.
-3. The framework is called passing on all arguments needed by [OpenOrchestrator](https://github.com/itk-dev-rpa/OpenOrchestrator).
+📡 **Automated Uploads**  
+- Uploads all processed documents to SharePoint libraries  
+- Registers documents in FilArkiv with metadata  
 
-## Requirements
-Minimum python version 3.10
+📧 **Notifications and Alerts**  
+- Emails caseworkers if document lists are empty or processing fails  
+- Sends confirmations after successful processing
 
-## Flow
+🔐 **Credential and Token Management**  
+- Securely fetches and refreshes API tokens (KMD, FilArkiv) via OpenOrchestrator  
+- All credentials are stored encrypted  
 
-This framework contains two different flows: A linear and a queue based.
-You should only ever use one at a time. You choose which one by going into `robot_framework/__main__.py`
-and uncommenting the framework you want. They are both disabled by default and an error will be
-raised to remind you if you don't choose.
+---
 
-### Linear Flow
+## 🧭 Process Flow
 
-The linear framework is used when a robot is just going from A to Z without fetching jobs from an
-OpenOrchestrator queue.
-The flow of the linear framework is sketched up in the following illustration:
+1. **Token Management**
+   - Fetches or refreshes KMD and FilArkiv access tokens (`GetKmdAcessToken.py`, `GetFilarkivAcessToken.py`)
+2. **Document List Retrieval**
+   - Retrieves a list of all documents for the requested case (`GetDocumentList.py`)
+3. **Validation**
+   - If no documents are found, notifies the requester by email and exits
+4. **Case Folder Creation**
+   - Creates or updates the case in FilArkiv (`GenerateCaseFolder.py`)
+   - Generates a Nova case record (`GenerateNovaCase.py`)
+5. **Document Preparation**
+   - Downloads documents
+   - Converts to PDF where needed (`PrepareEachDocumentToUpload.py`)
+   - Prepares Excel index (`GenerateAndUploadAktlistePDF.py`)
+   - Creates a case overview (`GenerererSagsoversigt.py`)
+6. **Uploads**
+   - Uploads all final documents to SharePoint (`SharePointUploader.py`)
+   - Registers files in FilArkiv
+7. **Cleanup and Confirmation**
+   - Logs operations and sends notifications
 
-![Linear Flow diagram](Robot-Framework.svg)
+---
 
-### Queue Flow
+## 🔐 Privacy & Security
 
-The queue framework is used when the robot is doing multiple bite-sized tasks defined in an
-OpenOrchestrator queue.
-The flow of the queue framework is sketched up in the following illustration:
+- All APIs use HTTPS
+- Credentials are managed in OpenOrchestrator
+- No personal data is stored locally after processing
+- Temporary files are deleted after upload
 
-![Queue Flow diagram](Robot-Queue-Framework.svg)
+---
 
-## Linting and Github Actions
+## ⚙️ Dependencies
 
-This template is also setup with flake8 and pylint linting in Github Actions.
-This workflow will trigger whenever you push your code to Github.
-The workflow is defined under `.github/workflows/Linting.yml`.
+- Python 3.10+
+- `requests`
+- `requests-ntlm`
+- `pandas`
+- `pyodbc`
+- `python-docx`
+- `openpyxl`
+- `reportlab`
+- `office365-rest-python-client`
+- `CloudConvert`
 
+---
+
+## 👷 Maintainer
+
+Gustav Chatterton  
+*Digital udvikling, Teknik og Miljø, Aarhus Kommune*
