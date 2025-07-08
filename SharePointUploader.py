@@ -23,7 +23,7 @@ def upload_file_to_sharepoint(site_url,Overmappe, Undermappe, file_path, RobotUs
         file_size = os.path.getsize(file_path)
 
         # Attempt normal upload for files ≤ 4MB
-        if file_size <= 4 * 1024*1024:  
+        if file_size <= 50 * 1024*1024:  
             try:
                 with open(file_path, "rb") as f:
                     file = folder.files.add(file_name, f.read(), overwrite=True).execute_query()
