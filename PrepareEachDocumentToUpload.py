@@ -174,7 +174,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 ".txt": "text/plain", ".pdf": "application/pdf", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
                 ".gif": "image/gif", ".doc": "application/msword", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 ".xls": "application/vnd.ms-excel", ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".csv": "text/csv",
-                ".json": "application/json", ".xml": "application/xml", ".msg":"application/vnd.ms-outlook"
+                ".json": "application/json", ".xml": "application/xml"
             }.get(extension, "application/octet-stream")
             FileName += extension
             print(f"Anvender følgende dokumentID: {Filarkiv_DocumentID}")
@@ -184,6 +184,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 print(f"FileID: {FileID}")
             else:
                 print("Failed to create file metadata.", response.text)
+                return False
             
             url = f"https://core.filarkiv.dk/api/v1/FileIO/Upload/{FileID}"
             if not os.path.exists(file_path):
@@ -196,6 +197,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         print("File uploaded successfully.")
                     else:
                         print(f"Failed to upload file. Status Code: {response.status_code}")
+                        return False
 
                     #Sætter den høje prioritet på dokumentet
                     url = f"https://core.filarkiv.dk/api/v1/FileProcess/UpdatePriority"
@@ -209,6 +211,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         print("Det lykkedes at opdaterer prioriteten")
                     else:
                         print("Fejlede i prioritering:", response.text)
+            return True
+                
 
 
     def check_conversion_possible(dokument_type, cloudconvert_api):
@@ -725,13 +729,29 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         FilIsPDF = True
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword)
      
-
                 if FilIsPDF or conversionPossible or CanDocumentBeConverted:
-                    upload_to_filarkiv(FilarkivURL,FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID,Titel, file_path)
-                    DokumentType = "pdf"
-                
-                else: # Filtypen er ikke understøttet, uploader til Sharepoint
-                    IsDocumentPDF = False 
+                    success = upload_to_filarkiv(
+                        FilarkivURL, FilarkivCaseID, Filarkiv_access_token,
+                        AktID, DokumentID, Titel, file_path
+                    )
+
+                    if success:
+                        DokumentType = "pdf"
+                    else:
+                        IsDocumentPDF = False
+                        file_path = f"{file_path}.{DokumentType}"
+                        upload_file_to_sharepoint(
+                            site_url=SharePointURL,
+                            Overmappe=Overmappe,
+                            Undermappe=Undermappe,
+                            file_path=file_path,
+                            RobotUserName=RobotUserName,
+                            RobotPassword=RobotPassword
+                        )
+
+                else:
+                    # This is when conversion is not possible and upload shouldn't even be attempted to Filarkiv
+                    IsDocumentPDF = False
                     file_path = f"{file_path}.{DokumentType}"
                     upload_file_to_sharepoint(
                         site_url=SharePointURL,
@@ -740,7 +760,23 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         file_path=file_path,
                         RobotUserName=RobotUserName,
                         RobotPassword=RobotPassword
-                    )
+    )
+    
+                # if FilIsPDF or conversionPossible or CanDocumentBeConverted:
+                #     upload_to_filarkiv(FilarkivURL,FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID,Titel, file_path)
+                #     DokumentType = "pdf"
+                
+                # else: # Filtypen er ikke understøttet, uploader til Sharepoint
+                #     IsDocumentPDF = False 
+                #     file_path = f"{file_path}.{DokumentType}"
+                #     upload_file_to_sharepoint(
+                #         site_url=SharePointURL,
+                #         Overmappe=Overmappe,
+                #         Undermappe=Undermappe,
+                #         file_path=file_path,
+                #         RobotUserName=RobotUserName,
+                #         RobotPassword=RobotPassword
+                #     )
                     
 
             else:
