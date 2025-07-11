@@ -492,7 +492,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
         for attempt in range(max_retries):
             try:
-                response = session.get(url, timeout=60)
+                response = session.get(url, timeout=180)
 
                 if response.status_code == 200:
                     ByteResult = response.content
