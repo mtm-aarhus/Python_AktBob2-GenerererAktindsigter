@@ -761,25 +761,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         file_path=file_path,
                         RobotUserName=RobotUserName,
                         RobotPassword=RobotPassword
-    )
+            )
     
-                # if FilIsPDF or conversionPossible or CanDocumentBeConverted:
-                #     upload_to_filarkiv(FilarkivURL,FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID,Titel, file_path)
-                #     DokumentType = "pdf"
-                
-                # else: # Filtypen er ikke understøttet, uploader til Sharepoint
-                #     IsDocumentPDF = False 
-                #     file_path = f"{file_path}.{DokumentType}"
-                #     upload_file_to_sharepoint(
-                #         site_url=SharePointURL,
-                #         Overmappe=Overmappe,
-                #         Undermappe=Undermappe,
-                #         file_path=file_path,
-                #         RobotUserName=RobotUserName,
-                #         RobotPassword=RobotPassword
-                #     )
-                    
-
             else:
                 Titel = f"{AktID:04} - {DokumentID} - {Titel}"
                 DokumentType = "pdf"
@@ -964,10 +947,26 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
                 if conversionPossible or CanDocumentBeConverted:
                     
-                    upload_to_filarkiv(FilarkivURL,FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID,Titel, file_path)
-                    if conversionPossible:
+                    success = upload_to_filarkiv(
+                        FilarkivURL, FilarkivCaseID, Filarkiv_access_token,
+                        AktID, DokumentID, Titel, file_path
+                    )
+
+                    if success:
                         DokumentType = "pdf"
 
+                    else:
+                        IsDocumentPDF = False
+                        file_path = f"{file_path}.{DokumentType}"
+                        upload_file_to_sharepoint(
+                            site_url=SharePointURL,
+                            Overmappe=Overmappe,
+                            Undermappe=Undermappe,
+                            file_path=file_path,
+                            RobotUserName=RobotUserName,
+                            RobotPassword=RobotPassword
+                        )
+                
                 else: # Uploader til Sharepoint
                     print("Could not be converted or uploaded - uploading directly to SharePoint")
                     IsDocumentPDF = False 
@@ -979,6 +978,10 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             RobotUserName=RobotUserName,
                             RobotPassword=RobotPassword
                         )
+            
+
+
+
                
 
             else:
