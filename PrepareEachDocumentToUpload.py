@@ -669,7 +669,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             print("ByteResult received successfully.")
                         
                     except Exception as e:
-                        raise Exception(f"An exception occurred: {e}")
+                        print(f"Could not convert to pdf : {e}")
+                        ByteResult = ""
                     
                     
                     # tjekker om go-conversion lykkedes eller ej
