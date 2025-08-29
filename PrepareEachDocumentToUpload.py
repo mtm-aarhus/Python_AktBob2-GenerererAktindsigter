@@ -740,7 +740,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         DokumentType = "pdf"
                     else:
                         IsDocumentPDF = False
-                        file_path = f"{file_path}.{DokumentType}"
+                        # File path her burde allerede have filtype
+                        #file_path = f"{file_path}.{DokumentType}"
                         upload_file_to_sharepoint(
                             site_url=SharePointURL,
                             Overmappe=Overmappe,
@@ -753,7 +754,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 else:
                     # This is when conversion is not possible and upload shouldn't even be attempted to Filarkiv
                     IsDocumentPDF = False
-                    file_path = f"{file_path}.{DokumentType}"
+                    #File path her burde allerede have filtype
+                    #file_path = f"{file_path}.{DokumentType}"
                     upload_file_to_sharepoint(
                         site_url=SharePointURL,
                         Overmappe=Overmappe,
@@ -957,7 +959,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
                     else:
                         IsDocumentPDF = False
-                        file_path = f"{file_path}.{DokumentType}"
+                        #file path her burde allerede have filtype
+                        #file_path = f"{file_path}.{DokumentType}"
                         upload_file_to_sharepoint(
                             site_url=SharePointURL,
                             Overmappe=Overmappe,
