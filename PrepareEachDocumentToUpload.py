@@ -126,7 +126,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         "title": FileName,
                         "documentNumber": DocumentNumber,
                         "documentDate": DocumentDate,
-                        "direction": 0
+                        "direction": 0,
+                        "documentReference": DokumentID
                     }
                     response = requests.post("https://core.filarkiv.dk/api/v1/Documents", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))  
                     if response.status_code in [200, 201]:
@@ -151,7 +152,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             "title": FileName,
                             "documentNumber": DocumentNumber,
                             "documentDate": DocumentDate,
-                            "direction": 0
+                            "direction": 0,
+                            "documentReference": DokumentID
                         }
                         response = requests.post("https://core.filarkiv.dk/api/v1/Documents", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
                         if response.status_code in [200, 201]:
