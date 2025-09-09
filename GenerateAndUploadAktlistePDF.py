@@ -40,7 +40,11 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF, 
     Undermappe = Arguments_GenerateAndUploadAktlistePDF.get("in_Undermappe")
     GoUsername = Arguments_GenerateAndUploadAktlistePDF.get("in_GoUsername")
     GoPassword = Arguments_GenerateAndUploadAktlistePDF.get("in_GoPassword")
-
+    tenant =  Arguments_GenerateAndUploadAktlistePDF.get("tenant")
+    client_id =  Arguments_GenerateAndUploadAktlistePDF.get("client_id")
+    thumbprint =  Arguments_GenerateAndUploadAktlistePDF.get("thumbprint")
+    cert_path =  Arguments_GenerateAndUploadAktlistePDF.get("cert_path")
+    
 
     def create_excel(data_table, file_path):
         try:
@@ -139,7 +143,11 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF, 
         Undermappe=Undermappe,
         file_path=file_path,
         RobotUserName=RobotUserName,
-        RobotPassword=RobotPassword
+        RobotPassword=RobotPassword,
+        tenant = tenant, 
+        client_id = client_id, 
+        thumbprint = thumbprint, 
+        cert_path = cert_path
     )
 
     #Omdanner PDF til Excel
@@ -319,7 +327,11 @@ def invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF, 
         Undermappe=Undermappe,
         file_path=pdf_path,
         RobotUserName=RobotUserName,
-        RobotPassword=RobotPassword
+        RobotPassword=RobotPassword,
+        tenant = tenant, 
+        client_id = client_id, 
+        thumbprint = thumbprint, 
+        cert_path = cert_path
     )
 
     #Deleting local files: 
