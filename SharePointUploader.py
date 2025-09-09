@@ -2,11 +2,19 @@ import os
 from office365.sharepoint.client_context import ClientContext
 from office365.runtime.auth.user_credential import UserCredential
 
-def upload_file_to_sharepoint(site_url,Overmappe, Undermappe, file_path, RobotUserName, RobotPassword):
+def upload_file_to_sharepoint(site_url,Overmappe, Undermappe, file_path, RobotUserName, RobotPassword, tenant, client_id, thumbprint, cert_path):
     try:
         # Authenticate
         credentials = UserCredential(RobotUserName, RobotPassword)
         ctx = ClientContext(site_url).with_credentials(credentials)
+
+        cert_credentials = {
+            "tenant": tenant,
+            "client_id": client_id,
+            "thumbprint": thumbprint,
+            "cert_path": cert_path
+                }
+        ctx = ClientContext(site_url).with_client_certificate(**cert_credentials)
 
         # Construct folder path
         # Construct folder path
