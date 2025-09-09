@@ -33,13 +33,25 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
     GoPassword = Arguments_GenererSagsoversigt.get("in_GoPassword")
     NovaToken = Arguments_GenererSagsoversigt.get("in_NovaToken")
     KMDNovaURL = Arguments_GenererSagsoversigt.get("in_KMDNovaURL")
+    tenant = Arguments_GenererSagsoversigt.get("tenant")
+    client_id = Arguments_GenererSagsoversigt.get("client_id")
+    thumbprint = Arguments_GenererSagsoversigt.get("thumbprint")
+    cert_path = Arguments_GenererSagsoversigt.get("cert_path")
     max_retries = 2  # Number of retry attempts
 
-    def sharepoint_client(RobotUserName, RobotPassword, SharePointURL) -> ClientContext:
+    def sharepoint_client(RobotUserName, RobotPassword, SharePointURL, tenant, client_id, thumbprint, cert_path) -> ClientContext:
 
         try:
             credentials = UserCredential(RobotUserName, RobotPassword)
             ctx = ClientContext(SharePointURL).with_credentials(credentials)
+            cert_credentials = {
+                "tenant": tenant,
+                "client_id": client_id,
+                "thumbprint": thumbprint,
+                "cert_path": cert_path
+            }
+            ctx = ClientContext(SharePointURL).with_client_certificate(**cert_credentials)
+            
             
             # Load the SharePoint web to test the connection
             web = ctx.web
@@ -388,7 +400,11 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
         Undermappe="",
         file_path=output_pdf_path,
         RobotUserName=RobotUserName,
-        RobotPassword=RobotPassword
+        RobotPassword=RobotPassword,
+        tenant, 
+        client_id, 
+        thumbprint, 
+        cert_path
     )
 
     #Deleting local files: 
