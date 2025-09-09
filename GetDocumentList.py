@@ -52,6 +52,10 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
     Overmappe = Arguments.get("in_Overmappe")
     Undermappe = Arguments.get("in_Undermappe")
     MailModtager= Arguments.get("in_MailModtager")
+    tenant = Arguments.get("tenant")
+    client_id = Arguments.get("client_id")
+    thumbprint = Arguments.get("thumbprint")
+    cert_path = Arguments.get("cert_path")
 
     # --- Check if it's a Geo-sag ---
     if GeoSag:
@@ -130,10 +134,17 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
 
 
     # SharePoint authentication and client setup
-    def sharepoint_client(RobotUserName, RobotPassword, SharePointUrl) -> ClientContext:
+    def sharepoint_client(RobotUserName, RobotPassword, SharePointUrl, tenant, client_id, thumbprint, cert_path) -> ClientContext:
         try:
             credentials = UserCredential(RobotUserName, RobotPassword)
             ctx = ClientContext(SharePointUrl).with_credentials(credentials)
+            cert_credentials = {
+                "tenant": tenant,
+                "client_id": client_id,
+                "thumbprint": thumbprint,
+                "cert_path": cert_path
+            }
+            ctx = ClientContext(SharePointUrl).with_client_certificate(**cert_credentials)
 
             # Load the SharePoint web to test the connection
             web = ctx.web
@@ -169,7 +180,7 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
     # Main logic
     # Authenticate to SharePoint
     try:    
-        client = sharepoint_client(RobotUserName, RobotPassword, SharePointUrl)
+        client = sharepoint_client(RobotUserName, RobotPassword, SharePointUrl, tenant = tenant, client_id = client_id, thumbprint = thumbprint, cert_path = cert_path)
 
         # Construct paths for Overmappe and Undermappe without over-encoding
         overmappe_url = f"{site_relative_path}/Dokumentlister/{Overmappe}"
