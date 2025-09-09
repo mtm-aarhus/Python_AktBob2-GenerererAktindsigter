@@ -24,6 +24,10 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder, orchestrator_connect
     DeskProTitel = Arguments_GenerateCaseFolder.get("in_DeskProTitel")
     DeskProID = Arguments_GenerateCaseFolder.get("in_DeskProID")
     FilarkivURL = Arguments_GenerateCaseFolder.get("in_FilarkivURL")
+    tenant = Arguments_GenerateCaseFolder.get("tenant")
+    client_id = Arguments_GenerateCaseFolder.get("client_id")
+    thumbprint = Arguments_GenerateCaseFolder.get("thumbprint")
+    cert_path = Arguments_GenerateCaseFolder.get("cert_path")
     
 
     # ---- Opretter sagen i Filarkiv ---- #
@@ -175,6 +179,13 @@ def invoke_GenerateCasefolder(Arguments_GenerateCaseFolder, orchestrator_connect
     # Authenticate
     credentials = UserCredential(RobotUserName, RobotPassword)
     ctx = ClientContext(SharePointUrl).with_credentials(credentials)
+    cert_credentials = {
+        "tenant": tenant,
+        "client_id": client_id,
+        "thumbprint": thumbprint,
+        "cert_path": cert_path
+        }
+    ctx = ClientContext(SharePointUrl).with_client_certificate(**cert_credentials)
     
 
     def folder_exists(ctx, folder_url):
