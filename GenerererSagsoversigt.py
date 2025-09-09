@@ -401,10 +401,10 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
         file_path=output_pdf_path,
         RobotUserName=RobotUserName,
         RobotPassword=RobotPassword,
-        tenant, 
-        client_id, 
-        thumbprint, 
-        cert_path
+        tenant = tenant, 
+        client_id = client_id, 
+        thumbprint = thumbprint, 
+        cert_path = cert_path
     )
 
     #Deleting local files: 
