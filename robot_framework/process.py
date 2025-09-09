@@ -20,15 +20,14 @@ import pandas as pd
 # pylint: disable-next=unused-argument
 def process(orchestrator_connection: OrchestratorConnection, queue_element: QueueElement | None = None) -> None:
     """Do the primary process of the robot."""
+
+    #Certification stuff added after sharepoint problems
     certification = orchestrator_connection.get_credential("SharePointCert")
     api = orchestrator_connection.get_credential("SharePointAPI")
-
-    cert_credentials = {
-        "tenant": api.username,
-        "client_id": api.password,
-        "thumbprint": certification.username,
-        "cert_path": certification.password
-    }
+    tenant =  api.username
+    client_id =  api.password
+    thumbprint = certification.username
+    cert_path = certification.password
     
     orchestrator_connection.log_trace("Running process.")
     GraphAppIDAndTenant = orchestrator_connection.get_credential("GraphAppIDAndTenant")
@@ -114,9 +113,12 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         "GoPassword":  GoPassword,
         "KMD_access_token": KMD_access_token,
         "KMDNovaURL": KMDNovaURL,
-        "in_MailModtager": MailModtager
+        "in_MailModtager": MailModtager, 
+        "tenant":  tenant,
+        "client_id":  client_id,
+        "thumbprint": thumbprint,
+        "cert_path": cert_path,
     }
-
 
     # ---- Run "GetDocumentList" ----
     GetDocumentList_Output_arguments = GetDocumentList.invoke(Arguments, go_session,orchestrator_connection)
@@ -167,7 +169,11 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         "in_DeskProID": DeskProID,
         "in_Filarkiv_access_token": Filarkiv_access_token,
         "in_Sagstitel": Sagstitel,
-        "in_FilarkivURL": FilarkivURL
+        "in_FilarkivURL": FilarkivURL,
+        "tenant":  tenant,
+        "client_id":  client_id,
+        "thumbprint": thumbprint,
+        "cert_path": cert_path,
     }
 
     GenerateCaseFolder_Output_arguments = GenerateCaseFolder.invoke_GenerateCasefolder(Arguments_GenerateCaseFolder,orchestrator_connection)
@@ -227,6 +233,10 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         "in_GoPassword":  GoPassword,
         "in_DeskProTitel": DeskProTitel,
         "in_DeskProID": DeskProID,
+        "tenant":  tenant,
+        "client_id":  client_id,
+        "thumbprint": thumbprint,
+        "cert_path": cert_path,
     }
 
     PrepareEachDocumentToUpload_Output_arguments = PrepareEachDocumentToUpload.invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload,orchestrator_connection)
@@ -247,7 +257,11 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     "in_Undermappe": Undermappe,
     "in_SharePointURL": SharePointURL,
     "in_GoUsername":GoUsername,
-    "in_GoPassword": GoPassword
+    "in_GoPassword": GoPassword,
+    "tenant":  tenant,
+    "client_id":  client_id,
+    "thumbprint": thumbprint,
+    "cert_path": cert_path,
     }
 
     GenerateAndUploadAktlistePDF_Output_arguments = GenerateAndUploadAktlistePDF.invoke_GenerateAndUploadAktlistePDF(Arguments_GenerateAndUploadAktlistePDF,orchestrator_connection)
@@ -270,7 +284,11 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
     "in_GoUsername":GoUsername,
     "in_GoPassword": GoPassword,
     "in_NovaToken": KMD_access_token,
-    "in_KMDNovaURL": KMDNovaURL
+    "in_KMDNovaURL": KMDNovaURL,
+    "tenant":  tenant,
+    "client_id":  client_id,
+    "thumbprint": thumbprint,
+    "cert_path": cert_path,
     }
 
     GenererSagsoversigt_Output_arguments = GenerererSagsoversigt.invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt,orchestrator_connection)
