@@ -370,7 +370,7 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
         site_relative_path = "/Teams/tea-teamsite10506/Delte Dokumenter"
 
         # Authenticate to SharePoint
-        client = sharepoint_client(RobotUserName, RobotPassword, SharePointURL)
+        client = sharepoint_client(RobotUserName, RobotPassword, SharePointURL, tenant = tenant, client_id = client_id, thumbprint = thumbprint, cert_path = cert_path)
 
         # Construct Overmappe path
         overmappe_url = f"{site_relative_path}/Aktindsigter/{Overmappe}"
