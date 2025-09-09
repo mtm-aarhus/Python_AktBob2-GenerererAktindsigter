@@ -46,6 +46,10 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
     GoPassword = Arguments_PrepareEachDocumentToUpload.get("in_GoPassword")
     DeskProID = Arguments_PrepareEachDocumentToUpload.get("in_DeskProID")
     DeskProTitel = Arguments_PrepareEachDocumentToUpload.get("in_DeskProTitel")
+    tenant = Arguments_PrepareEachDocumentToUpload.get("tenant")
+    client_id = Arguments_PrepareEachDocumentToUpload.get("client_id")
+    thumbprint = Arguments_PrepareEachDocumentToUpload.get("thumbprint")
+    cert_path = Arguments_PrepareEachDocumentToUpload.get("cert_path")
 
     # Define the structure of the data table
     dt_AktIndex = {
@@ -750,7 +754,11 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             Undermappe=Undermappe,
                             file_path=file_path,
                             RobotUserName=RobotUserName,
-                            RobotPassword=RobotPassword
+                            RobotPassword=RobotPassword,
+                            tenant = tenant, 
+                            client_id = client_id, 
+                            thumbprint = thumbprint, 
+                            cert_path = cert_path
                         )
 
                 else:
@@ -764,7 +772,11 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         Undermappe=Undermappe,
                         file_path=file_path,
                         RobotUserName=RobotUserName,
-                        RobotPassword=RobotPassword
+                        RobotPassword=RobotPassword,
+                        tenant = tenant, 
+                        client_id = client_id, 
+                        thumbprint = thumbprint, 
+                        cert_path = cert_path
             )
     
             else:
@@ -969,7 +981,11 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             Undermappe=Undermappe,
                             file_path=file_path,
                             RobotUserName=RobotUserName,
-                            RobotPassword=RobotPassword
+                            RobotPassword=RobotPassword,
+                            tenant = tenant, 
+                            client_id = client_id, 
+                            thumbprint = thumbprint, 
+                            cert_path = cert_path
                         )
                 
                 else: # Uploader til Sharepoint
@@ -981,14 +997,13 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             Undermappe=Undermappe,
                             file_path=file_path,
                             RobotUserName=RobotUserName,
-                            RobotPassword=RobotPassword
+                            RobotPassword=RobotPassword,
+                            tenant = tenant, 
+                            client_id = client_id, 
+                            thumbprint = thumbprint, 
+                            cert_path = cert_path
                         )
-            
-
-
-
-               
-
+    
             else:
                 Titel = f"{AktID:04} - {DokumentID} - {Titel}"
                 DokumentType = "pdf"    
@@ -1023,6 +1038,14 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         # SharePoint integration
         credentials = UserCredential(RobotUserName, RobotPassword)
         ctx = ClientContext(SharePointURL).with_credentials(credentials)
+
+        cert_credentials = {
+            "tenant": tenant,
+            "client_id": client_id,
+            "thumbprint": thumbprint,
+            "cert_path": cert_path
+        }
+        ctx = ClientContext(SharePointURL).with_client_certificate(**cert_credentials)
         folder_or_file_url = f"/Teams/tea-teamsite10506/Delte Dokumenter/Aktindsigter/{Overmappe}/{Undermappe}"
         target_item = ctx.web.get_folder_by_server_relative_url(folder_or_file_url)
 
