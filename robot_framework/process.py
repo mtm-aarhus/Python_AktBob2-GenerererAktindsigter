@@ -20,8 +20,16 @@ import pandas as pd
 # pylint: disable-next=unused-argument
 def process(orchestrator_connection: OrchestratorConnection, queue_element: QueueElement | None = None) -> None:
     """Do the primary process of the robot."""
+    certification = orchestrator_connection.get_credential("SharePointCert")
+    api = orchestrator_connection.get_credential("SharePointAPI")
 
-
+    cert_credentials = {
+        "tenant": api.username,
+        "client_id": api.password,
+        "thumbprint": certification.username,
+        "cert_path": certification.password
+    }
+    
     orchestrator_connection.log_trace("Running process.")
     GraphAppIDAndTenant = orchestrator_connection.get_credential("GraphAppIDAndTenant")
     SharePointAppID = GraphAppIDAndTenant.username
