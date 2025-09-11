@@ -102,7 +102,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         
         return Titel
 
-    def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID, Titel, file_path):
+    def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID, Titel, file_path, DokumentType):
         DoesFolderExists = False
         Filarkiv_DocumentID = None  # Ensure it is initialized
         FileName = f"{AktID:04} - {DokumentID} - {Titel}"
@@ -175,7 +175,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             return
         
         if not DoesFolderExists:
-            extension = os.path.splitext(file_path)[1]
+            extension = DokumentType
             mime_type = {
                 ".txt": "text/plain", ".pdf": "application/pdf", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
                 ".gif": "image/gif", ".doc": "application/msword", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -741,7 +741,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 if FilIsPDF or conversionPossible or CanDocumentBeConverted:
                     success = upload_to_filarkiv(
                         FilarkivURL, FilarkivCaseID, Filarkiv_access_token,
-                        AktID, DokumentID, Titel, file_path
+                        AktID, DokumentID, Titel, file_path, DokumentType= DokumentType
                     )
 
                     if success:
@@ -967,7 +967,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     
                     success = upload_to_filarkiv(
                         FilarkivURL, FilarkivCaseID, Filarkiv_access_token,
-                        AktID, DokumentID, Titel, file_path
+                        AktID, DokumentID, Titel, file_path, DokumentType= DokumentType
                     )
 
                     if success:
