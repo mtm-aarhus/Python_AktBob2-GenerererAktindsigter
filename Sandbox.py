@@ -14,7 +14,7 @@ import json
 from SendSMTPMail import send_email, EmailAttachment  # Import the function and dataclass
 
 #   ---- Henter Assets ----
-orchestrator_connection = OrchestratorConnection("Henter Assets", os.getenv('OpenOrchestratorSQL'),os.getenv('OpenOrchestratorKey'), None)
+orchestrator_connection = OrchestratorConnection("AktbobGenererAktindsigter", os.getenv('OpenOrchestratorSQL'),os.getenv('OpenOrchestratorKey'), None)
 GraphAppIDAndTenant = orchestrator_connection.get_credential("GraphAppIDAndTenant")
 SharePointAppID = GraphAppIDAndTenant.username
 SharePointTenant = GraphAppIDAndTenant.password

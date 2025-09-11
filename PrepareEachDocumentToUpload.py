@@ -292,7 +292,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         
         upload_data = {key: value for key, value in upload_parameters.items()}
         
-        with open(file_path, "rb") as file:
+        with open(file_path+f'.{DokumentType}', "rb") as file:
             upload_files = {"file": file}
             upload_response = requests.post(upload_url, data=upload_data, files=upload_files)
         
@@ -302,7 +302,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             orchestrator_connection.log_info(f"Upload failed: {upload_response.status_code} - {upload_response.text}")
             return None
         
-        os.remove(file_path)
+        os.remove(file_path + f'.{DokumentType}')
         
         convert_export_body = {
             "tasks": {
@@ -601,6 +601,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 
                 # Extracting variables for further use in the loop
                 DokumentType = Metadata["DokumentType"]
+                DokumenttypeBackup = DokumentType
                 VersionUI = Metadata["VersionUI"]
                 Feedback = Metadata["Feedback"]
                 file_path = Metadata["file_path"]
