@@ -628,6 +628,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 
                     # Extracting variables for further use in the loop
                     DokumentType = Metadata["DokumentType"]
+                    orchestrator_connection.log_info(f"Dokumenttype gotten from goref {DokumentType}")
                     VersionUI = Metadata["VersionUI"]
                     Feedback = Metadata["Feedback"]
                     file_path = Metadata["file_path"]
