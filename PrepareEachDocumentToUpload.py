@@ -115,13 +115,13 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         
         try:
             response = requests.get(url, headers=headers)
-            print("FilArkiv respons:", response.status_code)
+            orchestrator_connection.log_info(f"FilArkiv respons: {response.status_code}")
             
             if response.status_code == 200:
                 response_json = response.json()
                 
                 if not response_json:
-                    print("Der findes ingen dokumenter på sagen")
+                    orchestrator_connection.log_info("Der findes ingen dokumenter på sagen")
                     DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
                     DocumentNumber = 1
                     data = {
@@ -137,16 +137,16 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     if response.status_code in [200, 201]:
                         Filarkiv_DocumentID = response.json().get("id")
                     else:
-                        print("Failed to create document. Response:", response.text)
+                        orchestrator_connection.log_info(f"Failed to create document. Response:{response.text}")
                 else:
                     for current_item in response_json:
                         if FileName in current_item.get("title", ""):
-                            print("Dokument Mappen er oprettet")
+                            orchestrator_connection.log_info("Dokument Mappen er oprettet")
                             Filarkiv_DocumentID = current_item.get("id")
                             DoesFolderExists = True
                             break  # Exit loop once found
                     if not DoesFolderExists:
-                        print("Finder det nye dokumentnummer")
+                        orchestrator_connection.log_info("Finder det nye dokumentnummer")
                         HighestDocumentNumber = max((int(i.get("documentNumber", 0)) for i in response_json), default=1)
                         DocumentNumber = HighestDocumentNumber + 1
                         DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
@@ -162,16 +162,16 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         response = requests.post("https://core.filarkiv.dk/api/v1/Documents", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
                         if response.status_code in [200, 201]:
                             Filarkiv_DocumentID = response.json().get("id")
-                            print(f"Anvender følgende Filarkiv_DocumentID: {Filarkiv_DocumentID}")
+                            orchestrator_connection.log_info(f"Anvender følgende Filarkiv_DocumentID: {Filarkiv_DocumentID}")
                         else:
-                            print("Failed to create document. Response:", response.text)
+                            orchestrator_connection.log_info(f"Failed to create document. Response: {response.text}")
             else:
-                print("Failed to fetch data, status code:", response.status_code)
+                orchestrator_connection.log_info(f"Failed to fetch data, status code: {response.status_code}")
         except Exception as e:
             raise Exception("Kunne ikke hente dokumentinformation:", str(e))
         
         if Filarkiv_DocumentID is None:
-            print("Fejl: Filarkiv_DocumentID blev ikke genereret. Afbryder processen.")
+            orchestrator_connection.log_info("Fejl: Filarkiv_DocumentID blev ikke genereret. Afbryder processen.")
             return
         
         if not DoesFolderExists:
@@ -183,26 +183,26 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 ".json": "application/json", ".xml": "application/xml"
             }.get(extension, "application/octet-stream")
             FileName += extension
-            print(f"Anvender følgende dokumentID: {Filarkiv_DocumentID}")
+            orchestrator_connection.log_info(f"Anvender følgende dokumentID: {Filarkiv_DocumentID}")
             response = requests.post("https://core.filarkiv.dk/api/v1/Files", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, json={"documentId": Filarkiv_DocumentID, "fileName": FileName, "sequenceNumber": 0, "mimeType": mime_type})
             if response.status_code in [200, 201]:
                 FileID = response.json().get('id')
-                print(f"FileID: {FileID}")
+                orchestrator_connection.log_info(f"FileID: {FileID}")
             else:
-                print("Failed to create file metadata.", response.text)
+                orchestrator_connection.log_info(f"Failed to create file metadata. {response.text}")
                 return False
             
             url = f"https://core.filarkiv.dk/api/v1/FileIO/Upload/{FileID}"
             if not os.path.exists(file_path):
-                print(f"Error: File not found at {file_path}")
+                orchestrator_connection.log_info(f"Error: File not found at {file_path}")
             else:
                 with open(file_path, 'rb') as file:
                     files = [('file', (FileName, file, mime_type))]
                     response = requests.post(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}"}, files=files)
                     if response.status_code in [200, 201]:
-                        print("File uploaded successfully.")
+                        orchestrator_connection.log_info("File uploaded successfully.")
                     else:
-                        print(f"Failed to upload file. Status Code: {response.status_code}")
+                        orchestrator_connection.log_info(f"Failed to upload file. Status Code: {response.status_code}")
                         return False
 
                     #Sætter den høje prioritet på dokumentet
@@ -214,15 +214,15 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     }
                     response = requests.post(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
                     if response.status_code in [200, 201]:
-                        print("Det lykkedes at opdaterer prioriteten")
+                        orchestrator_connection.log_info("Det lykkedes at opdaterer prioriteten")
                     else:
-                        print("Fejlede i prioritering:", response.text)
+                        orchestrator_connection.log_info(f"Fejlede i prioritering: {response.text}")
             return True
                 
 
 
     def check_conversion_possible(dokument_type, cloudconvert_api):
-        print("Filen skal konverteres - attempting CloudConvert")
+        orchestrator_connection.log_info("Filen skal konverteres - attempting CloudConvert")
         
         url = f"https://api.cloudconvert.com/v2/convert/formats?filter[input_format]={dokument_type}&filter[output_format]=pdf&filter[operation]=convert"
         
@@ -252,7 +252,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         return conversion_possible
 
     def convert_file_to_pdf(CloudConvertAPI, file_path, DokumentID, DokumentType,Titel, AktID):
-        print("Conversion is supported!")
+        orchestrator_connection.log_info("Conversion is supported!")
         
         create_job_url = "https://api.cloudconvert.com/v2/jobs"
         create_job_headers = {
@@ -273,7 +273,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         
         tasks = job_response_data.get("data", {}).get("tasks", [])
         if not tasks:
-            print("Error: No tasks found in job creation response.")
+            orchestrator_connection.log_info("Error: No tasks found in job creation response.")
             return None
         
         upload_url, upload_parameters, upload_task_id = None, None, None
@@ -287,7 +287,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     break
         
         if not upload_url or not upload_parameters:
-            print("Error: Could not retrieve upload URL or parameters.")
+            orchestrator_connection.log_info("Error: Could not retrieve upload URL or parameters.")
             return None
         
         upload_data = {key: value for key, value in upload_parameters.items()}
@@ -297,9 +297,9 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             upload_response = requests.post(upload_url, data=upload_data, files=upload_files)
         
         if upload_response.status_code == 201:
-            print("File uploaded successfully!")
+            orchestrator_connection.log_info("File uploaded successfully!")
         else:
-            print(f"Upload failed: {upload_response.status_code} - {upload_response.text}")
+            orchestrator_connection.log_info(f"Upload failed: {upload_response.status_code} - {upload_response.text}")
             return None
         
         os.remove(file_path)
@@ -325,7 +325,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         convert_export_response_data = convert_export_response.json()
         
         if "INVALID_CONVERSION_TYPE" in convert_export_response.text:
-            print("Error: Invalid conversion type.")
+            orchestrator_connection.log_info("Error: Invalid conversion type.")
             return None
         
         export_task_id = convert_export_response_data["data"]["tasks"][1]["id"]
@@ -346,11 +346,11 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         for chunk in r.iter_content(chunk_size=8192):
                             file.write(chunk)
                 
-                print(f"File downloaded successfully at: {file_path}")
+                orchestrator_connection.log_info(f"File downloaded successfully at: {file_path}")
                 
                 return file_path
             elif task_status not in ["waiting", "processing"]:
-                print("An error occurred:", status_check_response.text)
+                orchestrator_connection.log_info(f"An error occurred:{status_check_response.text}")
                 return None
             
             time.sleep(5)
@@ -411,14 +411,14 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
             #  4. Delete ALL files (PDF and non-PDF)
             file_path = os.path.join(base_path, file_name_for_deletion)  # Use modified name for deletion
-            #print(f"Filepath to be deleted: {file_path}")
+            #orchestrator_connection.log_info(f"Filepath to be deleted: {file_path}")
             try:
                 if os.path.exists(file_path):
                     if os.path.isfile(file_path):
                         os.remove(file_path)
                     elif os.path.isdir(file_path):
                         shutil.rmtree(file_path, ignore_errors=True)
-                        print(f"Deleted directory: {file_path}")
+                        orchestrator_connection.log_info(f"Deleted directory: {file_path}")
             except Exception as e:
                 raise Exception(f"Error deleting {file_path}: {e}")
 
@@ -448,10 +448,10 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         try:
             with open(file_path, "wb") as file:
                 file.write(ByteResult)
-            print("File written successfully.")
+            orchestrator_connection.log_info("File written successfully.")
         except Exception as initial_exception:
-            print(f"Failed, trying from URL: {DokumentID} Path: {file_path}")
-            print(initial_exception)
+            orchestrator_connection.log_info(f"Failed, trying from URL: {DokumentID} Path: {file_path}")
+            orchestrator_connection.log_info(initial_exception)
 
             ByteResult = bytes()
 
@@ -470,7 +470,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         content = metadata_response.text
                         DocumentURL = content.split("ows_EncodedAbsUrl=")[1].split('"')[1]
                         DocumentURL = DocumentURL.split("\\")[0].replace("go.aarhus", "ad.go.aarhus")
-                        print(f"Document URL: {DocumentURL}")
+                        orchestrator_connection.log_info(f"Document URL: {DocumentURL}")
                         
                         handler = requests.Session()
                         handler.auth = HttpNtlmAuth(GoUsername, GoPassword)
@@ -480,10 +480,10 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                                 for chunk in download_response.iter_content(chunk_size=8192):
                                     file.write(chunk)
 
-                        print("File downloaded successfully.")
+                        orchestrator_connection.log_info("File downloaded successfully.")
                         break
                     except Exception as retry_exception:
-                        print(f"Retry {attempt + 1} failed: {retry_exception}")
+                        orchestrator_connection.log_info(f"Retry {attempt + 1} failed: {retry_exception}")
                         if attempt == max_retries - 1:
                             raise RuntimeError(
                                 f"Failed to download file after {max_retries} retries. "
@@ -492,7 +492,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         time.sleep(5)
 
             except RuntimeError as nested_exception:
-                print(f"An unrecoverable error occurred: {nested_exception}")
+                orchestrator_connection.log_info(f"An unrecoverable error occurred: {nested_exception}")
                 raise nested_exception
 
     def fetch_document_bytes(session, DokumentID, file_path=None, dokument_type=None, max_retries=30, retry_interval=5, delete_after_use=False):
@@ -506,16 +506,16 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
                 if response.status_code == 200:
                     ByteResult = response.content
-                    print(f"Success! ByteResult size: {len(ByteResult)} bytes")
+                    orchestrator_connection.log_info(f"Success! ByteResult size: {len(ByteResult)} bytes")
                     break
                 else:
-                    print(f"Attempt {attempt + 1}: Failed with status code {response.status_code}")
+                    orchestrator_connection.log_info(f"Attempt {attempt + 1}: Failed with status code {response.status_code}")
             except Exception as e:
-                print(f"Attempt {attempt + 1}: Exception occurred - {e}")
+                orchestrator_connection.log_info(f"Attempt {attempt + 1}: Exception occurred - {e}")
 
             time.sleep(retry_interval)
         else:
-            print("Max retries reached. File download failed.")
+            orchestrator_connection.log_info("Max retries reached. File download failed.")
             return None
 
         # If a file path is given, save to file
@@ -527,7 +527,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             # If delete_after_use is True, remove the file
             if delete_after_use:
                 os.remove(file_path_with_extension)
-                print("File deleted after use.")
+                orchestrator_connection.log_info("File deleted after use.")
 
         return ByteResult
 
@@ -568,7 +568,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 if mimetypes.guess_type(f"file.{ext}")[0]:  
                     Titel = name  # Remove extension
             else:
-                print("No file extension detected.")
+                orchestrator_connection.log_info("No file extension detected.")
 
             BilagTilDok = str(row["Bilag til Dok ID"])
             DokBilag = str(row["Bilag"])
@@ -582,7 +582,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 Dokumentdato = datetime.strptime(Dokumentdato, "%Y-%m-%d").strftime("%d-%m-%Y")
             
             IsDocumentPDF = True
-            print(f"AktID til debug: {AktID}")
+            orchestrator_connection.log_info(f"AktID til debug: {AktID}")
 
             # Declare the necessary variables
             base_path = "Teams/tea-teamsite10506/Delte dokumenter/Aktindsigter/"
@@ -609,7 +609,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 conversionPossible = False
                 # Tjekker om Goref-fil
                 if "goref" in DokumentType:
-                    print("Dokumenter er .GORef")
+                    orchestrator_connection.log_info("Dokumenter er .GORef")
                     ByteResult = fetch_document_bytes(session, DokumentID, file_path, delete_after_use=False)
 
                     if ByteResult:
@@ -620,9 +620,9 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         DokumentID = refdocument.split('"')[0]
                 
                         os.remove(file_path)
-                        print("File deleted after use.")
+                        orchestrator_connection.log_info("File deleted after use.")
                     
-                    print(f"GorefDokID: {DokumentID}")
+                    orchestrator_connection.log_info(f"GorefDokID: {DokumentID}")
                     #Henter dokument data
                     Metadata = fetch_document_info(DokumentID, session, AktID, Titel)
                 
@@ -635,13 +635,13 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
                 if DokumentType.lower() == "pdf": # Hvis PDF downloader den byte-filen
                     #Downloader fil fra GO    
-                    print("Allerede PDF - downloader")
+                    orchestrator_connection.log_info("Allerede PDF - downloader")
                     ByteResult = fetch_document_bytes(session, DokumentID, max_retries=5, retry_interval=30)
 
                     if ByteResult:
-                        print(f"File size: {len(ByteResult)} bytes")
+                        orchestrator_connection.log_info(f"File size: {len(ByteResult)} bytes")
                     else:
-                        print("No file was downloaded.")
+                        orchestrator_connection.log_info("No file was downloaded.")
                     file_path = (f"{file_path}.pdf")
                     download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword) 
                     #file_path = (f"{file_path}.pdf") 
@@ -663,33 +663,33 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         
                         # Error message
                         if response.status_code != 200:
-                            print(f"Error Message: {response.text}")
+                            orchestrator_connection.log_info(f"Error Message: {response.text}")
                         
                         # Feedback and byte result
                         Feedback = response.text
                         ByteResult = response.content
                         # Check if ByteResult is empty
                         if len(ByteResult) == 0:
-                            print(f"Status Code: {response.status_code}")
+                            orchestrator_connection.log_info(f"Status Code: {response.status_code}")
                         else:
-                            print("ByteResult received successfully.")
+                            orchestrator_connection.log_info("ByteResult received successfully.")
                         
                     except Exception as e:
-                        print(f"Could not convert to pdf : {e}")
+                        orchestrator_connection.log_info(f"Could not convert to pdf : {e}")
                         ByteResult = ""
                     
                     
                     # tjekker om go-conversion lykkedes eller ej
                     if "Document could not be converted" in Feedback or len(ByteResult) == 0:
-                        print("Go-convervision mislykkedes forsøger med Filarkiv")
+                        orchestrator_connection.log_info("Go-convervision mislykkedes forsøger med Filarkiv")
 
                         #Downloader fil fra GO    
                         FilnavnFørPdf = f"Output.{DokumentType}"
                         ByteResult = fetch_document_bytes(session, DokumentID, file_path=FilnavnFørPdf)
                         if ByteResult:
-                            print(f"File size: {len(ByteResult)} bytes")
+                            orchestrator_connection.log_info(f"File size: {len(ByteResult)} bytes")
                         else:
-                            print("No file was downloaded.")
+                            orchestrator_connection.log_info("No file was downloaded.")
                         
                         download_path = f"{file_path}.{DokumentType}"
                         download_file(download_path, ByteResult, DokumentID, GoUsername, GoPassword)  
@@ -709,28 +709,28 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             CanDocumentBeConverted = False
 
                         if CanDocumentBeConverted:
-                            print("Filen konverteres med Filarkiv")
+                            orchestrator_connection.log_info("Filen konverteres med Filarkiv")
 
                         else:
                             conversionPossible = check_conversion_possible(DokumentType, CloudConvertAPI)
                             
                             if not conversionPossible:
-                                print(f"Skipping cause CloudConvert doesn't support: {DokumentType}->PDF")
+                                orchestrator_connection.log_info(f"Skipping cause CloudConvert doesn't support: {DokumentType}->PDF")
                                 ByteResult = bytes()                  
                                 #Skal der sættes en bolean value?
                             else:
-                                print("Forsøger med CloudConvert")
+                                orchestrator_connection.log_info("Forsøger med CloudConvert")
                                 file_path = convert_file_to_pdf(CloudConvertAPI, file_path, DokumentID, DokumentType,Titel, AktID)
                                 if file_path:
-                                    print(f"PDF saved at: {file_path}")
+                                    orchestrator_connection.log_info(f"PDF saved at: {file_path}")
                                     DokumentType = "pdf"
                                                     
                     else: # Go-conversion lykkedes downloader fil
-                        print("Go-conversion lykkedes")
+                        orchestrator_connection.log_info("Go-conversion lykkedes")
                         if ByteResult:
-                            print(f"File size: {len(ByteResult)} bytes")
+                            orchestrator_connection.log_info(f"File size: {len(ByteResult)} bytes")
                         else:
-                            print("No file was downloaded.")
+                            orchestrator_connection.log_info("No file was downloaded.")
                         
                         file_path = (f"{file_path}.pdf")
                         FilIsPDF = True
@@ -808,7 +808,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
     #Det er en nova sag
     else:
         #Det er en Nova sag
-        print("Det er en Nova sag")
+        orchestrator_connection.log_info("Det er en Nova sag")
         for index, row in dt_DocumentList.iterrows():
             # Convert items to strings unless they are explicitly integers
             Omfattet = str(row["Omfattet af ansøgningen? (Ja/Nej)"])
@@ -836,7 +836,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             else:
                 raise ValueError(f"Unexpected data type: {type(Dokumentdato)}")
             IsDocumentPDF = True
-            print(f"AktID til debug: {AktID}")
+            orchestrator_connection.log_info(f"AktID til debug: {AktID}")
 
             # Declare the necessary variables
             base_path = "Teams/tea-teamsite10506/Delte dokumenter/Aktindsigter/"
@@ -851,7 +851,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 and DokumentID != "" 
                 and "ja" in Omfattet.lower()):
                 
-                print("Henter dokument information")
+                orchestrator_connection.log_info("Henter dokument information")
                 TransactionID = str(uuid.uuid4())
                 url = f"{KMDNovaURL}/Document/GetList?api-version=2.0-Case"
 
@@ -881,15 +881,15 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 try:
                     response = requests.put(url, headers=headers, json=payload)
                     if response.status_code == 200:
-                        print(response.status_code)
+                        orchestrator_connection.log_info(response.status_code)
                     else:
-                        print("Failed to fetch Sagstitel from NOVA. Status Code:", response.status_code)
+                        orchestrator_connection.log_info(f"Failed to fetch Sagstitel from NOVA. Status Code: {response.status_code}")
                 except Exception as e:
                     raise Exception("Failed to fetch Sagstitel (Nova):", str(e))
 
                 DokumentType = response.json()["documents"][0]["fileExtension"]
                 DocumentUuid = response.json()["documents"][0]["documentUuid"]
-                print(DokumentType)
+                orchestrator_connection.log_info(DokumentType)
                 
                 #Downloader file
                 
@@ -918,10 +918,10 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         with open(file_path, "wb") as file:
                             file.write(response.content)
                         
-                        print(f"File successfully saved at: {file_path}")
+                        orchestrator_connection.log_info(f"File successfully saved at: {file_path}")
                     else:
-                        print("Failed to fetch file from NOVA. Status Code:", response.status_code)
-                        print("Response:", response.text)  # Print error message from API
+                        orchestrator_connection.log_info(f"Failed to fetch file from NOVA. Status Code: {response.status_code}")
+                        orchestrator_connection.log_info(f"Response: {response.text}")  # Print error message from API
 
                 except Exception as e:
                     raise Exception("Failed to fetch file from NOVA:", str(e))
@@ -945,19 +945,19 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     CanDocumentBeConverted = False
 
                 if CanDocumentBeConverted:
-                    print("Filen skal ikke konverteres")
+                    orchestrator_connection.log_info("Filen skal ikke konverteres")
 
                 else:
                     conversionPossible = check_conversion_possible(DokumentType, CloudConvertAPI)
                     
                     if not conversionPossible:
-                        print(f"Skipping cause CloudConvert doesn't support: {DokumentType}->PDF")
+                        orchestrator_connection.log_info(f"Skipping cause CloudConvert doesn't support: {DokumentType}->PDF")
                         ByteResult = bytes()                  
                         #Skal der sættes en bolean value?
                     else:
                         file_path = convert_file_to_pdf(CloudConvertAPI, file_path, DokumentID, DokumentType,Titel, AktID)
                         if file_path:
-                            print(f"PDF saved at: {file_path}")
+                            orchestrator_connection.log_info(f"PDF saved at: {file_path}")
                             DokumentType = "pdf"
                                                     
 
@@ -989,7 +989,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         )
                 
                 else: # Uploader til Sharepoint
-                    print("Could not be converted or uploaded - uploading directly to SharePoint")
+                    orchestrator_connection.log_info("Could not be converted or uploaded - uploading directly to SharePoint")
                     IsDocumentPDF = False 
                     upload_file_to_sharepoint(
                             site_url=SharePointURL,
