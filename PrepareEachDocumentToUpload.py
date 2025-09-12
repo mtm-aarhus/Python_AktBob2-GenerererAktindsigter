@@ -127,8 +127,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 and DokumentID != ""):
 
                 Metadata = fetch_document_info_go(DokumentID, session, AktID, Titel)
-                if AktID == 3:
-                    print(3)
+
                 # Extracting variables for further use in the loop
                 DokumentType = Metadata["DokumentType"]
                 VersionUI = Metadata["VersionUI"]
