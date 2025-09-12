@@ -375,14 +375,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         }
                     }
 
-                try:
-                    response = requests.put(url, headers=headers, json=payload)
-                    if response.status_code == 200:
-                        orchestrator_connection.log_info(response.status_code)
-                    else:
-                        orchestrator_connection.log_info(f"Failed to fetch Sagstitel from NOVA. Status Code: {response.status_code}")
-                except Exception as e:
-                    raise Exception("Failed to fetch Sagstitel (Nova):", str(e))
+                response = requests.put(url, headers=headers, json=payload)
+                response.raise_for_status
 
                 DokumentType = response.json()["documents"][0]["fileExtension"]
                 DocumentUuid = response.json()["documents"][0]["documentUuid"]
@@ -459,6 +453,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     )
 
                     if success:
+                        os.remove(file_path)
                         DokumentType = "pdf"
                         IsDocumentPDF = True
 
@@ -476,6 +471,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             thumbprint = thumbprint, 
                             cert_path = cert_path
                         )
+                        os.remove(file_path)
                 
                 else: # Uploader til Sharepoint
                     orchestrator_connection.log_info("Could not be converted or uploaded - uploading directly to SharePoint")
@@ -492,6 +488,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             thumbprint = thumbprint, 
                             cert_path = cert_path
                         )
+                    os.remove(file_path)
     
             else:
                 DokumentType = "pdf"   
