@@ -207,15 +207,15 @@ smtp_server = "smtp.adm.aarhuskommune.dk"
 smtp_port = 25               
 
 # Call the send_email function
-send_email(
-    receiver=MailModtager,
-    sender=sender,
-    subject=subject,
-    body=body,
-    smtp_server=smtp_server,
-    smtp_port=smtp_port,
-    html_body=True
-)
+# send_email(
+#     receiver=MailModtager,
+#     sender=sender,
+#     subject=subject,
+#     body=body,
+#     smtp_server=smtp_server,
+#     smtp_port=smtp_port,
+#     html_body=True
+# )
 
 
 # ---- Run "PrepareEachDocumentToUpload" ----

@@ -83,8 +83,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         for index, row in dt_DocumentList.iterrows():
             # Convert items to strings unless they are explicitly integers
             elapsed = time.time() - timestamp
-            if elapsed >= 45 * 60:  # 45 minutes in seconds
-                print("45 minutes passed, fetching new filarkiv tokens and resetting timestamp.")
+            if elapsed >= 31 * 60:  # 45 minutes in seconds
+                print("30 minutes passed, fetching new filarkiv tokens and resetting timestamp.")
                 Filarkiv_access_token = GetFilarkivToken(orchestrator_connection)
                 timestamp = time.time()
             Omfattet = str(row["Omfattet af ansøgningen? (Ja/Nej)"])
@@ -163,8 +163,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     file_title = Metadata["file_title"]
                     file_path = file_title+"."+DokumentType
 
-                if DokumentType == "Not found":
-                    raise Exception("No extension, file not valid, check in GO and notify caseworker")
                     
                 if DokumentType.lower() == "pdf": # Hvis PDF downloader den byte-filen
                     #Downloader fil fra GO    
@@ -305,8 +303,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         for index, row in dt_DocumentList.iterrows():
             
             elapsed = time.time() - timestamp
-            if elapsed >= 45 * 60:  # 45 minutes in seconds
-                print("45 minutes passed, fetching new filarkiv tokens and resetting timestamp.")
+            if elapsed >= 31 * 60:  # 45 minutes in seconds
+                print("30 minutes passed, fetching new filarkiv tokens and resetting timestamp.")
                 Filarkiv_access_token = GetFilarkivToken(orchestrator_connection)
                 timestamp = time.time()
             # Convert items to strings unless they are explicitly integers
@@ -941,7 +939,7 @@ def fetch_document_info_go(DokumentID, session, AktID, Titel):
     item_properties = data.get("ItemProperties", "")
     file_type_match = re.search(r'ows_File_x0020_Type="([^"]+)"', item_properties)
     version_ui_match = re.search(r'ows__UIVersionString="([^"]+)"', item_properties)
-    DokumentType = file_type_match.group(1) if file_type_match else "Not found"
+    DokumentType = file_type_match.group(1) if file_type_match else "unknown"
     VersionUI = version_ui_match.group(1) if version_ui_match else "Not found"
     Feedback = " "
     file_title = f"{AktID:04} - {DokumentID} - {Titel}"
@@ -999,23 +997,29 @@ def fetch_document_bytes(session: requests.Session, DokumentID, file_path=None, 
 
     url = f"https://ad.go.aarhuskommune.dk/_goapi/Documents/DocumentBytes/{DokumentID}"
     ByteResult = None
-
+    
+    response = None
     for attempt in range(max_retries):
         try:
             response = session.get(url, timeout=180)
             response.raise_for_status()
             if response.status_code == 200:
                 ByteResult = response.content
-                break
+                if b"HTTP Error 503. The service is unavailable." in ByteResult:
+                    ByteResult = None
+                    print(f"Attempt {attempt + 1}: Failed due to HTTP Error 503. The service is unavailable")
+                    continue
+                else:
+                    break
             else:
                 print(f"Attempt {attempt + 1}: Failed with status code {response.status_code}")
         except Exception as e:
             print(f"Attempt {attempt + 1}: Exception occurred - {e}")
 
         time.sleep(retry_interval)
-
+        
     # If a file path is given, save to file
-    if file_path:
+    if file_path and ByteResult:
         with open(file_path, "wb") as file:
             file.write(ByteResult)
 
