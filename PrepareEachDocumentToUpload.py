@@ -272,6 +272,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     os.remove(file_path)
             else:
                 DokumentType = ".pdf"
+                IsDocumentPDF = True
                 
             #Ændre dokumenttitlen:
             
