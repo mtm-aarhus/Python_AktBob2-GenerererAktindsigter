@@ -66,19 +66,6 @@ go_session = GO_Session(GoUsername, GoPassword)
 
     #---- Henter kø-elementer ----
 queue = json.loads("""{
-    "Sagsnummer": "GEO-2020-158781",
-    "MailModtager": "ndaka@aarhus.dk",
-    "DeskProID": 2454,
-    "DeskProTitel": "Aktindsigt: indsigt i lokalplan under udarbejdelse",
-    "PodioID": 3158925125,
-    "Overmappe": "2454 - Aktindsigt indsigt i lokalplan under udarbejdelse",
-    "Undermappe": "GEO-2020-158781 - Afklaringsfase - Lokalplan 1249 - Dagligvarebutik mv - Højbjerg Centrum",
-    "GeoSag": true,
-    "NovaSag": false,
-    "AktSagsURL": "https://go.aarhuskommune.dk/cases/AKT38/AKT-2025-000977",
-    "IndsenderNavn": "Johan Frederik Schjødt",
-    "IndsenderMail": "schjoedt@hotmail.com",
-    "AktindsigtsDato": "2025-09-02T06:36:53Z"
 }""")
 
 Sagsnummer = queue.get("Sagsnummer")
