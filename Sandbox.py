@@ -180,7 +180,7 @@ if not conflicts.empty:
     print(conflicts[cols_to_show].to_string(index=False))
     subject = f"{Sagsnummer}: Dokumentliste mangler udfyldning"
     body = f"""Sag: <a href="https://mtmsager.aarhuskommune.dk/app#/t/ticket/{DeskProID}">{DeskProID} - {DeskProTitel}</a><br><br>
-    Dokumentlisten har {len(conflicts)} rækker hvor dokumenter har 'Ja' i er 'Omfattet af ansøgningen? (Ja/Nej)', men der er ikke valgt noget i 
+    Dokumentlisten har {len(conflicts)} række(r) hvor dokumenter har 'Ja' i 'Omfattet af ansøgningen? (Ja/Nej)', men der er ikke valgt noget i 
     'Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)'. Sørg for at alle rækker der er omfattet af ansøgningen har et svar om hvorvidt der gives aktindsigt, og genkør herefter processen i Podio.<br><br>
     Det anbefales at følge <a href="https://aarhuskommune.atlassian.net/wiki/spaces/AB/pages/64979049/AKTBOB+--+Vejledning">vejledningen</a>, 
     hvor du også finder svar på de fleste spørgsmål og fejltyper.
