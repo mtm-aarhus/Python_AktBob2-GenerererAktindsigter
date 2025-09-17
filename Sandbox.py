@@ -81,6 +81,9 @@ IndsenderNavn =  queue.get("IndsenderNavn")
 IndsenderMail = queue.get("IndsenderMail")
 AktindsigtsDato = queue.get("AktindsigtsDato")
 
+sender = "aktbob@aarhus.dk" 
+smtp_server = "smtp.adm.aarhuskommune.dk"   
+smtp_port = 25               
 
 orchestrator_connection.log_info(f"Sagsnummer: {Sagsnummer}")
 orchestrator_connection.log_info(f"DeskProID: {DeskProID}")
@@ -128,14 +131,12 @@ if dt_DocumentList.empty:
         ###---- Send mail til sagsansvarlig ----####
 
     # Define email details
-    sender = "aktbob@aarhus.dk" 
+    
     subject = f"{Sagsnummer} er en tom sag"
     body = f"""Sagen: {Sagsnummer} er en tom sag. Vær opmærksom på, at processen ikke kan behandle tomme sager.<br><br>
     Det anbefales at følge <a href="https://aarhuskommune.atlassian.net/wiki/spaces/AB/pages/64979049/AKTBOB+--+Vejledning">vejledningen</a>, 
     hvor du også finder svar på de fleste spørgsmål og fejltyper.
     """
-    smtp_server = "smtp.adm.aarhuskommune.dk"   
-    smtp_port = 25               
 
     # Call the send_email function
     send_email(
@@ -147,9 +148,57 @@ if dt_DocumentList.empty:
         smtp_port=smtp_port,
         html_body=True
     )
-    raise ValueError("Dokumentlisten inderholder ikke nogen data - Processen fejler")
+    raise Exception("return")
 else:
     print("Number of rows:",len(dt_DocumentList))
+    
+# --- Validate: Omfattet = "Ja" but Aktstatus is blank ---
+
+col_omf = "Omfattet af ansøgningen? (Ja/Nej)"
+col_akt = "Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)"
+
+# Normalize Omfattet
+dt_DocumentList[col_omf] = (
+    dt_DocumentList[col_omf]
+    .astype(str)
+    .str.strip()
+    .str.lower()
+    .replace({"nan": ""})
+)
+
+# Aktstatus: keep NaN/blank detection separate
+dt_DocumentList[col_akt] = dt_DocumentList[col_akt].astype(str).str.strip()
+dt_DocumentList[col_akt] = dt_DocumentList[col_akt].replace({"nan": ""})
+
+# Condition: Omfattet == "ja" and Aktstatus is blank
+mask_blank = (dt_DocumentList[col_omf] == "ja") & (dt_DocumentList[col_akt] == "")
+conflicts = dt_DocumentList.loc[mask_blank].copy()
+
+if not conflicts.empty:
+    print(f"{len(conflicts)} dokument(er) er omfattet, men Aktstatus er blank.")
+    cols_to_show = [c for c in ["Dok ID", "Dokumenttitel", col_omf, col_akt] if c in conflicts.columns]
+    print(conflicts[cols_to_show].to_string(index=False))
+    subject = f"{Sagsnummer}: Dokumentliste mangler udfyldning"
+    body = f"""Sag: <a href="https://mtmsager.aarhuskommune.dk/app#/t/ticket/{DeskProID}">{DeskProID} - {DeskProTitel}</a><br><br>
+    Dokumentlisten har {len(conflicts)} rækker hvor dokumenter har 'Ja' i er 'Omfattet af ansøgningen? (Ja/Nej)', men der er ikke valgt noget i 
+    'Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)'. Sørg for at alle rækker der er omfattet af ansøgningen har et svar om hvorvidt der gives aktindsigt, og genkør herefter processen i Podio.<br><br>
+    Det anbefales at følge <a href="https://aarhuskommune.atlassian.net/wiki/spaces/AB/pages/64979049/AKTBOB+--+Vejledning">vejledningen</a>, 
+    hvor du også finder svar på de fleste spørgsmål og fejltyper.
+    """
+    send_email(
+        receiver=MailModtager,
+        sender=sender,
+        subject=subject,
+        body=body,
+        smtp_server=smtp_server,
+        smtp_port=smtp_port,
+        html_body=True
+    )
+    raise Exception("return")
+
+else:
+    print("Ingen dokumenter med Omfattet='Ja' og tom Aktstatus.")
+
 
 # ---- Run "GenerateCaseFolder" ----
 Arguments_GenerateCaseFolder = {
@@ -179,7 +228,6 @@ orchestrator_connection.log_info(f"FilarkivCaseID: {FilarkivCaseID}")
 ###---- Send mail til sagsansvarlig ----####
 
 # Define email details
-sender = "aktbob@aarhus.dk" 
 subject = f"{Sagsnummer}: Screening igangsat"
 body = f"""Sag: <a href="https://mtmsager.aarhuskommune.dk/app#/t/ticket/{DeskProID}">{DeskProID} - {DeskProTitel}</a><br><br>
 Robotten er nu gået i gang med screening af dokumenterne.<br><br>
@@ -187,21 +235,17 @@ Procestiden varierer afhængigt af antallet af dokumenter. Du vil modtage en mai
 Det anbefales at følge <a href="https://aarhuskommune.atlassian.net/wiki/spaces/AB/pages/64979049/AKTBOB+--+Vejledning">vejledningen</a>, 
 hvor du også finder svar på de fleste spørgsmål og fejltyper.
 """
-
-
-smtp_server = "smtp.adm.aarhuskommune.dk"   
-smtp_port = 25               
-
+        
 # Call the send_email function
-# send_email(
-#     receiver=MailModtager,
-#     sender=sender,
-#     subject=subject,
-#     body=body,
-#     smtp_server=smtp_server,
-#     smtp_port=smtp_port,
-#     html_body=True
-# )
+send_email(
+    receiver=MailModtager,
+    sender=sender,
+    subject=subject,
+    body=body,
+    smtp_server=smtp_server,
+    smtp_port=smtp_port,
+    html_body=True
+)
 
 
 # ---- Run "PrepareEachDocumentToUpload" ----
