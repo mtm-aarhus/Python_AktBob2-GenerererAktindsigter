@@ -716,7 +716,16 @@ def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID
                 if response.status_code in [200, 201]:
                     orchestrator_connection.log_info("File uploaded successfully.")
                 else:
-                    orchestrator_connection.log_info(f"Failed to upload file. Status Code: {response.status_code}")
+                    orchestrator_connection.log_info(f"Failed to upload file. Status Code: {response.status_code} - deleting file + document")
+                    url = f"https://core.filarkiv.dk/api/v1/Files"
+                    data = {"id": FileID}
+                    response = requests.delete(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
+                    orchestrator_connection.log_info(f"File deletion status code: {response.status_code}")
+
+                    url = f"https://core.filarkiv.dk/api/v1/Documents"
+                    data = {"id": Filarkiv_DocumentID}
+                    response = requests.delete(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
+                    orchestrator_connection.log_info(f"Document deletion status code: {response.status_code}")
                     return False
 
                 #Sætter den høje prioritet på dokumentet
