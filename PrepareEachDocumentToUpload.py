@@ -68,7 +68,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
     mimetypes.add_type("application/x-msmetafile", ".emz")
     
     timestamp = time.time()  
-
+    case_cache = {}
+    case_cache[FilarkivCaseID] = fetch_all_case_documents(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, orchestrator_connection)
 
     # ---- If-statement som tjekker om det er en GeoSag eller NovaSag ----
     if GeoSag == True:
@@ -227,7 +228,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 if file_path.lower().endswith(".pdf") or CanDocumentBeConverted:
                     success = upload_to_filarkiv(
                         FilarkivURL, FilarkivCaseID, Filarkiv_access_token,
-                        AktID, DokumentID, Titel, file_path, DokumentType = DokumentType, orchestrator_connection = orchestrator_connection
+                        AktID, DokumentID, Titel, file_path, DokumentType = DokumentType, orchestrator_connection = orchestrator_connection, case_cache = case_cache
                     )
 
                     if success:
@@ -449,7 +450,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     
                     success = upload_to_filarkiv(
                         FilarkivURL, FilarkivCaseID, Filarkiv_access_token,
-                        AktID, DokumentID, Titel, file_path, DokumentType= DokumentType, orchestrator_connection = orchestrator_connection
+                        AktID, DokumentID, Titel, file_path, DokumentType= DokumentType, orchestrator_connection = orchestrator_connection, case_cache = case_cache
                     )
 
                     if success:
@@ -617,71 +618,65 @@ def calculate_available_title_length(base_path, Overmappe, Undermappe, AktID, Do
     
     return Titel
 
-def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID, Titel, file_path, DokumentType, orchestrator_connection):
+def fetch_all_case_documents(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, orchestrator_connection):
+    headers = {"Authorization": f"Bearer {Filarkiv_access_token}"}
+    page_index = 1
+    page_size = 10
+    all_docs = []
+
+    while True:
+        url = f"{FilarkivURL}/Documents?caseId={FilarkivCaseID}&skipTotalCount=True&pageIndex={page_index}&pageSize={page_size}"
+        resp = requests.get(url, headers=headers)
+        if resp.status_code != 200:
+            orchestrator_connection.log_info(f"Failed to fetch docs: {resp.status_code} {resp.text}")
+            break
+
+        docs = resp.json()
+        all_docs.extend(docs)
+
+        # pagination check
+        has_next = resp.headers.get("Pagination-HasNextPage", "False") == "True"
+        if not has_next:
+            break
+        page_index += 1
+
+    orchestrator_connection.log_info(f"Fetched {len(all_docs)} docs for case {FilarkivCaseID}")
+    return all_docs
+
+
+def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID, Titel, file_path, DokumentType, orchestrator_connection, case_cache):
     DoesFolderExists = False
     Filarkiv_DocumentID = None  # Ensure it is initialized
     FileName = f"{AktID:04} - {DokumentID} - {Titel}"
-    url = f"{FilarkivURL}/Documents/CaseDocumentOverview?caseId={FilarkivCaseID}&pageIndex=1&pageSize=500"
 
-    headers = {
-        "Authorization": f"Bearer {Filarkiv_access_token}",
-        "Content-Type": "application/xml"
-    }
-    
 
-    response = requests.get(url, headers=headers)
-    orchestrator_connection.log_info(f"FilArkiv respons: {response.status_code}")
     
-    if response.status_code == 200:
-        response_json = response.json()
-        
-        if not response_json:
-            orchestrator_connection.log_info("Der findes ingen dokumenter på sagen")
-            DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-            DocumentNumber = 1
-            data = {
-                "caseId": FilarkivCaseID,
-                "securityClassificationLevel": 0,
-                "title": FileName,
-                "documentNumber": DocumentNumber,
-                "documentDate": DocumentDate,
-                "direction": 0,
-                "documentReference": DokumentID
-            }
-            response = requests.post("https://core.filarkiv.dk/api/v1/Documents", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))  
-            if response.status_code in [200, 201]:
-                Filarkiv_DocumentID = response.json().get("id")
-            else:
-                orchestrator_connection.log_info(f"Failed to create document. Response:{response.text}")
-        else:
-            for current_item in response_json:
-                if FileName in current_item.get("title", ""):
-                    orchestrator_connection.log_info("Dokument Mappen er oprettet")
-                    Filarkiv_DocumentID = current_item.get("id")
-                    DoesFolderExists = True
-                    break  # Exit loop once found
-            if not DoesFolderExists:
-                orchestrator_connection.log_info("Finder det nye dokumentnummer")
-                HighestDocumentNumber = max((int(i.get("documentNumber", 0)) for i in response_json), default=1)
-                DocumentNumber = HighestDocumentNumber + 1
-                DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-                data = {
-                    "caseId": FilarkivCaseID,
-                    "securityClassificationLevel": 0,
-                    "title": FileName,
-                    "documentNumber": DocumentNumber,
-                    "documentDate": DocumentDate,
-                    "direction": 0,
-                    "documentReference": DokumentID
-                }
-                response = requests.post("https://core.filarkiv.dk/api/v1/Documents", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
-                if response.status_code in [200, 201]:
-                    Filarkiv_DocumentID = response.json().get("id")
-                    orchestrator_connection.log_info(f"Anvender følgende Filarkiv_DocumentID: {Filarkiv_DocumentID}")
-                else:
-                    orchestrator_connection.log_info(f"Failed to create document. Response: {response.text}")
+    case_docs = case_cache.setdefault(FilarkivCaseID, [])
+    existing = next((d for d in case_docs if d.get("documentReference") == DokumentID), None)
+    if existing:
+        orchestrator_connection.log_info("Dokument Mappen er oprettet")
+        Filarkiv_DocumentID = existing["id"]
+        DoesFolderExists = True
     else:
-        orchestrator_connection.log_info(f"Failed to fetch data, status code: {response.status_code}")
+        HighestDocumentNumber = max((int(d.get("documentNumber", 0)) for d in case_docs), default=0)
+        DocumentNumber = HighestDocumentNumber + 1
+        DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        data = {
+            "caseId": FilarkivCaseID,
+            "securityClassificationLevel": 0,
+            "title": FileName,
+            "documentNumber": DocumentNumber,
+            "documentDate": DocumentDate,
+            "direction": 0,
+            "documentReference": DokumentID
+        }
+        response = requests.post(f"{FilarkivURL}/Documents", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
+        if response.status_code in [200, 201]:
+            Filarkiv_DocumentID = response.json().get("id")
+            orchestrator_connection.log_info(f"Anvender følgende Filarkiv_DocumentID: {Filarkiv_DocumentID}")
+            case_docs.append({**data, "id": Filarkiv_DocumentID})
+        else:
+            orchestrator_connection.log_info(f"Failed to create document. Response: {response.text}")
 
     
     if Filarkiv_DocumentID is None:
@@ -698,7 +693,7 @@ def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID
         }.get(extension, "application/octet-stream")
         FileName += extension
         orchestrator_connection.log_info(f"Anvender følgende dokumentID: {Filarkiv_DocumentID}")
-        response = requests.post("https://core.filarkiv.dk/api/v1/Files", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, json={"documentId": Filarkiv_DocumentID, "fileName": FileName, "sequenceNumber": 0, "mimeType": mime_type})
+        response = requests.post(f"{FilarkivURL}/Files", headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, json={"documentId": Filarkiv_DocumentID, "fileName": FileName, "sequenceNumber": 0, "mimeType": mime_type})
         if response.status_code in [200, 201]:
             FileID = response.json().get('id')
             orchestrator_connection.log_info(f"FileID: {FileID}")
