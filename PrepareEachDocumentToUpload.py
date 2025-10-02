@@ -621,7 +621,7 @@ def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID
     DoesFolderExists = False
     Filarkiv_DocumentID = None  # Ensure it is initialized
     FileName = f"{AktID:04} - {DokumentID} - {Titel}"
-    url = f"{FilarkivURL}/Documents/CaseDocumentOverview?caseId={FilarkivCaseID}&pageIndex=1&pageSize=10000"
+    url = f"{FilarkivURL}/Documents/CaseDocumentOverview?caseId={FilarkivCaseID}&pageIndex=1&pageSize=800"
 
     headers = {
         "Authorization": f"Bearer {Filarkiv_access_token}",
