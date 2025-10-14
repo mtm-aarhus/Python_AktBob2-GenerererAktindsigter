@@ -136,7 +136,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
         # Define email details
         
-        subject = f"{Sagsnummer} er en tom sag"
+        subject = f"ROBOTFEJL - KRÆVER HANDLING: {Sagsnummer} er en tom sag"
         body = f"""Sagen: {Sagsnummer} er en tom sag. Vær opmærksom på, at processen ikke kan behandle tomme sager.<br><br>
         Det anbefales at følge <a href="https://aarhuskommune.atlassian.net/wiki/spaces/AB/pages/64979049/AKTBOB+--+Vejledning">vejledningen</a>, 
         hvor du også finder svar på de fleste spørgsmål og fejltyper.
@@ -145,7 +145,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         # Call the send_email function
         send_email(
             receiver=MailModtager,
-            sender=sender,
+            sender="robotfejl@aarhus.dk",
             subject=subject,
             body=body,
             smtp_server=smtp_server,
@@ -180,7 +180,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
 
     if not conflicts.empty:
         orchestrator_connection.log_info(f"{len(conflicts)} dokument(er) er omfattet, men Aktstatus er blank. Sender mail og afslutter process")
-        subject = f"{Sagsnummer}: Dokumentliste mangler udfyldning"
+        subject = f"ROBOTFEJL - KRÆVER HANDLING: Dokumentliste mangler udfyldning for {Sagsnummer}"
         body = f"""Sag: <a href="https://mtmsager.aarhuskommune.dk/app#/t/ticket/{DeskProID}">{DeskProID} - {DeskProTitel}</a><br><br>
         Dokumentlisten har {len(conflicts)} række(r) hvor dokumenter har 'Ja' i 'Omfattet af ansøgningen? (Ja/Nej)', men der er ikke valgt noget i 
         'Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)'. Sørg for at alle rækker der er omfattet af ansøgningen har et svar om hvorvidt der gives aktindsigt, og genkør herefter processen i Podio.<br><br>
@@ -189,7 +189,7 @@ def process(orchestrator_connection: OrchestratorConnection, queue_element: Queu
         """
         send_email(
             receiver=MailModtager,
-            sender=sender,
+            sender="robotfejl@aarhus.dk",
             subject=subject,
             body=body,
             smtp_server=smtp_server,
