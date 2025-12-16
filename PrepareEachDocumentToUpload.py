@@ -19,6 +19,10 @@ from SharePointUploader import upload_file_to_sharepoint
 import re
 import mimetypes
 from GetFilarkivAcessToken import GetFilarkivToken
+from email import policy
+from email.parser import BytesParser
+from pathlib import Path
+import base64
 
 def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, orchestrator_connection: OrchestratorConnection):
 
@@ -190,6 +194,29 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             orchestrator_connection.log_info("No file was downloaded.")
                         
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword, orchestrator_connection)  
+
+                        # === CDW / MHTML special handling ===
+                        if DokumentType.lower() in ["mht", "mhtml"]:
+                            orchestrator_connection.log_info("CDW MHTML detected – converting to HTML")
+
+                            try:
+                                new_html_path = cdw_mhtml_to_html(file_path)
+
+                                os.remove(file_path)  # remove original .mhtml
+                                file_path = new_html_path
+                                DokumentType = "html"
+                                CanDocumentBeConverted = True
+
+                                orchestrator_connection.log_info(
+                                    f"MHTML converted to HTML: {file_path}"
+                                )
+
+                            except Exception as e:
+                                orchestrator_connection.log_error(
+                                    f"Failed MHTML→HTML conversion: {e}"
+                                )
+                                CanDocumentBeConverted = False
+
 
                         # List of supported file extensions
                         supported_extensions = [
@@ -587,8 +614,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
     return {
     "out_dt_AktIndex": dt_AktIndex,
     }
-
-
 
 
 def sanitize_title(Titel):
@@ -1018,3 +1043,79 @@ def GOPDFConvert (DokumentID, VersionUI, GoUsername, GoPassword):
     
     except Exception as e:
         return ""
+
+
+def cdw_mhtml_to_html(mhtml_path):
+    """
+    Converts CDW/Outlook MHTML mail to a single self-contained HTML file.
+    Returns path to new HTML file.
+    """
+    with open(mhtml_path, "rb") as f:
+        msg = BytesParser(policy=policy.default).parse(f)
+
+    html_body = None
+    attachments = []
+
+    for part in msg.walk():
+        ctype = part.get_content_type()
+        disp = part.get_content_disposition()
+
+        if ctype == "text/html" and html_body is None:
+            html_body = part.get_content()
+
+        elif disp == "attachment":
+            attachments.append({
+                "filename": part.get_filename(),
+                "ctype": ctype,
+                "data": part.get_payload(decode=True),
+            })
+
+    def attachment_html(att):
+        fn = att["filename"]
+        ct = att["ctype"]
+        data = base64.b64encode(att["data"]).decode()
+
+        if ct.startswith("image/"):
+            return f'<h4>{fn}</h4><img src="data:{ct};base64,{data}" style="max-width:100%;">'
+
+        if ct == "application/pdf":
+            return (
+                f'<h4>{fn}</h4>'
+                f'<iframe src="data:application/pdf;base64,{data}" '
+                f'width="100%" height="800"></iframe>'
+            )
+
+        return (
+            f'<h4>{fn}</h4>'
+            f'<a download="{fn}" href="data:{ct};base64,{data}">Download</a>'
+        )
+
+    attachments_html = "\n".join(attachment_html(a) for a in attachments)
+
+    final_html = f"""<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<title>Mailarkiv</title>
+<style>
+body {{ font-family: Arial, Helvetica, sans-serif; font-size: 11pt; }}
+.attachments {{ page-break-before: always; }}
+</style>
+</head>
+<body>
+
+{html_body}
+
+<div class="attachments">
+<h2>Bilag</h2>
+{attachments_html}
+</div>
+
+</body>
+</html>
+"""
+
+    html_path = Path(mhtml_path).with_suffix(".html")
+    html_path.write_text(final_html, encoding="utf-8")
+
+    return str(html_path)
