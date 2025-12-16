@@ -1043,27 +1043,37 @@ def GOPDFConvert (DokumentID, VersionUI, GoUsername, GoPassword):
     except Exception as e:
         return ""
 
+
 def _decode_html_part(part):
     """
-    Decode HTML payload using declared charset with safe fallbacks.
-    Critical for Danish characters (æ ø å).
+    Robustly decode HTML from Outlook/CDW MHTML files.
+    Preserves Danish characters (æ ø å) and fixes mojibake.
     """
     payload = part.get_payload(decode=True)
 
-    # Charset declared in the MIME part
-    charset = part.get_content_charset()
+    if not payload:
+        return ""
 
-    # Outlook / CDW fallback order
-    for enc in [charset, "windows-1252", "iso-8859-1", "utf-8"]:
-        if not enc:
-            continue
+    # 1️⃣ Try UTF-8 FIRST
+    try:
+        return payload.decode("utf-8")
+    except UnicodeDecodeError:
+        pass
+
+    # 2️⃣ Decode as Windows-1252 (Outlook default)
+    text = payload.decode("windows-1252", errors="replace")
+
+    # 3️⃣ Repair UTF-8 decoded as Latin-1 (Ã¥ Ã¸ Ã¦)
+    if any(bad in text for bad in ("Ã¥", "Ã¸", "Ã¦", "Ã…", "Ã˜", "Ã†")):
         try:
-            return payload.decode(enc)
+            text = text.encode("windows-1252").decode("utf-8")
         except UnicodeDecodeError:
-            continue
+            pass
 
-    # Last-resort fallback (never crashes)
-    return payload.decode("utf-8", errors="replace")
+    return text
+
+
+
 def cdw_mhtml_to_html(mhtml_path):
     """
     Converts CDW/Outlook MHTML mail to a single self-contained HTML file.
