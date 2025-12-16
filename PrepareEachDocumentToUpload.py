@@ -195,14 +195,13 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword, orchestrator_connection)  
 
-                        # === CDW / MHTML special handling ===
                         if DokumentType.lower() in ["mht", "mhtml"]:
                             orchestrator_connection.log_info("CDW MHTML detected – converting to HTML")
 
                             try:
                                 new_html_path = cdw_mhtml_to_html(file_path)
 
-                                os.remove(file_path)  # remove original .mhtml
+                                os.remove(file_path)
                                 file_path = new_html_path
                                 DokumentType = "html"
                                 CanDocumentBeConverted = True
@@ -1044,10 +1043,31 @@ def GOPDFConvert (DokumentID, VersionUI, GoUsername, GoPassword):
     except Exception as e:
         return ""
 
+def _decode_html_part(part):
+    """
+    Decode HTML payload using declared charset with safe fallbacks.
+    Critical for Danish characters (æ ø å).
+    """
+    payload = part.get_payload(decode=True)
 
+    # Charset declared in the MIME part
+    charset = part.get_content_charset()
+
+    # Outlook / CDW fallback order
+    for enc in [charset, "windows-1252", "iso-8859-1", "utf-8"]:
+        if not enc:
+            continue
+        try:
+            return payload.decode(enc)
+        except UnicodeDecodeError:
+            continue
+
+    # Last-resort fallback (never crashes)
+    return payload.decode("utf-8", errors="replace")
 def cdw_mhtml_to_html(mhtml_path):
     """
     Converts CDW/Outlook MHTML mail to a single self-contained HTML file.
+    Preserves Danish characters correctly.
     Returns path to new HTML file.
     """
     with open(mhtml_path, "rb") as f:
@@ -1061,7 +1081,7 @@ def cdw_mhtml_to_html(mhtml_path):
         disp = part.get_content_disposition()
 
         if ctype == "text/html" and html_body is None:
-            html_body = part.get_content()
+            html_body = _decode_html_part(part)
 
         elif disp == "attachment":
             attachments.append({
@@ -1073,22 +1093,33 @@ def cdw_mhtml_to_html(mhtml_path):
     def attachment_html(att):
         fn = att["filename"]
         ct = att["ctype"]
-        data = base64.b64encode(att["data"]).decode()
+        data = base64.b64encode(att["data"]).decode("ascii")
 
-        if ct.startswith("image/"):
-            return f'<h4>{fn}</h4><img src="data:{ct};base64,{data}" style="max-width:100%;">'
+        if ct and ct.startswith("image/"):
+            return f"""
+            <div class="attachment">
+                <h4>{fn}</h4>
+                <img src="data:{ct};base64,{data}" style="max-width:100%;">
+            </div>
+            """
 
         if ct == "application/pdf":
-            return (
-                f'<h4>{fn}</h4>'
-                f'<iframe src="data:application/pdf;base64,{data}" '
-                f'width="100%" height="800"></iframe>'
-            )
+            return f"""
+            <div class="attachment">
+                <h4>{fn}</h4>
+                <iframe src="data:application/pdf;base64,{data}"
+                        width="100%" height="800"></iframe>
+            </div>
+            """
 
-        return (
-            f'<h4>{fn}</h4>'
-            f'<a download="{fn}" href="data:{ct};base64,{data}">Download</a>'
-        )
+        return f"""
+        <div class="attachment">
+            <h4>{fn}</h4>
+            <a download="{fn}" href="data:{ct};base64,{data}">
+                Download attachment
+            </a>
+        </div>
+        """
 
     attachments_html = "\n".join(attachment_html(a) for a in attachments)
 
@@ -1098,13 +1129,21 @@ def cdw_mhtml_to_html(mhtml_path):
 <meta charset="utf-8">
 <title>Mailarkiv</title>
 <style>
-body {{ font-family: Arial, Helvetica, sans-serif; font-size: 11pt; }}
-.attachments {{ page-break-before: always; }}
+body {{
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+}}
+.attachments {{
+    page-break-before: always;
+}}
+.attachment {{
+    margin-bottom: 30px;
+}}
 </style>
 </head>
 <body>
 
-{html_body}
+{html_body or ""}
 
 <div class="attachments">
 <h2>Bilag</h2>
