@@ -1,4 +1,5 @@
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
+from nova_tls_helper import nova_request
 import pandas as pd
 import re
 import requests
@@ -11,12 +12,10 @@ from office365.sharepoint.client_context import ClientContext
 from office365.sharepoint.sharing.links.kind import SharingLinkKind
 from office365.sharepoint.webs.web import Web
 from office365.runtime.auth.user_credential import UserCredential
-import json
 from SendSMTPMail import send_email
 import shutil
 import uuid
 from SharePointUploader import upload_file_to_sharepoint
-import re
 import mimetypes
 from GetFilarkivAcessToken import GetFilarkivToken
 from email import policy
@@ -406,7 +405,13 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         }
                     }
 
-                response = requests.put(url, headers=headers, json=payload)
+                #response = requests.put(url, headers=headers, json=payload)
+                response = nova_request(
+                "PUT",
+                url,
+                headers=headers,
+                json=payload
+                )
                 response.raise_for_status
 
                 DokumentType = response.json()["documents"][0]["fileExtension"]
@@ -433,7 +438,13 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
 
 
                 # Send request to API (Use GET if API expects it; otherwise, use POST)
-                response = requests.put(url, headers=headers, json=payload)
+                #response = requests.put(url, headers=headers, json=payload)
+                response = nova_request(
+                "PUT",
+                url,
+                headers=headers,
+                json=payload
+                )
                 response.raise_for_status()
 
                 with open(file_path, "wb") as file:

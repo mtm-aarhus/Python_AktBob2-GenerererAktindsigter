@@ -1,4 +1,5 @@
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
+from nova_tls_helper import nova_request
 
 def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnection): 
     import requests
@@ -10,15 +11,14 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
     from datetime import datetime
     import os
     import json
-    import os
     import time
     from office365.runtime.auth.authentication_context import AuthenticationContext
     from office365.sharepoint.client_context import ClientContext
     from office365.sharepoint.files.file import File
     from office365.runtime.auth.user_credential import UserCredential
     from urllib.parse import quote
-    import re
     from SendSMTPMail import send_email
+    
 
     # Helper function for sanitizing sagstitel
     def sanitize_sagstitel(sagstitel):
@@ -109,7 +109,13 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
         }
 
         try:
-            response = requests.put(url, headers=headers, json=payload)
+            #response = requests.put(url, headers=headers, json=payload)
+            response = nova_request(
+            "PUT",
+            url,
+            headers=headers,
+            json=payload
+)
             print("Nova API Response:", response.status_code, response.text)
 
             if response.status_code == 200:

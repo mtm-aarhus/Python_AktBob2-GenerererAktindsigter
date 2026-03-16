@@ -1,5 +1,5 @@
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
-
+from nova_tls_helper import nova_request
 def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_connection: OrchestratorConnection):
     import os
     from office365.sharepoint.client_context import ClientContext
@@ -141,7 +141,13 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
         }
 
         try:
-            response = requests.put(url, headers=headers, json=payload)
+            #response = requests.put(url, headers=headers, json=payload)
+            response = nova_request(
+            "PUT",
+            url,
+            headers=headers,
+            json=payload
+        )
             print("Nova API Response:", response.status_code)
 
             if response.status_code == 200:

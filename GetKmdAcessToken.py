@@ -1,5 +1,5 @@
 from OpenOrchestrator.orchestrator_connection.connection import OrchestratorConnection
-
+from nova_tls_helper import nova_request
 def GetKMDToken(orchestrator_connection: OrchestratorConnection):
     import os
     from datetime import datetime, timedelta
@@ -56,7 +56,12 @@ def GetKMDToken(orchestrator_connection: OrchestratorConnection):
 
             try:
                 # Sending POST request to get the access token
-                response = requests.post(KMD_URL, data=keys)
+                #response = requests.post(KMD_URL, data=keys)
+                response = nova_request(
+                "POST",
+                KMD_URL,
+                data=keys
+                ) 
                 response.raise_for_status()  # Raise HTTPError for bad responses (4xx and 5xx)
             except requests.exceptions.RequestException as e:
                 raise ConnectionError(f"Failed to fetch new access token: {e}")
