@@ -180,7 +180,13 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     
                                                                                             
                 else: #Dokumentet er ikke en pdf - forsøger at konverterer               
-                    ByteResult = GOPDFConvert(DokumentID, VersionUI, GoUsername, GoPassword)
+                    email_extensions = ["eml", "msg"]
+
+                    if DokumentType.lower() in email_extensions:
+                        orchestrator_connection.log_info("Email format detected – skipping GO-conversion")
+                        ByteResult = []
+                    else:
+                        ByteResult = GOPDFConvert(DokumentID, VersionUI, GoUsername, GoPassword)
                     
                     if len(ByteResult) == 0:
                         orchestrator_connection.log_info("Go-convervision mislykkedes forsøger med Filarkiv")
