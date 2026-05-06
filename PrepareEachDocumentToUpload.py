@@ -174,7 +174,7 @@ def handle_email_attachments(
 
         non_convertible_names.append(
             f"Bilag til mail ({AktID:04} - {DokumentID} - {Titel}): "
-            f"<b>{att['filename']}</b>)"
+            f" <b>{att['filename']}</b>"
         )
 
     return non_convertible_names
