@@ -62,12 +62,13 @@ def extract_email_attachments(file_path: str, orchestrator_connection) -> list[d
             try:
                 for att in outlook_msg.attachments:
                     filename = att.longFilename or att.shortFilename or "unknown"
+                    filename = filename.replace("\x00", "").strip()  # clean null chars
                     data = att.data
                     if data:
                         att_ext = Path(filename).suffix.lower().lstrip(".")
                         attachments.append({"filename": filename, "extension": att_ext, "data": data})
             finally:
-                outlook_msg.close()  # releases the file handle
+                outlook_msg.close()
         except Exception as e:
             orchestrator_connection.log_info(f"Could not parse .msg attachments: {e}")
 
