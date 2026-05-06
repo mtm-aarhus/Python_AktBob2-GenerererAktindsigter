@@ -141,11 +141,12 @@ def handle_email_attachments(
 
         # ── Attachment CANNOT be converted ─────────────────────────────────
         orchestrator_connection.log_info(
-            f"Email attachment '{att['filename']}' ({att_ext}) is NOT supported – uploading to SharePoint."
+            f"Email attachment '{att['filename']}' is NOT supported – uploading to SharePoint."
         )
 
         # Build sub-document filename: "XXXX - DokID - Titel.N.ext"
-        sub_filename = f"{AktID:04} - {DokumentID} - {Titel}.{sub_index}.{att_ext}"
+        sub_filename = f"{AktID:04} - {DokumentID} - {Titel} - {att['filename']}"
+        #sub_filename = f"{AktID:04} - {DokumentID} - {Titel}.{sub_index}.{att_ext}"
         sub_index += 1
 
         # Write attachment bytes to disk
