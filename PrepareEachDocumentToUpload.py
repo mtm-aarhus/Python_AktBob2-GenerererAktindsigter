@@ -22,6 +22,162 @@ from email import policy
 from email.parser import BytesParser
 from pathlib import Path
 import base64
+import extract_msg  # pip install extract-msg
+
+
+# ---------------------------------------------------------------------------
+# NEW HELPER: extract attachments from .eml or .msg and return metadata list
+# ---------------------------------------------------------------------------
+
+def extract_email_attachments(file_path: str, orchestrator_connection) -> list[dict]:
+    """
+    Extract attachments from an .eml or .msg file.
+
+    Returns a list of dicts:
+        {
+            "filename":  str,          # original attachment filename
+            "extension": str,          # lower-case extension without dot
+            "data":      bytes,        # raw bytes of the attachment
+        }
+    """
+    ext = Path(file_path).suffix.lower().lstrip(".")
+    attachments = []
+
+    if ext == "eml":
+        with open(file_path, "rb") as f:
+            msg = BytesParser(policy=policy.default).parse(f)
+
+        for part in msg.walk():
+            if part.get_content_disposition() == "attachment":
+                filename = part.get_filename() or "unknown"
+                data = part.get_payload(decode=True)
+                if data:
+                    att_ext = Path(filename).suffix.lower().lstrip(".")
+                    attachments.append({"filename": filename, "extension": att_ext, "data": data})
+
+    elif ext == "msg":
+        try:
+            outlook_msg = extract_msg.openMsg(file_path)
+            for att in outlook_msg.attachments:
+                filename = att.longFilename or att.shortFilename or "unknown"
+                data = att.data
+                if data:
+                    att_ext = Path(filename).suffix.lower().lstrip(".")
+                    attachments.append({"filename": filename, "extension": att_ext, "data": data})
+        except Exception as e:
+            orchestrator_connection.log_info(f"Could not parse .msg attachments: {e}")
+
+    else:
+        orchestrator_connection.log_info(f"extract_email_attachments called on unsupported type: {ext}")
+
+    return attachments
+
+
+def handle_email_attachments(
+    file_path: str,
+    AktID: int,
+    DokumentID: str,
+    Titel: str,
+    SharePointURL: str,
+    Overmappe: str,
+    Undermappe: str,
+    RobotUserName: str,
+    RobotPassword: str,
+    tenant: str,
+    client_id: str,
+    thumbprint: str,
+    cert_path: str,
+    orchestrator_connection,
+) -> list[str]:
+    """
+    GeoSag only. Inspect all attachments inside an .eml or .msg file.
+
+    The full original email is always uploaded to Filarkiv by the caller —
+    this function does NOT affect that flow.
+
+    For every attachment whose extension is NOT in supported_extensions:
+        • Extract it and save to disk with sub-document naming:
+          e.g.  "0005 - DokID - Titel.1.mp4",  "0005 - DokID - Titel.2.wav"
+        • Upload it to SharePoint
+        • Add an entry to the returned list so the caller can include it in
+          the existing sagsbehandler notification email (dt_non_pdf_docs)
+
+    Attachments whose extension IS in supported_extensions are left alone —
+    Filarkiv converts them as part of the full email upload.
+
+    Returns a list of human-readable strings for each unsupported attachment.
+    """
+
+    supported_extensions = [
+        "bmp", "csv", "doc", "docm", "dwf", "dwg", "dxf", "emf", "eml",
+        "epub", "fodt", "gif", "htm", "html", "ico", "jpeg", "jpg", "msg",
+        "odp", "ods", "odt", "pdf", "png", "pos", "pps", "ppt", "pptx", "psd",
+        "rtf", "tif", "tiff", "tsv", "txt", "vdw", "vdx", "vsd", "vss", "vst",
+        "vsx", "vtx", "webp", "wmf", "xls", "xlsm", "xlsx", "xltx", "heic", "docx",
+    ]
+
+    attachments = extract_email_attachments(file_path, orchestrator_connection)
+    non_convertible_names: list[str] = []
+
+    if not attachments:
+        return non_convertible_names  # nothing to do
+
+    sub_index = 1  # counter for .1, .2, …
+
+    for att in attachments:
+        att_ext = att["extension"]
+
+        if att_ext in supported_extensions:
+            print(
+                f"Email attachment '{att['filename']}' ({att_ext}) is supported – Filarkiv will convert it."
+            )
+            sub_index += 1
+            continue
+
+        # ── Attachment CANNOT be converted ─────────────────────────────────
+        orchestrator_connection.log_info(
+            f"Email attachment '{att['filename']}' ({att_ext}) is NOT supported – uploading to SharePoint."
+        )
+
+        # Build sub-document filename: "XXXX - DokID - Titel.N.ext"
+        sub_filename = f"{AktID:04} - {DokumentID} - {Titel}.{sub_index}.{att_ext}"
+        sub_index += 1
+
+        # Write attachment bytes to disk
+        with open(sub_filename, "wb") as f:
+            f.write(att["data"])
+
+        try:
+            upload_file_to_sharepoint(
+                site_url=SharePointURL,
+                Overmappe=Overmappe,
+                Undermappe=Undermappe,
+                file_path=sub_filename,
+                RobotUserName=RobotUserName,
+                RobotPassword=RobotPassword,
+                tenant=tenant,
+                client_id=client_id,
+                thumbprint=thumbprint,
+                cert_path=cert_path,
+            )
+            orchestrator_connection.log_info(f"Uploaded attachment to SharePoint: {sub_filename}")
+        except Exception as e:
+            orchestrator_connection.log_info(f"Failed to upload attachment {sub_filename}: {e}")
+        finally:
+            if os.path.exists(sub_filename):
+                os.remove(sub_filename)
+
+        non_convertible_names.append(
+            f"Bilag til mail (Akt {AktID:04} - {DokumentID} - {Titel}): "
+            f"<b>{att['filename']}</b> (type: .{att_ext})"
+        )
+
+    return non_convertible_names
+
+
+# ---------------------------------------------------------------------------
+# ORIGINAL CODE (unchanged except where marked ── NEW ──)
+# ---------------------------------------------------------------------------
 
 def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, orchestrator_connection: OrchestratorConnection):
 
@@ -77,7 +233,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
     # ---- If-statement som tjekker om det er en GeoSag eller NovaSag ----
     if GeoSag == True:
         #Sagen er en geo sag 
-        #dt_DocumentList['Dokumentdato'] = pd.to_datetime(dt_DocumentList['Dokumentdato'], errors='coerce')
         dt_DocumentList['Dokumentdato'] = pd.to_datetime(dt_DocumentList['Dokumentdato'], format="%d-%m-%Y", errors='coerce')
         
         with requests.Session() as session:
@@ -85,16 +240,14 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             session.headers.update({"Content-Type": "application/json"}) 
         
         for index, row in dt_DocumentList.iterrows():
-            # Convert items to strings unless they are explicitly integers
             elapsed = time.time() - timestamp
-            if elapsed >= 31 * 60:  # 45 minutes in seconds
+            if elapsed >= 31 * 60:
                 print("30 minutes passed, fetching new filarkiv tokens and resetting timestamp.")
                 Filarkiv_access_token = GetFilarkivToken(orchestrator_connection)
                 timestamp = time.time()
             Omfattet = str(row["Omfattet af ansøgningen? (Ja/Nej)"])
             DokumentID = str(row["Dok ID"])
             
-            # Handle AktID conversion
             AktID = row['Akt ID']
             if isinstance(AktID, str):  
                 AktID = int(AktID.replace('.', ''))
@@ -102,8 +255,6 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 AktID = AktID
 
             Titel = str(row["Dokumenttitel"])
-            
-            # Split title into name and extension
             Titel, ext = os.path.splitext(Titel)
 
             BilagTilDok = str(row["Bilag til Dok ID"])
@@ -111,7 +262,7 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             Dokumentkategori = str(row["Dokumentkategori"])
             Aktstatus = str(row["Gives der aktindsigt i dokumentet? (Ja/Nej/Delvis)"])
             Begrundelse = str(row["Begrundelse hvis nej eller delvis"])
-            Dokumentdato =row['Dokumentdato']
+            Dokumentdato = row['Dokumentdato']
             if isinstance(Dokumentdato, pd.Timestamp):
                 Dokumentdato = Dokumentdato.strftime("%d-%m-%Y")
             else:
@@ -119,67 +270,50 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             
             orchestrator_connection.log_info(f"AktID til debug: {AktID}")
 
-            # Declare the necessary variables
             base_path = "Teams/tea-teamsite10506/Delte dokumenter/Aktindsigter/"
-
-            # Sanitize the title
             Titel = sanitize_title(Titel)
-
             Titel = calculate_available_title_length(base_path, Overmappe, Undermappe, AktID, DokumentID, Titel)
 
             if (("ja" in Aktstatus.lower() or "delvis" in Aktstatus.lower()) 
                 and DokumentID != ""):
 
                 Metadata = fetch_document_info_go(DokumentID, session, AktID, Titel)
-
-                # Extracting variables for further use in the loop
                 DokumentType = Metadata["DokumentType"]
                 VersionUI = Metadata["VersionUI"]
                 file_title = Metadata["file_title"]
                 CanDocumentBeConverted = False
                 conversionPossible = False
-                file_path = file_title+"."+DokumentType
+                file_path = file_title + "." + DokumentType
                 
-                # Tjekker om Goref-fil
                 if "goref" in DokumentType:
                     orchestrator_connection.log_info("Dokumenter er .GORef")
-                    ByteResult = fetch_document_bytes(session, DokumentID, file_path, delete_after_use=False, orchestrator_connection = orchestrator_connection)
-
+                    ByteResult = fetch_document_bytes(session, DokumentID, file_path, delete_after_use=False)
                     if ByteResult:
                         with open(file_path, "r", encoding="utf-8") as file:
                             RefDokument = file.read()
-                        
                         refdocument = RefDokument.split("?docid=")[1]
                         DokumentID = refdocument.split('"')[0]
-                
                         os.remove(file_path)
                         orchestrator_connection.log_info("File deleted after use.")
                     
                     orchestrator_connection.log_info(f"GorefDokID: {DokumentID}")
-                    #Henter dokument data
                     Metadata = fetch_document_info_go(DokumentID, session, AktID, Titel)
-                
-                    # Extracting variables for further use in the loop
                     DokumentType = Metadata["DokumentType"]
                     orchestrator_connection.log_info(f"Dokumenttype gotten from goref {DokumentType}")
                     VersionUI = Metadata["VersionUI"]
                     file_title = Metadata["file_title"]
-                    file_path = file_title+"."+DokumentType
+                    file_path = file_title + "." + DokumentType
 
-                    
-                if DokumentType.lower() == "pdf": # Hvis PDF downloader den byte-filen
-                    #Downloader fil fra GO    
+                if DokumentType.lower() == "pdf":
                     orchestrator_connection.log_info("Allerede PDF - downloader")
                     ByteResult = fetch_document_bytes(session, DokumentID, max_retries=5, retry_interval=30)
-
                     if ByteResult:
                         orchestrator_connection.log_info(f"File size: {len(ByteResult)} bytes")
                     else:
                         orchestrator_connection.log_info("No file was downloaded.")
-                    download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword, orchestrator_connection) 
-                    
-                                                                                            
-                else: #Dokumentet er ikke en pdf - forsøger at konverterer               
+                    download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword, orchestrator_connection)
+
+                else:
                     email_extensions = ["eml", "msg"]
 
                     if DokumentType.lower() in email_extensions:
@@ -190,58 +324,42 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     
                     if len(ByteResult) == 0:
                         orchestrator_connection.log_info("Go-convervision mislykkedes forsøger med Filarkiv")
-
-                        #Downloader fil fra GO    
                         ByteResult = fetch_document_bytes(session, DokumentID, file_path=file_path)
                         if ByteResult:
                             orchestrator_connection.log_info(f"File size: {len(ByteResult)} bytes")
                         else:
                             orchestrator_connection.log_info("No file was downloaded.")
-                        
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword, orchestrator_connection)  
 
                         if DokumentType.lower() in ["mht", "mhtml"]:
                             orchestrator_connection.log_info("CDW MHTML detected – converting to HTML")
-
                             try:
                                 new_html_path = cdw_mhtml_to_html(file_path)
-
                                 os.remove(file_path)
                                 file_path = new_html_path
                                 DokumentType = "html"
                                 CanDocumentBeConverted = True
-
-                                orchestrator_connection.log_info(
-                                    f"MHTML converted to HTML: {file_path}"
-                                )
-
+                                orchestrator_connection.log_info(f"MHTML converted to HTML: {file_path}")
                             except Exception as e:
-                                orchestrator_connection.log_error(
-                                    f"Failed MHTML→HTML conversion: {e}"
-                                )
+                                orchestrator_connection.log_error(f"Failed MHTML→HTML conversion: {e}")
                                 CanDocumentBeConverted = False
 
-
-                        # List of supported file extensions
                         supported_extensions = [
                             "bmp", "csv", "doc", "docm", "dwf", "dwg", "dxf", "emf", "eml",
                             "epub", "fodt", "gif", "htm", "html", "ico", "jpeg", "jpg", "msg",
                             "odp", "ods", "odt", "pdf", "png", "pos", "pps", "ppt", "pptx", "psd",
                             "rtf", "tif", "tiff", "tsv", "txt", "vdw", "vdx", "vsd", "vss", "vst",
-                            "vsx", "vtx", "webp", "wmf", "xls", "xlsm", "xlsx", "xltx", "heic","docx"
+                            "vsx", "vtx", "webp", "wmf", "xls", "xlsm", "xlsx", "xltx", "heic", "docx"
                         ]
-                        # Check if the input file extension exists in the list
                         if DokumentType.lower() in supported_extensions:
                             orchestrator_connection.log_info("Filen konverteres med Filarkiv")
                             CanDocumentBeConverted = True
                         else:
                             CanDocumentBeConverted = False
                             conversionPossible = check_conversion_possible(DokumentType, CloudConvertAPI)
-                            
                             if not conversionPossible:
                                 orchestrator_connection.log_info(f"Skipping cause CloudConvert doesn't support: {DokumentType}->PDF")
-                                ByteResult = bytes()                  
-                                #Skal der sættes en bolean value?
+                                ByteResult = bytes()
                             else:
                                 orchestrator_connection.log_info("Forsøger med CloudConvert")
                                 conversion = convert_file_to_pdf(CloudConvertAPI, file_path, DokumentID, DokumentType)
@@ -250,32 +368,53 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                                     orchestrator_connection.log_info(f"PDF saved at: {file_path}")
                                     DokumentType = "pdf"
 
-                    else: # Go-conversion lykkedes downloader fil
-                        orchestrator_connection.log_info("Go-conversion lykkedes")                  
-                        file_path = (f"{file_title}.pdf")
+                    else:
+                        orchestrator_connection.log_info("Go-conversion lykkedes")
+                        file_path = f"{file_title}.pdf"
                         DokumentType = "pdf"
                         download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword, orchestrator_connection)
 
+                # ── GeoSag only: inspect e-mail attachments for unsupported types ──
+                # The full original email is always uploaded to Filarkiv unchanged below.
+                # Any attachment whose extension is NOT in supported_extensions is
+                # additionally extracted and uploaded to SharePoint separately, and
+                # the sagsbehandler is notified via the existing dt_non_pdf_docs email.
+                if DokumentType.lower() in ["eml", "msg"] and os.path.exists(file_path):
+                    orchestrator_connection.log_info(f"Inspecting email attachments for: {file_path}")
+                    attachment_non_pdf = handle_email_attachments(
+                        file_path=file_path,
+                        AktID=AktID,
+                        DokumentID=DokumentID,
+                        Titel=Titel,
+                        SharePointURL=SharePointURL,
+                        Overmappe=Overmappe,
+                        Undermappe=Undermappe,
+                        RobotUserName=RobotUserName,
+                        RobotPassword=RobotPassword,
+                        tenant=tenant,
+                        client_id=client_id,
+                        thumbprint=thumbprint,
+                        cert_path=cert_path,
+                        orchestrator_connection=orchestrator_connection,
+                    )
+                    dt_non_pdf_docs.extend(attachment_non_pdf)
+                # ── end GeoSag attachment check ──────────────────────────────────────
+
                 if file_path.lower().endswith(".pdf") or CanDocumentBeConverted:
                     success, document_number = upload_to_filarkiv(
-                    FilarkivURL, FilarkivCaseID, Filarkiv_access_token,
-                    AktID, DokumentID, Titel, file_path,
-                    DokumentType=DokumentType,
-                    orchestrator_connection=orchestrator_connection,
-                    document_number=document_number
-                )
-
-
+                        FilarkivURL, FilarkivCaseID, Filarkiv_access_token,
+                        AktID, DokumentID, Titel, file_path,
+                        DokumentType=DokumentType,
+                        orchestrator_connection=orchestrator_connection,
+                        document_number=document_number
+                    )
                     if success:
                         DokumentType = "pdf"
                         os.remove(file_path)
-                        file_path = file_title+DokumentType
+                        file_path = file_title + DokumentType
                         IsDocumentPDF = True
-                        
                     else:
                         IsDocumentPDF = False
-                        # File path her burde allerede have filtype
-                        #file_path = f"{file_path}.{DokumentType}"
                         upload_file_to_sharepoint(
                             site_url=SharePointURL,
                             Overmappe=Overmappe,
@@ -283,15 +422,13 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             file_path=file_path,
                             RobotUserName=RobotUserName,
                             RobotPassword=RobotPassword,
-                            tenant = tenant, 
-                            client_id = client_id, 
-                            thumbprint = thumbprint, 
-                            cert_path = cert_path
+                            tenant=tenant,
+                            client_id=client_id,
+                            thumbprint=thumbprint,
+                            cert_path=cert_path
                         )
                         os.remove(file_path)
-
                 else:
-                    # This is when conversion is not possible and upload shouldn't even be attempted to Filarkiv
                     IsDocumentPDF = False
                     upload_file_to_sharepoint(
                         site_url=SharePointURL,
@@ -300,54 +437,38 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         file_path=file_path,
                         RobotUserName=RobotUserName,
                         RobotPassword=RobotPassword,
-                        tenant = tenant, 
-                        client_id = client_id, 
-                        thumbprint = thumbprint, 
-                        cert_path = cert_path
-                        )
+                        tenant=tenant,
+                        client_id=client_id,
+                        thumbprint=thumbprint,
+                        cert_path=cert_path
+                    )
                     os.remove(file_path)
             else:
                 DokumentType = ".pdf"
                 IsDocumentPDF = True
                 
-            #Ændre dokumenttitlen:
-            
             Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
 
-            # Call function
-            dt_AktIndex,non_pdf_docs= process_documents(
-                dt_AktIndex,
-                AktID,
-                Titel,
-                Dokumentkategori,
-                Dokumentdato,
-                DokumentID,
-                BilagTilDok,
-                DokBilag,
-                Omfattet,
-                Aktstatus,
-                Begrundelse,
-                IsDocumentPDF,
+            dt_AktIndex, non_pdf_docs = process_documents(
+                dt_AktIndex, AktID, Titel, Dokumentkategori, Dokumentdato,
+                DokumentID, BilagTilDok, DokBilag, Omfattet, Aktstatus,
+                Begrundelse, IsDocumentPDF,
             )
-            
             dt_non_pdf_docs.extend(non_pdf_docs) 
 
-    #Det er en nova sag
     else:
-        #Det er en Nova sag
         orchestrator_connection.log_info("Det er en Nova sag")
         for index, row in dt_DocumentList.iterrows():
             
             elapsed = time.time() - timestamp
-            if elapsed >= 31 * 60:  # 45 minutes in seconds
+            if elapsed >= 31 * 60:
                 print("30 minutes passed, fetching new filarkiv tokens and resetting timestamp.")
                 Filarkiv_access_token = GetFilarkivToken(orchestrator_connection)
                 timestamp = time.time()
-            # Convert items to strings unless they are explicitly integers
+
             Omfattet = str(row["Omfattet af ansøgningen? (Ja/Nej)"])
             DokumentID = str(row["Dok ID"])
             
-            # Handle AktID conversion
             AktID = row['Akt ID']
             if isinstance(AktID, str):  
                 AktID = int(AktID.replace('.', ''))
@@ -371,14 +492,9 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             IsDocumentPDF = True
             orchestrator_connection.log_info(f"AktID til debug: {AktID}")
 
-            # Declare the necessary variables
             base_path = "Teams/tea-teamsite10506/Delte dokumenter/Aktindsigter/"
-
-            # Sanitize the title
             Titel = sanitize_title(Titel)
-
             Titel = calculate_available_title_length(base_path, Overmappe, Undermappe, AktID, DokumentID, Titel)
-
 
             if (("ja" in Aktstatus.lower() or "delvis" in Aktstatus.lower()) 
                 and DokumentID != "" 
@@ -387,114 +503,66 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 orchestrator_connection.log_info("Henter dokument information")
                 TransactionID = str(uuid.uuid4())
                 url = f"{KMDNovaURL}/Document/GetList?api-version=2.0-Case"
-
                 headers = {
                     "Authorization": f"Bearer {KMD_access_token}",
                     "Content-Type": "application/json"
                 }
-
                 payload = {
-                    "common": {
-                        "transactionId": TransactionID,
-                        #"uuid": DokumentID ## skal hente dokument id og ikke dokumentnr, find ud af hvornår den skal hentes.
-                    },
-                    "paging": {
-                        "startRow": 1,
-                        "numberOfRows": 100
-                    },
+                    "common": {"transactionId": TransactionID},
+                    "paging": {"startRow": 1, "numberOfRows": 100},
                     "documentNumber": DokumentID,
                     "caseNumber": Sagsnummer,
-                    "getOutput": {
-                        "documentDate": True,
-                        "title": True,
-                        "fileExtension": True
-                        }
-                    }
-
-                #response = requests.put(url, headers=headers, json=payload)
-                response = nova_request(
-                "PUT",
-                url,
-                headers=headers,
-                json=payload
-                )
+                    "getOutput": {"documentDate": True, "title": True, "fileExtension": True}
+                }
+                response = nova_request("PUT", url, headers=headers, json=payload)
                 response.raise_for_status
 
                 DokumentType = response.json()["documents"][0]["fileExtension"]
                 DocumentUuid = response.json()["documents"][0]["documentUuid"]
                 orchestrator_connection.log_info(DokumentType)
                 
-                #Downloader file
-                
                 TransactionID = str(uuid.uuid4())
                 url = f"{KMDNovaURL}/Document/GetFile?api-version=2.0-Case"
                 file_path = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
-
                 headers = {
                     "Authorization": f"Bearer {KMD_access_token}",
                     "Content-Type": "application/json"
                 }
+                payload = {"common": {"transactionId": TransactionID, "uuid": DocumentUuid}}
 
-                payload = {
-                    "common": {
-                        "transactionId": TransactionID,
-                        "uuid": DocumentUuid
-                    }
-                }
-
-
-                # Send request to API (Use GET if API expects it; otherwise, use POST)
-                #response = requests.put(url, headers=headers, json=payload)
-                response = nova_request(
-                "PUT",
-                url,
-                headers=headers,
-                json=payload
-                )
+                response = nova_request("PUT", url, headers=headers, json=payload)
                 response.raise_for_status()
 
                 with open(file_path, "wb") as file:
                     file.write(response.content)
-                
                 orchestrator_connection.log_info(f"File successfully saved at: {file_path}")
                 
                 CanDocumentBeConverted = False
                 conversionPossible = False
 
-                # List of supported file extensions
                 supported_extensions = [
                     "bmp", "csv", "doc", "docm", "dwf", "dwg", "dxf", "emf", "eml",
                     "epub", "fodt", "gif", "htm", "html", "ico", "jpeg", "jpg", "msg",
                     "odp", "ods", "odt", "pdf", "png", "pos", "pps", "ppt", "pptx", "psd",
                     "rtf", "tif", "tiff", "tsv", "txt", "vdw", "vdx", "vsd", "vss", "vst",
-                    "vsx", "vtx", "webp", "wmf", "xls", "xlsm", "xlsx", "xltx", "heic","docx"
+                    "vsx", "vtx", "webp", "wmf", "xls", "xlsm", "xlsx", "xltx", "heic", "docx"
                 ]
-                # Check if the input file extension exists in the list
                 if DokumentType.lower() in supported_extensions:
                     CanDocumentBeConverted = True
                 else:
                     CanDocumentBeConverted = False
-
-                if CanDocumentBeConverted:
-                    orchestrator_connection.log_info("Filen skal ikke konverteres")
-
-                else:
                     conversionPossible = check_conversion_possible(DokumentType, CloudConvertAPI)
-                    
                     if not conversionPossible:
                         orchestrator_connection.log_info(f"Skipping cause CloudConvert doesn't support: {DokumentType}->PDF")
-                        ByteResult = bytes()                  
-                        #Skal der sættes en bolean value?
+                        ByteResult = bytes()
                     else:
                         conversion = convert_file_to_pdf(CloudConvertAPI, file_path, DokumentID, DokumentType)
                         if conversion:
                             file_path = conversion
                             orchestrator_connection.log_info(f"PDF saved at: {file_path}")
                             DokumentType = "pdf"
-                                                    
 
                 if conversionPossible or CanDocumentBeConverted:
-                    
                     success, document_number = upload_to_filarkiv(
                         FilarkivURL, FilarkivCaseID, Filarkiv_access_token,
                         AktID, DokumentID, Titel, file_path,
@@ -502,13 +570,10 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                         orchestrator_connection=orchestrator_connection,
                         document_number=document_number
                     )
-
-
                     if success:
                         os.remove(file_path)
                         DokumentType = "pdf"
                         IsDocumentPDF = True
-
                     else:
                         IsDocumentPDF = False
                         upload_file_to_sharepoint(
@@ -518,65 +583,49 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                             file_path=file_path,
                             RobotUserName=RobotUserName,
                             RobotPassword=RobotPassword,
-                            tenant = tenant, 
-                            client_id = client_id, 
-                            thumbprint = thumbprint, 
-                            cert_path = cert_path
+                            tenant=tenant,
+                            client_id=client_id,
+                            thumbprint=thumbprint,
+                            cert_path=cert_path
                         )
                         os.remove(file_path)
-                
-                else: # Uploader til Sharepoint
+                else:
                     orchestrator_connection.log_info("Could not be converted or uploaded - uploading directly to SharePoint")
                     IsDocumentPDF = False 
                     upload_file_to_sharepoint(
-                            site_url=SharePointURL,
-                            Overmappe=Overmappe,
-                            Undermappe=Undermappe,
-                            file_path=file_path,
-                            RobotUserName=RobotUserName,
-                            RobotPassword=RobotPassword,
-                            tenant = tenant, 
-                            client_id = client_id, 
-                            thumbprint = thumbprint, 
-                            cert_path = cert_path
-                        )
+                        site_url=SharePointURL,
+                        Overmappe=Overmappe,
+                        Undermappe=Undermappe,
+                        file_path=file_path,
+                        RobotUserName=RobotUserName,
+                        RobotPassword=RobotPassword,
+                        tenant=tenant,
+                        client_id=client_id,
+                        thumbprint=thumbprint,
+                        cert_path=cert_path
+                    )
                     os.remove(file_path)
     
             else:
                 DokumentType = "pdf"   
                 IsDocumentPDF = True 
         
-            #Ændre dokumenttitlen:
             Titel = f"{AktID:04} - {DokumentID} - {Titel}.{DokumentType}"
 
-            # Call function
-            dt_AktIndex,non_pdf_docs= process_documents(
-                dt_AktIndex,
-                AktID,
-                Titel,
-                Dokumentkategori,
-                Dokumentdato,
-                DokumentID,
-                BilagTilDok,
-                DokBilag,
-                Omfattet,
-                Aktstatus,
-                Begrundelse,
-                IsDocumentPDF,
+            dt_AktIndex, non_pdf_docs = process_documents(
+                dt_AktIndex, AktID, Titel, Dokumentkategori, Dokumentdato,
+                DokumentID, BilagTilDok, DokBilag, Omfattet, Aktstatus,
+                Begrundelse, IsDocumentPDF,
             )
-            
             dt_non_pdf_docs.extend(non_pdf_docs)
 
     
     #Send Email
     if dt_non_pdf_docs:
-        # Send Email Notification
-        FinalString = "<br><br>".join(set(dt_non_pdf_docs))  # Remove duplicates
+        FinalString = "<br><br>".join(set(dt_non_pdf_docs))
 
-        # SharePoint integration
         credentials = UserCredential(RobotUserName, RobotPassword)
         ctx = ClientContext(SharePointURL).with_credentials(credentials)
-
         cert_credentials = {
             "tenant": tenant,
             "client_id": client_id,
@@ -586,11 +635,9 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
         ctx = ClientContext(SharePointURL).with_client_certificate(**cert_credentials)
         folder_or_file_url = f"/Teams/tea-teamsite10506/Delte Dokumenter/Aktindsigter/{Overmappe}/{Undermappe}"
         target_item = ctx.web.get_folder_by_server_relative_url(folder_or_file_url)
-
-        result = target_item.share_link(2).execute_query()  # Organization view link
+        result = target_item.share_link(2).execute_query()
         link_url = result.value.sharingLinkInfo.Url
 
-        # Prepare email
         sender = "aktbob@aarhus.dk"
         subject = f"{Sagsnummer} - Filer kan ikke konverteres til PDF"
         body = (
@@ -608,11 +655,8 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             "<br>"
             "Øvrige dokumenter overføres til FilArkiv og gennemgås der. Når du overfører fra FilArkiv til udleveringsmappen, opdateres aktlisten automatisk.<br>"
         )
-
         smtp_server = "smtp.adm.aarhuskommune.dk"
         smtp_port = 25
-
-
         send_email(
             receiver=MailModtager,
             sender=sender,
@@ -623,34 +667,24 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
             html_body=True
         )
 
-
-    
     dt_AktIndex = dt_AktIndex.drop('IsDocumentPDF', axis=1)
 
     return {
-    "out_dt_AktIndex": dt_AktIndex,
+        "out_dt_AktIndex": dt_AktIndex,
     }
 
 
+# ---------------------------------------------------------------------------
+# ALL ORIGINAL HELPER FUNCTIONS (unchanged)
+# ---------------------------------------------------------------------------
+
 def sanitize_title(Titel):
-    # 1. Replace double quotes with an empty string
     Titel = Titel.replace("\"", "")
-
-    # 2. Remove special characters with regex
     Titel = re.sub(r"[.:>#<*\?/%&{}\$!\"@+\|'=]+", "", Titel)
-
-    # 3. Remove any newline characters
     Titel = Titel.replace("\n", "").replace("\r", "")
-
-    # 4. Trim leading and trailing whitespace
     Titel = Titel.strip()
-
-    # 5. Remove non-alphanumeric characters except spaces and Danish letters
     Titel = re.sub(r"[^a-zA-Z0-9ÆØÅæøå ]", "", Titel)
-
-    # 6. Replace multiple spaces with a single space
     Titel = re.sub(r" {2,}", " ", Titel)
-
     return Titel
 
 def calculate_available_title_length(base_path, Overmappe, Undermappe, AktID, DokumentID, Titel, max_path_length=400):
@@ -658,19 +692,15 @@ def calculate_available_title_length(base_path, Overmappe, Undermappe, AktID, Do
     undermappe_length = len(Undermappe)
     aktID_length = len(str(AktID))
     dokID_length = len(str(DokumentID))
-
     fixed_length = len(base_path) + overmappe_length + undermappe_length + aktID_length + dokID_length + 7
     available_title_length = max_path_length - fixed_length
-
     if len(Titel) > available_title_length:
         return Titel[:available_title_length]
-    
     return Titel
 
 def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID, DokumentID, Titel, file_path, DokumentType, orchestrator_connection, document_number):
-    Filarkiv_DocumentID = None  # Ensure it is initialized
+    Filarkiv_DocumentID = None
     FileName = f"{AktID:04} - {DokumentID} - {Titel}"
-
     DocumentDate = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
     data = {
         "caseId": FilarkivCaseID,
@@ -690,14 +720,16 @@ def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID
 
     if Filarkiv_DocumentID is None:
         orchestrator_connection.log_info("Fejl: Filarkiv_DocumentID blev ikke genereret. Afbryder processen.")
-        return False, document_number+1
+        return False, document_number + 1
     
     extension = f".{DokumentType}"
     mime_type = {
-        ".txt": "text/plain", ".pdf": "application/pdf", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
-        ".gif": "image/gif", ".doc": "application/msword", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        ".xls": "application/vnd.ms-excel", ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", ".csv": "text/csv",
-        ".json": "application/json", ".xml": "application/xml"
+        ".txt": "text/plain", ".pdf": "application/pdf", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+        ".png": "image/png", ".gif": "image/gif", ".doc": "application/msword",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".xls": "application/vnd.ms-excel",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ".csv": "text/csv", ".json": "application/json", ".xml": "application/xml"
     }.get(extension, "application/octet-stream")
     FileName += extension
     orchestrator_connection.log_info(f"Anvender følgende dokumentID: {Filarkiv_DocumentID}")
@@ -707,7 +739,7 @@ def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID
         orchestrator_connection.log_info(f"FileID: {FileID}")
     else:
         orchestrator_connection.log_info(f"Failed to create file metadata. {response.text}")
-        return False, document_number+1
+        return False, document_number + 1
     
     url = f"https://core.filarkiv.dk/api/v1/FileIO/Upload/{FileID}"
     if not os.path.exists(file_path):
@@ -724,43 +756,29 @@ def upload_to_filarkiv(FilarkivURL, FilarkivCaseID, Filarkiv_access_token, AktID
                 data = {"id": FileID}
                 response = requests.delete(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
                 orchestrator_connection.log_info(f"File deletion status code: {response.status_code}")
-
                 url = f"https://core.filarkiv.dk/api/v1/Documents"
                 data = {"id": Filarkiv_DocumentID}
                 response = requests.delete(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
                 orchestrator_connection.log_info(f"Document deletion status code: {response.status_code}")
-                return False, document_number+1
+                return False, document_number + 1
 
-            #Sætter den høje prioritet på dokumentet
             url = f"https://core.filarkiv.dk/api/v1/FileProcess/UpdatePriority"
-
-            data = {
-                    "fileId": FileID,
-                    "priority": 10000
-            }
+            data = {"fileId": FileID, "priority": 10000}
             response = requests.post(url, headers={"Authorization": f"Bearer {Filarkiv_access_token}", "Content-Type": "application/json"}, data=json.dumps(data))
             if response.status_code in [200, 201]:
                 orchestrator_connection.log_info("Det lykkedes at opdaterer prioriteten")
             else:
                 orchestrator_connection.log_info(f"Fejlede i prioritering: {response.text}")
-    return True, document_number+1
+    return True, document_number + 1
 
 
 def check_conversion_possible(dokument_type, cloudconvert_api):
-    
     url = f"https://api.cloudconvert.com/v2/convert/formats?filter[input_format]={dokument_type}&filter[output_format]=pdf&filter[operation]=convert"
-    
-    headers = {
-        "Authorization": cloudconvert_api
-    }
-    
+    headers = {"Authorization": cloudconvert_api}
     conversion_possible = False
-
     response = requests.get(url, headers=headers)
-    
     if response.status_code == 200 and response.text.strip():
         json_response = json.loads(response.text)
-        
         data = json_response.get("data", [])
         if data:
             for item in data:
@@ -769,34 +787,25 @@ def check_conversion_possible(dokument_type, cloudconvert_api):
                     item.get("output_format") == "pdf"):
                     conversion_possible = True
                     break
-    
     return conversion_possible
 
 def convert_file_to_pdf(CloudConvertAPI, file_path, DokumentID, DokumentType):
     print("Conversion is supported!")
-    
     create_job_url = "https://api.cloudconvert.com/v2/jobs"
     create_job_headers = {
         "Authorization": CloudConvertAPI,
         "Content-Type": "application/json",
     }
     json_body = {
-        "tasks": {
-            "import_1": {
-                "operation": "import/upload"
-            },
-        },
+        "tasks": {"import_1": {"operation": "import/upload"}},
         "tag": f"Aktbob-{DokumentID}-{time.strftime('%H-%M-%S')}",
     }
-    
     response = requests.post(create_job_url, headers=create_job_headers, json=json_body)
     job_response_data = response.json()
-    
     tasks = job_response_data.get("data", {}).get("tasks", [])
     if not tasks:
         print("Error: No tasks found in job creation response.")
         return None
-    
     upload_url, upload_parameters, upload_task_id = None, None, None
     for task in tasks:
         if task.get("operation") == "import/upload" and "result" in task:
@@ -806,20 +815,15 @@ def convert_file_to_pdf(CloudConvertAPI, file_path, DokumentID, DokumentType):
                 upload_parameters = form.get("parameters", {})
                 upload_task_id = task["id"]
                 break
-    
-    
     upload_data = {key: value for key, value in upload_parameters.items()}
-    
     with open(file_path, "rb") as file:
         upload_files = {"file": file}
         upload_response = requests.post(upload_url, data=upload_data, files=upload_files)
-    
     if upload_response.status_code == 201:
         print("File uploaded successfully!")
     else:
         print(f"Upload failed: {upload_response.status_code} - {upload_response.text}")
         return None
-    
     convert_export_body = {
         "tasks": {
             "convert_1": {
@@ -828,42 +832,29 @@ def convert_file_to_pdf(CloudConvertAPI, file_path, DokumentID, DokumentType):
                 "input_format": DokumentType,
                 "output_format": "pdf",
             },
-            "export_1": {
-                "operation": "export/url",
-                "input": ["convert_1"],
-            }
+            "export_1": {"operation": "export/url", "input": ["convert_1"]}
         },
         "tag": f"Aktbob-{DokumentID}-{time.strftime('%H-%M-%S')}",
     }
-    convert_export_response = requests.post(
-        create_job_url, headers=create_job_headers, json=convert_export_body
-    )
+    convert_export_response = requests.post(create_job_url, headers=create_job_headers, json=convert_export_body)
     convert_export_response_data = convert_export_response.json()
-    
     if "INVALID_CONVERSION_TYPE" in convert_export_response.text:
         print("Error: Invalid conversion type.")
         return None
-    
     export_task_id = convert_export_response_data["data"]["tasks"][1]["id"]
-    
     while True:
         status_check_url = f"https://api.cloudconvert.com/v2/tasks/{export_task_id}"
         status_check_response = requests.get(status_check_url, headers=create_job_headers)
         status_check_data = status_check_response.json()
-        
         task_status = status_check_data["data"]["status"]
-        
         if task_status == "finished":
             os.remove(file_path)
             download_url = status_check_data["data"]["result"]["files"][0]["url"]
-            
             with requests.get(download_url, stream=True) as r:
                 with open(file_path, "wb") as file:
                     for chunk in r.iter_content(chunk_size=8192):
                         file.write(chunk)
-            
             print(f"File downloaded successfully at: {file_path}")
-            
             return file_path
         elif task_status not in ["waiting", "processing"]:
             print(f"An error occurred:{status_check_response.text}")
@@ -871,21 +862,9 @@ def convert_file_to_pdf(CloudConvertAPI, file_path, DokumentID, DokumentType):
         time.sleep(5)
 
 def process_documents(
-    dt_AktIndex,
-    AktID,
-    Titel,
-    Dokumentkategori,
-    Dokumentdato,
-    DokumentID,
-    BilagTilDok,
-    DokBilag,
-    Omfattet,
-    Aktstatus,
-    Begrundelse,
-    IsDocumentPDF
-    ):
-    # Parse and prepare data for the row
-
+    dt_AktIndex, AktID, Titel, Dokumentkategori, Dokumentdato, DokumentID,
+    BilagTilDok, DokBilag, Omfattet, Aktstatus, Begrundelse, IsDocumentPDF
+):
     row_to_add = {
         "Akt ID": int(AktID),
         "Filnavn": Titel,
@@ -899,34 +878,14 @@ def process_documents(
         "Begrundelse hvis Nej/Delvis": Begrundelse,
         "IsDocumentPDF": IsDocumentPDF,
     }
-    
     dt_AktIndex = pd.concat([dt_AktIndex, pd.DataFrame([row_to_add])], ignore_index=True)
-
-    # Sort and reset index
     dt_AktIndex = dt_AktIndex.sort_values(by="Akt ID", ascending=True).reset_index(drop=True)
-
-    #  1. Prepare base path for deletion
     base_path = os.path.join("C:\\", "Users", os.getlogin(), "Downloads")
-
-    #  2. Create a list of non-PDF documents (KEEPING extensions for return)
     ListOfNonPDFDocs = dt_AktIndex.loc[dt_AktIndex["IsDocumentPDF"] != True, "Filnavn"].tolist()
-
-    #  3. Loop through all files and process them correctly
     for index, row in dt_AktIndex.iterrows():
-        file_name_with_extension = row["Filnavn"]  # Get original filename
-        
-        file_name_for_deletion = file_name_with_extension  # Default: use full name for deletion
-        
-        # #  If it's NOT a PDF, remove the file extension *just for deletion*
-        # if not row["IsDocumentPDF"]:
-        #     parts = file_name_with_extension.rsplit(".", 1)  # Split at last dot
-
-        #     if len(parts) == 2:  # If there's an extension
-        #         file_name_for_deletion, extension = parts  # Use filename without extension
-
-        #  4. Delete ALL files (PDF and non-PDF)
-        file_path = os.path.join(base_path, file_name_for_deletion)  # Use modified name for deletion
-        #orchestrator_connection.log_info(f"Filepath to be deleted: {file_path}")
+        file_name_with_extension = row["Filnavn"]
+        file_name_for_deletion = file_name_with_extension
+        file_path = os.path.join(base_path, file_name_for_deletion)
         try:
             if os.path.exists(file_path):
                 if os.path.isfile(file_path):
@@ -936,8 +895,6 @@ def process_documents(
                     print(f"Deleted directory: {file_path}")
         except Exception as e:
             raise Exception(f"Error deleting {file_path}: {e}")
-
-    # Return dt_AktIndex and ListOfNonPDFDocs, both WITH extensions
     return dt_AktIndex, ListOfNonPDFDocs
 
 def fetch_document_info_go(DokumentID, session, AktID, Titel):
@@ -963,9 +920,7 @@ def download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword, orc
     except Exception as initial_exception:
         orchestrator_connection.log_info(f"Failed, trying from URL: {DokumentID} Path: {file_path}")
         orchestrator_connection.log_info(initial_exception)
-
         ByteResult = bytes()
-
     max_retries = 2
     for attempt in range(max_retries):
         try:
@@ -976,12 +931,10 @@ def download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword, orc
                 headers={"Content-Type": "application/json"},
                 timeout=60
             )
-            
             content = metadata_response.text
             DocumentURL = content.split("ows_EncodedAbsUrl=")[1].split('"')[1]
             DocumentURL = DocumentURL.split("\\")[0].replace("go.aarhus", "ad.go.aarhus")
             orchestrator_connection.log_info(f"Document URL: {DocumentURL}")
-            
             handler = requests.Session()
             handler.auth = HttpNtlmAuth(GoUsername, GoPassword)
             with handler.get(DocumentURL, stream=True) as download_response:
@@ -989,7 +942,6 @@ def download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword, orc
                 with open(file_path, "wb") as file:
                     for chunk in download_response.iter_content(chunk_size=8192):
                         file.write(chunk)
-
             orchestrator_connection.log_info("File downloaded successfully.")
             return
         except Exception as retry_exception:
@@ -1001,12 +953,9 @@ def download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword, orc
                 )
             time.sleep(5)
 
-
 def fetch_document_bytes(session: requests.Session, DokumentID, file_path=None, max_retries=30, retry_interval=5, delete_after_use=False):
-
     url = f"https://ad.go.aarhuskommune.dk/_goapi/Documents/DocumentBytes/{DokumentID}"
     ByteResult = None
-    
     response = None
     for attempt in range(max_retries):
         try:
@@ -1024,92 +973,60 @@ def fetch_document_bytes(session: requests.Session, DokumentID, file_path=None, 
                 print(f"Attempt {attempt + 1}: Failed with status code {response.status_code}")
         except Exception as e:
             print(f"Attempt {attempt + 1}: Exception occurred - {e}")
-
         time.sleep(retry_interval)
-        
-    # If a file path is given, save to file
     if file_path and ByteResult:
         with open(file_path, "wb") as file:
             file.write(ByteResult)
-
-        # If delete_after_use is True, remove the file
         if delete_after_use:
             os.remove(file_path)
-
     return ByteResult
 
-def GOPDFConvert (DokumentID, VersionUI, GoUsername, GoPassword):
+def GOPDFConvert(DokumentID, VersionUI, GoUsername, GoPassword):
     try:
         url = f"https://ad.go.aarhuskommune.dk/_goapi/Documents/ConvertToPDF/{DokumentID}/{VersionUI}"
         response = requests.get(
             url,
             auth=HttpNtlmAuth(GoUsername, GoPassword),
             headers={"Content-Type": "application/json"},
-            timeout=None  # Equivalent to client.Timeout = -1
+            timeout=None
         )
-        
         response.raise_for_status
-        
-        # Feedback and byte result
         Feedback = response.text
         if "Document could not be converted" in Feedback:
             return ""
         else:
             return response.content
-    
     except Exception as e:
         return ""
 
 
 def _decode_html_part(part):
-    """
-    Robustly decode HTML from Outlook/CDW MHTML files.
-    Preserves Danish characters (æ ø å) and fixes mojibake.
-    """
     payload = part.get_payload(decode=True)
-
     if not payload:
         return ""
-
-    # 1️⃣ Try UTF-8 FIRST
     try:
         return payload.decode("utf-8")
     except UnicodeDecodeError:
         pass
-
-    # 2️⃣ Decode as Windows-1252 (Outlook default)
     text = payload.decode("windows-1252", errors="replace")
-
-    # 3️⃣ Repair UTF-8 decoded as Latin-1 (Ã¥ Ã¸ Ã¦)
     if any(bad in text for bad in ("Ã¥", "Ã¸", "Ã¦", "Ã…", "Ã˜", "Ã†")):
         try:
             text = text.encode("windows-1252").decode("utf-8")
         except UnicodeDecodeError:
             pass
-
     return text
 
 
-
 def cdw_mhtml_to_html(mhtml_path):
-    """
-    Converts CDW/Outlook MHTML mail to a single self-contained HTML file.
-    Preserves Danish characters correctly.
-    Returns path to new HTML file.
-    """
     with open(mhtml_path, "rb") as f:
         msg = BytesParser(policy=policy.default).parse(f)
-
     html_body = None
     attachments = []
-
     for part in msg.walk():
         ctype = part.get_content_type()
         disp = part.get_content_disposition()
-
         if ctype == "text/html" and html_body is None:
             html_body = _decode_html_part(part)
-
         elif disp == "attachment":
             attachments.append({
                 "filename": part.get_filename(),
@@ -1121,67 +1038,32 @@ def cdw_mhtml_to_html(mhtml_path):
         fn = att["filename"]
         ct = att["ctype"]
         data = base64.b64encode(att["data"]).decode("ascii")
-
         if ct and ct.startswith("image/"):
-            return f"""
-            <div class="attachment">
-                <h4>{fn}</h4>
-                <img src="data:{ct};base64,{data}" style="max-width:100%;">
-            </div>
-            """
-
+            return f'<div class="attachment"><h4>{fn}</h4><img src="data:{ct};base64,{data}" style="max-width:100%;"></div>'
         if ct == "application/pdf":
-            return f"""
-            <div class="attachment">
-                <h4>{fn}</h4>
-                <iframe src="data:application/pdf;base64,{data}"
-                        width="100%" height="800"></iframe>
-            </div>
-            """
-
-        return f"""
-        <div class="attachment">
-            <h4>{fn}</h4>
-            <a download="{fn}" href="data:{ct};base64,{data}">
-                Download attachment
-            </a>
-        </div>
-        """
+            return f'<div class="attachment"><h4>{fn}</h4><iframe src="data:application/pdf;base64,{data}" width="100%" height="800"></iframe></div>'
+        return f'<div class="attachment"><h4>{fn}</h4><a download="{fn}" href="data:{ct};base64,{data}">Download attachment</a></div>'
 
     attachments_html = "\n".join(attachment_html(a) for a in attachments)
-
     final_html = f"""<!DOCTYPE html>
 <html lang="da">
 <head>
 <meta charset="utf-8">
 <title>Mailarkiv</title>
 <style>
-body {{
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 11pt;
-}}
-.attachments {{
-    page-break-before: always;
-}}
-.attachment {{
-    margin-bottom: 30px;
-}}
+body {{ font-family: Arial, Helvetica, sans-serif; font-size: 11pt; }}
+.attachments {{ page-break-before: always; }}
+.attachment {{ margin-bottom: 30px; }}
 </style>
 </head>
 <body>
-
 {html_body or ""}
-
 <div class="attachments">
 <h2>Bilag</h2>
 {attachments_html}
 </div>
-
 </body>
-</html>
-"""
-
+</html>"""
     html_path = Path(mhtml_path).with_suffix(".html")
     html_path.write_text(final_html, encoding="utf-8")
-
     return str(html_path)
