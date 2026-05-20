@@ -28,18 +28,7 @@ import extract_msg  # pip install extract-msg
 # ---------------------------------------------------------------------------
 # NEW HELPER: extract attachments from .eml or .msg and return metadata list
 # ---------------------------------------------------------------------------
-
 def extract_email_attachments(file_path: str, orchestrator_connection) -> list[dict]:
-    """
-    Extract attachments from an .eml or .msg file.
-
-    Returns a list of dicts:
-        {
-            "filename":  str,          # original attachment filename
-            "extension": str,          # lower-case extension without dot
-            "data":      bytes,        # raw bytes of the attachment
-        }
-    """
     ext = Path(file_path).suffix.lower().lstrip(".")
     attachments = []
 
@@ -55,15 +44,24 @@ def extract_email_attachments(file_path: str, orchestrator_connection) -> list[d
                     att_ext = Path(filename).suffix.lower().lstrip(".")
                     attachments.append({"filename": filename, "extension": att_ext, "data": data})
 
-    
     elif ext == "msg":
         try:
             outlook_msg = extract_msg.openMsg(file_path)
             try:
                 for att in outlook_msg.attachments:
                     filename = att.longFilename or att.shortFilename or "unknown"
-                    filename = filename.replace("\x00", "").strip()  # clean null chars
+                    filename = filename.replace("\x00", "").strip()
                     data = att.data
+
+                    # att.data can be a Message object for embedded .msg attachments
+                    if hasattr(data, 'as_bytes'):
+                        data = data.as_bytes()
+                    elif not isinstance(data, (bytes, bytearray)):
+                        orchestrator_connection.log_info(
+                            f"Skipping attachment '{filename}': unexpected data type {type(data)}"
+                        )
+                        continue
+
                     if data:
                         att_ext = Path(filename).suffix.lower().lstrip(".")
                         attachments.append({"filename": filename, "extension": att_ext, "data": data})
