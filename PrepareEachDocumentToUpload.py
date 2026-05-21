@@ -318,13 +318,13 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                     download_file(file_path, ByteResult, DokumentID, GoUsername, GoPassword, orchestrator_connection)
 
                 else:
-                    email_extensions = ["eml", "msg"]
-
-                    if DokumentType.lower() in email_extensions:
-                        orchestrator_connection.log_info("Email format detected – skipping GO-conversion")
-                        ByteResult = []
-                    else:
-                        ByteResult = GOPDFConvert(DokumentID, VersionUI, GoUsername, GoPassword)
+                    ByteResult = GOPDFConvert(DokumentID, VersionUI, GoUsername, GoPassword)
+                    # email_extensions = ["eml", "msg"]
+                    # if DokumentType.lower() in email_extensions:
+                    #     orchestrator_connection.log_info("Email format detected – skipping GO-conversion")
+                    #     ByteResult = []
+                    # else:
+                    #     ByteResult = GOPDFConvert(DokumentID, VersionUI, GoUsername, GoPassword)
                     
                     if len(ByteResult) == 0:
                         orchestrator_connection.log_info("Go-convervision mislykkedes forsøger med Filarkiv")
@@ -383,25 +383,25 @@ def invoke_PrepareEachDocumentToUpload(Arguments_PrepareEachDocumentToUpload, or
                 # Any attachment whose extension is NOT in supported_extensions is
                 # additionally extracted and uploaded to SharePoint separately, and
                 # the sagsbehandler is notified via the existing dt_non_pdf_docs email.
-                if DokumentType.lower() in ["eml", "msg"] and os.path.exists(file_path):
-                    orchestrator_connection.log_info(f"Inspecting email attachments for: {file_path}")
-                    attachment_non_pdf = handle_email_attachments(
-                        file_path=file_path,
-                        AktID=AktID,
-                        DokumentID=DokumentID,
-                        Titel=Titel,
-                        SharePointURL=SharePointURL,
-                        Overmappe=Overmappe,
-                        Undermappe=Undermappe,
-                        RobotUserName=RobotUserName,
-                        RobotPassword=RobotPassword,
-                        tenant=tenant,
-                        client_id=client_id,
-                        thumbprint=thumbprint,
-                        cert_path=cert_path,
-                        orchestrator_connection=orchestrator_connection,
-                    )
-                    dt_non_pdf_docs.extend(attachment_non_pdf)
+                # if DokumentType.lower() in ["eml", "msg"] and os.path.exists(file_path):
+                #     orchestrator_connection.log_info(f"Inspecting email attachments for: {file_path}")
+                #     attachment_non_pdf = handle_email_attachments(
+                #         file_path=file_path,
+                #         AktID=AktID,
+                #         DokumentID=DokumentID,
+                #         Titel=Titel,
+                #         SharePointURL=SharePointURL,
+                #         Overmappe=Overmappe,
+                #         Undermappe=Undermappe,
+                #         RobotUserName=RobotUserName,
+                #         RobotPassword=RobotPassword,
+                #         tenant=tenant,
+                #         client_id=client_id,
+                #         thumbprint=thumbprint,
+                #         cert_path=cert_path,
+                #         orchestrator_connection=orchestrator_connection,
+                #     )
+                #     dt_non_pdf_docs.extend(attachment_non_pdf)
                 # ── end GeoSag attachment check ──────────────────────────────────────
 
                 if file_path.lower().endswith(".pdf") or CanDocumentBeConverted:
