@@ -192,7 +192,8 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
                 client.load(folder)  # Ensure folder data is loaded
                 client.execute_query()
 
-                Sagsnummer = folder.properties.get("Name", "Unknown")
+                folder_name = folder.properties.get("Name", "Unknown")
+                Sagsnummer = folder_name
 
                 if " - " in Sagsnummer:
                     Sagsnummer = Sagsnummer.split(" - ")[0]
@@ -202,21 +203,23 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
 
                 # Fetch metadata using the folder name
                 if re.fullmatch(geosag_pattern, Sagsnummer):
-                    Sagstitel, Startdato = fetch_metadata(Sagsnummer)
+                    folder_sagstitel, startdato = fetch_metadata(Sagsnummer)
                 elif re.fullmatch(novasag_pattern, Sagsnummer):
-                    Sagstitel, Startdato = GetNovaCaseinfo(Sagsnummer)
+                    folder_sagstitel, startdato = GetNovaCaseinfo(Sagsnummer)
                 else:
-                    print("Det er hverken et geosagsnummer eller Novasagsnummer")
+                    print(f"Skipping folder '{folder_name}': det er hverken et geosagsnummer eller Novasagsnummer")
+                    continue
 
                 data_table.append({
                     "Sagsnummer": Sagsnummer,  
-                    "Sagstitel": Sagstitel,
-                    "Startdato": Startdato  
+                    "Sagstitel": folder_sagstitel,
+                    "Startdato": startdato
                 })
 
-                # Convert to DataFrame
-                dt_Sagsliste = pd.DataFrame(data_table)
+            # Convert to DataFrame
+            dt_Sagsliste = pd.DataFrame(data_table, columns=["Sagsnummer", "Sagstitel", "Startdato"])
 
+            if not dt_Sagsliste.empty:
                 # Sort by Startdato (most recent first), keeping missing values (`None`) at the bottom
                 dt_Sagsliste = dt_Sagsliste.sort_values(by="Startdato", ascending=False, na_position='last')
 
@@ -395,6 +398,9 @@ def invoke_GenererSagsoversigt(Arguments_GenererSagsoversigt, orchestrator_conne
 
         else:
             print("No data found. PDF generation skipped.")
+            return {
+                "out_Text": f"Sagsoversigt ikke oprettet - ingen sager fundet",
+            }
 
     except Exception as e:
         raise Exception(f"An error occurred: {e}")
