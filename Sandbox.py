@@ -43,6 +43,8 @@ orchestrator_connection = OrchestratorConnection(
         "AktbobGenererAktindsigter",
         os.getenv("OpenOrchestratorSQL"),
         os.getenv("OpenOrchestratorKey"),
+        None,
+        None,
         None
     )
 

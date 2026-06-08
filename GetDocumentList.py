@@ -253,14 +253,26 @@ def invoke(Arguments, go_Session, orchestrator_connection: OrchestratorConnectio
 
             local_file_path = download_file_from_sharepoint(client, sharepoint_file_url)
         if local_file_path.endswith('.xlsx'):
-            # Read Excel file into a Pandas DataFrame
-            dt_DocumentList = pd.read_excel(local_file_path)
+            # Read the actual document list sheet. Pandas defaults to the first
+            # worksheet, which can be a hidden lookup sheet in this workbook.
+            sheet_name = "Sagsoversigt"
+            with pd.ExcelFile(local_file_path) as excel_file:
+                print(f"Available sheets in document list: {excel_file.sheet_names}")
+                if sheet_name not in excel_file.sheet_names:
+                    orchestrator_connection.log_error(f"Sheet '{sheet_name}' was not found in document list. Available sheets: {excel_file.sheet_names}")
+                    raise Exception(
+                        f"Sheet '{sheet_name}' was not found in document list. "
+                        f"Available sheets: {excel_file.sheet_names}"
+                    )
+
+                dt_DocumentList = pd.read_excel(excel_file, sheet_name=sheet_name)
             os.remove(local_file_path)
 
         else:
             raise Exception(f"Downloaded file is not an Excel file: {local_file_path}")
     except Exception as e:
         # --- HANDLE ERROR HERE ---
+        print(f"Failed while getting document list: {e}")
         print("Failed - sender mail til sagsbehandler")  # Replace with email logic if needed
     
         # Define email details
